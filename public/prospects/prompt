@@ -1,30 +1,70 @@
 Traites tous les prospects du dossier.
 Attention, si le prospect est déjà traité (déjà dans le fichier dones.txt), ignores le.
 
-PRIMORDIAL : Recherche sur Google la page google business : "<NOM ENTREPRISE + DEPARTEMENT>" pour cette entreprise. Pour déterminer un max d'info ci-dessous.
+═══════════════════════════════════════
+ÉTAPE 1 — COULEURS (image devanture)
+═══════════════════════════════════════
+Analyse l'image devanture.jpg pour extraire :
+- primaryColor : couleur dominante de l'enseigne / façade
+- secondaryColor : couleur secondaire (fond, marquise, etc.)
+- accentColor : couleur d'accent (détails, néons, dorures…)
 
-Le but est le suivant :
-- Analyse l'image devanture pour récupérer les couleurs principale, secondair et d'accent
-- Pour la description ou shortDesc, n'hésites pas à inventer quelques chose si tu n'as rien trouvé, basé sur le nom et le type de business (voire l'adresse).
-- Génère un JSON en respectant cela :
-  {
-    "name": "Le Pain d'Orée",
-    "businessType": "Boulangerie / Pâtisserie",
-    "description": "...",
-    "shortDesc": "Artisan boulanger depuis 1987",
-    "address": "12 rue de la Paix",
-    "city": "Paris",
-    "zipCode": "75019",
-    "country": "FR",
-    "phone": "01 23 45 67 89",
-    "email": "contact@lepain.fr",
-    "website": "https://lepain.fr",
-    "primaryColor": "#c41e1e",
-    "secondaryColor": "#1c1c1c",
-    "accentColor": "#d4a843",
-    "facebookUrl": "...",
-    "instagramUrl": "...",
-    "googleMapsUrl": "..."
-  }
+═══════════════════════════════════════
+ÉTAPE 2 — RECHERCHE WEB (obligatoire)
+═══════════════════════════════════════
+Tu DOIS faire une recherche web ET fetcher au moins une page de résultat.
+Le nom et la ville/code postal sont dans le nom du dossier (ex: boulangerie-le-pain-d-oree-75019).
 
-Stock le fichier dans le dossier du prospect, data.json et git add + git commit tout cela.
+a) WebSearch : "<nom business> <ville ou code postal>"
+   Ex: WebSearch("Le Pain d'Orée Paris 75019")
+
+b) Parmi les résultats, FETCHE (WebFetch) en priorité dans cet ordre :
+   1. pagesjaunes.fr
+   2. mappy.com
+   3. societe.com ou annuaire-entreprises.data.gouv.fr
+   4. Le site officiel s'il existe
+   5. Toute autre page annuaire contenant l'adresse
+
+c) Dans la page fetchée, récupère : adresse complète (numéro + rue), téléphone,
+   site web, réseaux sociaux, horaires éventuels.
+
+d) Si aucun résultat utile → 2ème WebSearch avec variante :
+   "<type business> <nom> <ville>" ou "<nom business> adresse téléphone"
+
+═══════════════════════════════════════
+ÉTAPE 3 — CONTENU TEXTUEL
+═══════════════════════════════════════
+- shortDesc (max 160 car.) : extraite du web, sinon inventée de façon crédible
+- description : extraite du web ou inventée (2-3 phrases) basée sur nom + type + adresse
+
+═══════════════════════════════════════
+ÉTAPE 4 — JSON FINAL
+═══════════════════════════════════════
+Génère data.json dans le dossier du prospect. Inclus uniquement les champs trouvés
+(ne mets pas un champ vide ou "..."). Format :
+
+{
+  "name": "Le Pain d'Orée",
+  "businessType": "Boulangerie / Pâtisserie",
+  "shortDesc": "Artisan boulanger depuis 1987",
+  "description": "...",
+  "address": "12 rue de la Paix",
+  "city": "Paris",
+  "zipCode": "75019",
+  "country": "FR",
+  "phone": "01 23 45 67 89",
+  "email": "contact@lepain.fr",
+  "website": "https://lepain.fr",
+  "primaryColor": "#c41e1e",
+  "secondaryColor": "#1c1c1c",
+  "accentColor": "#d4a843",
+  "facebookUrl": "https://facebook.com/...",
+  "instagramUrl": "https://instagram.com/...",
+  "googleMapsUrl": "https://maps.google.com/..."
+}
+
+═══════════════════════════════════════
+ÉTAPE 5 — COMMIT
+═══════════════════════════════════════
+- Ajoute le nom du dossier à dones.txt
+- git add + git commit avec message : "feat(prospects): traite <nom>"
