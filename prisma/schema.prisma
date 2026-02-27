@@ -132,7 +132,7 @@ model Business {
   // Réseaux sociaux
   facebookUrl  String?
   instagramUrl String?
-  googleMapsUrl String?
+  googleMapsUrl String? @db.Text
 
   // Statut
   isPublished Boolean   @default(false)
@@ -280,7 +280,7 @@ model ReviewConfig {
   businessId String   @unique
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  googleUrl    String? // Lien direct vers la page avis Google
+  googleUrl    String? @db.Text // Lien direct vers la page avis Google
   instructions String? @db.Text
 
   rewards Reward[]
