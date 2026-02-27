@@ -229,8 +229,11 @@ function PrintCard({
         display: "flex", alignItems: "center", gap: 4,
         opacity: 0.45,
       }}>
-        <IconLogo size={11} logoB64={logoB64} />
-        <span style={{ fontSize: 7.5, fontWeight: 600, color: "#fff", letterSpacing: 0.2 }}>
+        <span style={{ fontSize: 6.5, fontWeight: 300, color: "#fff", letterSpacing: 0.1 }}>
+          Propulsé par
+        </span>
+        <IconLogo size={10} logoB64={logoB64} />
+        <span style={{ fontSize: 6.5, fontWeight: 800, color: "#fff", letterSpacing: 0.2 }}>
           TocTocToc.boutique
         </span>
       </div>
