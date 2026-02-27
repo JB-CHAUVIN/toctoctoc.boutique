@@ -198,9 +198,9 @@ function PrintCard({
         {/* QR code */}
         <div style={{ ...boxStyle, background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt="QR" style={{ width: card.hasNFC ? 60 : 76, height: card.hasNFC ? 60 : 76, borderRadius: 3 }} />
+            <img src={qrDataUrl} alt="QR" style={{ width: 64, height: 64, borderRadius: 3 }} />
           ) : (
-            <div style={{ width: card.hasNFC ? 60 : 76, height: card.hasNFC ? 60 : 76, background: "#f1f5f9", borderRadius: 3 }} />
+            <div style={{ width: 64, height: 64, background: "#f1f5f9", borderRadius: 3 }} />
           )}
           <span style={{ fontSize: 7.5, fontWeight: 700, color: "#64748b", letterSpacing: 0.8, textTransform: "uppercase" }}>
             Scanner
@@ -225,7 +225,7 @@ function PrintCard({
 
       {/* Footer */}
       <div style={{
-        marginTop: 9, zIndex: 1,
+        marginTop: 5, zIndex: 1,
         display: "flex", alignItems: "center", gap: 4,
         opacity: 0.45,
       }}>
