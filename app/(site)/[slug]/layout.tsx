@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site/site-nav";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 async function getBusiness(slug: string) {
   return prisma.business.findUnique({
@@ -49,7 +50,7 @@ export default async function SiteLayout({
         <span className="inline-flex items-center gap-1.5">
           © {new Date().getFullYear()} {business.name}. Propulsé par
           <Image src="/logo.png" alt="" width={14} height={14} className="inline rounded-sm opacity-70" />
-          TocTocToc.boutique.
+          <Link href={"https://toctoctoc.boutique"} title={"Visiter TocTocToc.boutique"}>TocTocToc.boutique</Link>.
         </span>
       </footer>
     </div>
