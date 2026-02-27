@@ -174,6 +174,7 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
                     <td className="px-6 py-4">
                       <RewardClaimToggle
                         reviewId={review.id}
+                        businessId={params.businessId}
                         claimed={review.rewardClaimed}
                       />
                     </td>
@@ -189,17 +190,19 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
 }
 
 // Petit composant inline pour le toggle de réclamation
-function RewardClaimToggle({ reviewId, claimed }: { reviewId: string; claimed: boolean }) {
+function RewardClaimToggle({ reviewId, businessId, claimed }: { reviewId: string; businessId: string; claimed: boolean }) {
   if (!claimed) {
     return (
       <form
         action={async () => {
           "use server";
           const { prisma: db } = await import("@/lib/prisma");
+          const { revalidatePath } = await import("next/cache");
           await db.review.update({
             where: { id: reviewId },
             data: { rewardClaimed: true, rewardClaimedAt: new Date() },
           });
+          revalidatePath(`/dashboard/${businessId}/reviews`);
         }}
       >
         <button type="submit" className="text-xs text-indigo-600 hover:underline">
