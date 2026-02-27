@@ -26,7 +26,7 @@ const updateSchema = z.object({
 });
 
 async function getOwnedBusiness(businessId: string, userId: string) {
-  return prisma.business.findFirst({ where: { id: businessId, userId } });
+  return prisma.business.findFirst({ where: { id: businessId, userId, deletedAt: null } });
 }
 
 export async function GET(req: Request, { params }: { params: { businessId: string } }) {
@@ -90,7 +90,10 @@ export async function DELETE(req: Request, { params }: { params: { businessId: s
   const business = await getOwnedBusiness(params.businessId, session.user.id);
   if (!business) return NextResponse.json({ error: "Commerce introuvable" }, { status: 404 });
 
-  await prisma.business.delete({ where: { id: params.businessId } });
+  await prisma.business.update({
+    where: { id: params.businessId },
+    data: { deletedAt: new Date(), isPublished: false },
+  });
 
   return NextResponse.json({ success: true });
 }

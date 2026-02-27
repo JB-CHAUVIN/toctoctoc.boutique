@@ -39,7 +39,7 @@ export async function GET() {
   const limits = PLAN_LIMITS[plan];
 
   const businesses = await prisma.business.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.id, deletedAt: null },
     include: { modules: true, _count: { select: { bookings: true, loyaltyCards: true } } },
     orderBy: { createdAt: "desc" },
   });

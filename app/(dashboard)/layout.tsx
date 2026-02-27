@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!session?.user?.id) redirect("/login");
 
   const businesses = await prisma.business.findMany({
-    where: { userId: session.user.id },
+    where: { userId: session.user.id, deletedAt: null },
     select: {
       id: true, name: true, slug: true, primaryColor: true,
       modules: { select: { module: true, isActive: true } },

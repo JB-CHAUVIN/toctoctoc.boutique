@@ -135,7 +135,8 @@ model Business {
   googleMapsUrl String?
 
   // Statut
-  isPublished Boolean @default(false)
+  isPublished Boolean   @default(false)
+  deletedAt   DateTime?
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

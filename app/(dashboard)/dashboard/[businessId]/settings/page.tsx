@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,13 +9,17 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 import { BUSINESS_TYPES, FONT_FAMILIES } from "@/lib/constants";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Trash2 } from "lucide-react";
 import type { BusinessFull } from "@/types";
 
 export default function BusinessSettingsPage() {
   const params = useParams<{ businessId: string }>();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -44,6 +48,7 @@ export default function BusinessSettingsPage() {
       const data = await res.json();
       if (data.success) {
         const b = data.data as BusinessFull;
+        setBusinessName(b.name);
         setForm({
           name: b.name,
           slug: b.slug,
@@ -254,6 +259,47 @@ export default function BusinessSettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* Zone de danger */}
+      <div className="mt-10 max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6">
+        <h2 className="mb-1 text-base font-semibold text-red-700">Zone de danger</h2>
+        <p className="mb-4 text-sm text-red-600">
+          La suppression retire définitivement ce commerce de votre compte. Les données sont conservées en base mais inaccessibles.
+        </p>
+        <p className="mb-2 text-sm text-red-700">
+          Saisissez <span className="font-mono font-bold">{businessName}</span> pour confirmer :
+        </p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={confirmName}
+            onChange={(e) => setConfirmName(e.target.value)}
+            placeholder={businessName}
+            className="flex-1 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          />
+          <Button
+            type="button"
+            variant="danger"
+            loading={deleting}
+            disabled={confirmName !== businessName}
+            leftIcon={<Trash2 className="h-4 w-4" />}
+            onClick={async () => {
+              setDeleting(true);
+              const res = await fetch(`/api/business/${params.businessId}`, { method: "DELETE" });
+              if (res.ok) {
+                toast.success("Commerce supprimé");
+                router.push("/dashboard");
+                router.refresh();
+              } else {
+                toast.error("Erreur lors de la suppression");
+                setDeleting(false);
+              }
+            }}
+          >
+            Supprimer
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
