@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
-import { Download, ChevronLeft, ChevronRight, Wifi, QrCode, Gift, Star } from "lucide-react";
-import { useEffect } from "react";
+import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   businessName: string;
@@ -36,10 +35,67 @@ const LOYALTY_CARDS: CardDef[] = [
   { id: "l-qr",  type: "loyalty", hasNFC: false, hasReward: true },
 ];
 
-// ── Card renderer (pure, capturable) ──────────────────────────────────────────
+// ── Inline SVG icons (no emoji, consistent across OS) ────────────────────────
+
+function IconStar({ size = 36, color = "#fff" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M12 2l2.83 5.73 6.32.92-4.57 4.45 1.08 6.28L12 16.52l-5.66 2.98 1.08-6.28L2.85 8.65l6.32-.92L12 2z" />
+    </svg>
+  );
+}
+
+function IconLoyalty({ size = 36, color = "#fff" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="6" width="20" height="14" rx="3" />
+      <path d="M2 11h20" />
+      <circle cx="7.5" cy="16" r="1.2" fill={color} stroke="none" />
+      <circle cx="11.5" cy="16" r="1.2" fill={color} stroke="none" />
+      <circle cx="15.5" cy="16" r="1.2" fill={color} stroke="none" />
+      <path d="M8 6V4a4 4 0 018 0v2" />
+    </svg>
+  );
+}
+
+function IconGift({ size = 14, color = "#fff" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 12 20 22 4 22 4 12" />
+      <rect x="2" y="7" width="20" height="5" rx="1" />
+      <line x1="12" y1="22" x2="12" y2="7" />
+      <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
+    </svg>
+  );
+}
+
+function IconNFC({ size = 32, color = "#fff" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round">
+      <path d="M6.5 17.5A8 8 0 0 1 6.5 6.5" opacity=".4"/>
+      <path d="M9.5 14.5A4.5 4.5 0 0 1 9.5 9.5" opacity=".7"/>
+      <path d="M12.5 11.5a1.5 1.5 0 0 1 0 1" />
+      <circle cx="13" cy="12" r="1.5" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
+function IconLogo({ size = 12, logoB64 }: { size?: number; logoB64?: string }) {
+  if (!logoB64) return null;
+  return (
+    <img
+      src={logoB64}
+      alt=""
+      style={{ width: size, height: size, borderRadius: 2, objectFit: "contain", display: "inline-block", verticalAlign: "middle" }}
+    />
+  );
+}
+
+// ── PrintCard ────────────────────────────────────────────────────────────────
 function PrintCard({
-  card, businessName, primaryColor, secondaryColor, accentColor, qrDataUrl,
-  style, className,
+  card, businessName, primaryColor, secondaryColor, accentColor,
+  qrDataUrl, logoB64, style,
 }: {
   card: CardDef;
   businessName: string;
@@ -47,160 +103,145 @@ function PrintCard({
   secondaryColor: string;
   accentColor: string;
   qrDataUrl: string;
+  logoB64?: string;
   style?: React.CSSProperties;
-  className?: string;
 }) {
   const isReviews = card.type === "reviews";
   const initial = businessName[0]?.toUpperCase() ?? "?";
-
-  // Gradient background
   const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
 
-  return (
-    <div
-      className={className}
-      style={{
-        // 10×15cm at 96dpi ≈ 378×567px. We display at 220×330 and scale for download
-        width: 220, height: 330,
-        background: bg,
-        borderRadius: 16,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "20px 16px 16px",
-        overflow: "hidden",
-        position: "relative",
-        fontFamily: "Inter, system-ui, sans-serif",
-        ...style,
-      }}
-    >
-      {/* Decorative blobs */}
-      <div style={{
-        position: "absolute", width: 180, height: 180, borderRadius: "50%",
-        background: "rgba(255,255,255,0.06)", top: -60, right: -60,
-      }} />
-      <div style={{
-        position: "absolute", width: 120, height: 120, borderRadius: "50%",
-        background: "rgba(255,255,255,0.04)", bottom: 80, left: -40,
-      }} />
+  const boxStyle: React.CSSProperties = {
+    flex: 1,
+    borderRadius: 10,
+    padding: "10px 8px 8px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+  };
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", zIndex: 1 }}>
+  return (
+    <div style={{
+      width: 220, height: 330,
+      background: bg,
+      borderRadius: 16,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      padding: "16px 14px 12px",
+      overflow: "hidden",
+      position: "relative",
+      fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+      ...style,
+    }}>
+      {/* Decorative circles */}
+      <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.07)", top: -50, right: -50, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: 60, left: -30, pointerEvents: "none" }} />
+
+      {/* Header: business name */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", zIndex: 1 }}>
         <div style={{
-          width: 32, height: 32, borderRadius: 8,
+          width: 28, height: 28, borderRadius: 7,
           background: accentColor,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 16, fontWeight: 800, color: "#fff",
+          fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0,
         }}>
           {initial}
         </div>
-        <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: 0.3 }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {businessName}
         </span>
       </div>
 
       {/* Main content */}
-      <div style={{ textAlign: "center", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+      <div style={{ zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", padding: "4px 0" }}>
         {/* Icon */}
-        <div style={{
-          fontSize: 32, lineHeight: 1,
-          filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.2))",
-        }}>
-          {isReviews ? "⭐" : "🎯"}
-        </div>
+        {isReviews
+          ? <IconStar size={34} color="#fff" />
+          : <IconLoyalty size={34} color="#fff" />
+        }
 
         {/* Title */}
-        <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", lineHeight: 1.2, textAlign: "center", letterSpacing: -0.3 }}>
-          {isReviews ? (
-            <>Laissez-nous<br />un avis Google</>
-          ) : (
-            <>Votre carte<br />de fidélité</>
-          )}
+        <div style={{ fontSize: 19, fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: -0.5 }}>
+          {isReviews ? <>Laissez-nous<br />un avis Google</> : <>Votre carte<br />de fidélité</>}
         </div>
 
         {/* Reward badge */}
         {card.hasReward && (
           <div style={{
-            display: "flex", alignItems: "center", gap: 5,
+            display: "inline-flex", alignItems: "center", gap: 5,
             background: accentColor,
-            borderRadius: 20, padding: "5px 12px",
-            fontSize: 10, fontWeight: 700, color: "#fff",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            borderRadius: 20, padding: "5px 11px",
+            fontSize: 9.5, fontWeight: 700, color: "#fff",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
           }}>
-            🎁 {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
+            <IconGift size={11} color="#fff" />
+            {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
           </div>
         )}
 
         {/* Instruction */}
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", textAlign: "center", lineHeight: 1.4 }}>
+        <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>
           {card.hasNFC
             ? isReviews
               ? "Scannez le QR code ou approchez\nvotre téléphone pour laisser un avis"
               : "Scannez le QR code ou approchez\nvotre téléphone pour ouvrir votre carte"
             : isReviews
-              ? "Scannez le QR code pour\nnous laisser un avis"
-              : "Scannez le QR code pour\nouvrir votre carte de fidélité"}
+              ? "Scannez le QR code pour\nnous laisser un avis Google"
+              : "Scannez le QR code pour\nouvrir votre carte de fidélité"
+          }
         </div>
       </div>
 
-      {/* QR + NFC row */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, zIndex: 1, width: "100%" }}>
+      {/* Bottom: QR + NFC (equal width) */}
+      <div style={{ display: "flex", gap: 8, width: "100%", zIndex: 1, alignItems: "stretch" }}>
         {/* QR code */}
-        <div style={{
-          flex: 1,
-          background: "#fff",
-          borderRadius: 12,
-          padding: 8,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 4,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-        }}>
+        <div style={{ ...boxStyle, background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt="QR" style={{ width: 72, height: 72, borderRadius: 4 }} />
+            <img src={qrDataUrl} alt="QR" style={{ width: card.hasNFC ? 60 : 76, height: card.hasNFC ? 60 : 76, borderRadius: 3 }} />
           ) : (
-            <div style={{ width: 72, height: 72, background: "#f1f5f9", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: 20 }}>⬛</span>
-            </div>
+            <div style={{ width: card.hasNFC ? 60 : 76, height: card.hasNFC ? 60 : 76, background: "#f1f5f9", borderRadius: 3 }} />
           )}
-          <span style={{ fontSize: 8, fontWeight: 600, color: "#64748b", letterSpacing: 0.5, textTransform: "uppercase" }}>
+          <span style={{ fontSize: 7.5, fontWeight: 700, color: "#64748b", letterSpacing: 0.8, textTransform: "uppercase" }}>
             Scanner
           </span>
         </div>
 
-        {/* NFC badge */}
+        {/* NFC — same width as QR */}
         {card.hasNFC && (
           <div style={{
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-            background: "rgba(255,255,255,0.15)",
-            borderRadius: 12, padding: "10px 12px",
+            ...boxStyle,
+            background: "rgba(255,255,255,0.14)",
             backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.2)",
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 12C20 16.4183 16.4183 20 12 20M17 12C17 14.7614 14.7614 17 12 17M14 12C14 13.1046 13.1046 14 12 14" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
-              <circle cx="12" cy="12" r="2" fill="white"/>
-            </svg>
-            <span style={{ fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: 0.5, textTransform: "uppercase", textAlign: "center", lineHeight: 1.2 }}>
-              NFC<br/>Tap
+            <IconNFC size={36} color="#fff" />
+            <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: 0.3, textAlign: "center", lineHeight: 1.35 }}>
+              Approchez<br />votre téléphone
             </span>
           </div>
         )}
       </div>
 
-      {/* Powered by */}
-      <div style={{ fontSize: 7, color: "rgba(255,255,255,0.35)", marginTop: 8, zIndex: 1 }}>
-        toctoctoc.boutique
+      {/* Footer */}
+      <div style={{
+        marginTop: 9, zIndex: 1,
+        display: "flex", alignItems: "center", gap: 4,
+        opacity: 0.45,
+      }}>
+        <IconLogo size={11} logoB64={logoB64} />
+        <span style={{ fontSize: 7.5, fontWeight: 600, color: "#fff", letterSpacing: 0.2 }}>
+          TocTocToc.boutique
+        </span>
       </div>
     </div>
   );
 }
 
-// ── Card Stack ─────────────────────────────────────────────────────────────────
+// ── CardStack ─────────────────────────────────────────────────────────────────
 function CardStack({
   cards, businessName, primaryColor, secondaryColor, accentColor,
-  reviewsUrl, loyaltyUrl,
+  reviewsUrl, loyaltyUrl, logoB64,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -209,20 +250,20 @@ function CardStack({
   accentColor: string;
   reviewsUrl: string;
   loyaltyUrl: string;
+  logoB64?: string;
 }) {
   const [index, setIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
 
-  // Pre-generate QR codes
   useEffect(() => {
     const generate = async () => {
       const urls: Record<string, string> = {};
       for (const card of cards) {
         const url = card.type === "reviews" ? reviewsUrl : loyaltyUrl;
         urls[card.id] = await QRCode.toDataURL(url, {
-          width: 200, margin: 1,
+          width: 220, margin: 1,
           color: { dark: "#1e293b", light: "#ffffff" },
         });
       }
@@ -239,11 +280,7 @@ function CardStack({
     if (!cardRef.current) return;
     setDownloading(true);
     try {
-      // Scale up 4× for print quality
-      const dataUrl = await toPng(cardRef.current, {
-        pixelRatio: 4,
-        backgroundColor: undefined,
-      });
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 4 });
       const link = document.createElement("a");
       link.download = `carte-${current.type}-${current.id}.png`;
       link.href = dataUrl;
@@ -255,70 +292,37 @@ function CardStack({
     }
   }, [current]);
 
+  const shared = { businessName, primaryColor, secondaryColor, accentColor, logoB64 };
+
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Stack visual */}
-      <div style={{ position: "relative", width: 220, height: 340 }}>
-        {/* Cards behind */}
-        {cards.length > 1 && (
-          <div style={{
-            position: "absolute", top: 8, left: 8, opacity: 0.35,
-            transform: "rotate(3deg)", pointerEvents: "none",
-          }}>
-            <PrintCard
-              card={cards[(index + 1) % cards.length]}
-              businessName={businessName}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              accentColor={accentColor}
-              qrDataUrl={qrUrls[cards[(index + 1) % cards.length].id] ?? ""}
-            />
-          </div>
-        )}
+      {/* Stack */}
+      <div style={{ position: "relative", width: 220, height: 345 }}>
         {cards.length > 2 && (
-          <div style={{
-            position: "absolute", top: 4, left: 4, opacity: 0.2,
-            transform: "rotate(6deg)", pointerEvents: "none",
-          }}>
-            <PrintCard
-              card={cards[(index + 2) % cards.length]}
-              businessName={businessName}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              accentColor={accentColor}
-              qrDataUrl={qrUrls[cards[(index + 2) % cards.length].id] ?? ""}
-            />
+          <div style={{ position: "absolute", top: 10, left: 8, opacity: 0.2, transform: "rotate(5deg)", pointerEvents: "none" }}>
+            <PrintCard card={cards[(index + 2) % cards.length]} qrDataUrl={qrUrls[cards[(index + 2) % cards.length].id] ?? ""} {...shared} />
           </div>
         )}
-
-        {/* Active card */}
+        {cards.length > 1 && (
+          <div style={{ position: "absolute", top: 6, left: 4, opacity: 0.4, transform: "rotate(2.5deg)", pointerEvents: "none" }}>
+            <PrintCard card={cards[(index + 1) % cards.length]} qrDataUrl={qrUrls[cards[(index + 1) % cards.length].id] ?? ""} {...shared} />
+          </div>
+        )}
         <div ref={cardRef} style={{ position: "absolute", top: 0, left: 0 }}>
-          <PrintCard
-            card={current}
-            businessName={businessName}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-            accentColor={accentColor}
-            qrDataUrl={qrUrls[current.id] ?? ""}
-          />
+          <PrintCard card={current} qrDataUrl={qrUrls[current.id] ?? ""} {...shared} />
         </div>
       </div>
 
-      {/* Card label */}
+      {/* Label + dots */}
       <div className="text-center">
-        <p className="text-xs font-medium text-slate-700">
-          {current.type === "reviews" ? "Avis Google" : "Carte de fidélité"}
-          {current.hasNFC && " · NFC + QR"}
-          {!current.hasNFC && " · QR uniquement"}
+        <p className="text-xs font-medium text-slate-600">
+          {current.hasNFC ? "NFC + QR" : "QR uniquement"}
           {current.hasReward && " · Récompense"}
         </p>
-        {/* Dots */}
-        <div className="mt-1 flex justify-center gap-1">
+        <div className="mt-1.5 flex justify-center gap-1">
           {cards.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={`h-1.5 rounded-full transition-all ${i === index ? "w-4 bg-indigo-500" : "w-1.5 bg-slate-300"}`}
+            <button key={i} onClick={() => setIndex(i)}
+              className={`h-1.5 rounded-full transition-all ${i === index ? "w-4 bg-indigo-500" : "w-1.5 bg-slate-200"}`}
             />
           ))}
         </div>
@@ -326,24 +330,16 @@ function CardStack({
 
       {/* Controls */}
       <div className="flex items-center gap-2">
-        <button
-          onClick={prev}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-800"
-        >
+        <button onClick={prev} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50">
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-slate-700 disabled:opacity-50"
+        <button onClick={handleDownload} disabled={downloading}
+          className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5" />
           {downloading ? "Export…" : "Télécharger PNG"}
         </button>
-        <button
-          onClick={next}
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-800"
-        >
+        <button onClick={next} className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
@@ -351,33 +347,48 @@ function CardStack({
   );
 }
 
-// ── Main export ────────────────────────────────────────────────────────────────
+// ── Main export ───────────────────────────────────────────────────────────────
 export function PrintableCards({
   businessName, slug, primaryColor, secondaryColor, accentColor,
   appUrl, hasReviews, hasLoyalty,
 }: Props) {
+  const [logoB64, setLogoB64] = useState<string | undefined>();
+
+  // Load logo as base64 so html-to-image can embed it
+  useEffect(() => {
+    fetch("/logo.png")
+      .then((r) => r.blob())
+      .then((blob) => new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      }))
+      .then(setLogoB64)
+      .catch(() => {});
+  }, []);
+
   if (!hasReviews && !hasLoyalty) return null;
 
   const reviewsUrl = `${appUrl}/${slug}/avis`;
   const loyaltyUrl = `${appUrl}/${slug}/fidelite`;
-
-  const shared = { businessName, primaryColor, secondaryColor, accentColor, reviewsUrl, loyaltyUrl };
+  const shared = { businessName, primaryColor, secondaryColor, accentColor, reviewsUrl, loyaltyUrl, logoB64 };
 
   return (
     <div className="mb-8">
       <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-400">
         Impressions
       </h2>
-      <p className="mb-4 text-xs text-slate-400">
-        Cartes 10×15cm à imprimer et poser en caisse. Téléchargez en PNG haute résolution.
+      <p className="mb-5 text-xs text-slate-400">
+        Cartes 10×15cm à imprimer et poser en caisse. Téléchargez en PNG haute résolution (300 DPI).
       </p>
 
-      <div className="flex flex-wrap gap-10">
+      <div className="flex flex-wrap gap-12">
         {hasReviews && (
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-              <span>⭐</span> Avis Google
-              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-400">4 variantes</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l2.83 5.73 6.32.92-4.57 4.45 1.08 6.28L12 16.52l-5.66 2.98 1.08-6.28L2.85 8.65l6.32-.92L12 2z"/></svg>
+              Avis Google
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-slate-400">4 variantes</span>
             </p>
             <CardStack cards={REVIEW_CARDS} {...shared} />
           </div>
@@ -386,8 +397,9 @@ export function PrintableCards({
         {hasLoyalty && (
           <div>
             <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-              <span>🎯</span> Fidélité
-              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-400">2 variantes</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 11h20"/></svg>
+              Fidélité
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-slate-400">2 variantes</span>
             </p>
             <CardStack cards={LOYALTY_CARDS} {...shared} />
           </div>
