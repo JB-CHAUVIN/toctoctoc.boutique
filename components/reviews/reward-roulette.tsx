@@ -71,7 +71,7 @@ export function RewardRoulette({ rewards, spinning, primaryColor }: Props) {
     const totalProb = rewards.reduce((sum, r) => sum + r.probability, 0);
     let startAngle = rot;
 
-    rewards.forEach((reward, i) => {
+    rewards.forEach((reward) => {
       const angle = (reward.probability / totalProb) * Math.PI * 2;
 
       // Segment

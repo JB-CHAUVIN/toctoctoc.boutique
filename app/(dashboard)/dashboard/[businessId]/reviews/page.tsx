@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { formatDateTime } from "@/lib/utils";
-import { Settings, Star, Copy } from "lucide-react";
+import { Settings, Star } from "lucide-react";
 import { CopyLinkButton } from "@/components/reviews/copy-link-button";
 
 export const metadata = { title: "Avis & Roulette" };

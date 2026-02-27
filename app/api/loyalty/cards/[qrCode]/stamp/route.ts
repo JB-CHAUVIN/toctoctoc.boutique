@@ -2,24 +2,23 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-/** POST → ajouter un tampon (depuis le dashboard) */
+/** POST → ajouter N tampons (depuis le dashboard commerçant) */
 export async function POST(req: Request, { params }: { params: { qrCode: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const body = await req.json().catch(() => ({}));
+  const count = Math.min(Math.max(parseInt(body.count ?? 1), 1), 10);
+
   const card = await prisma.loyaltyCard.findUnique({
     where: { qrCode: params.qrCode },
     include: {
-      stamps: true,
-      business: {
-        include: { loyaltyConfig: true },
-      },
+      business: { include: { loyaltyConfig: true } },
     },
   });
 
   if (!card) return NextResponse.json({ error: "Carte introuvable" }, { status: 404 });
 
-  // Vérifier que l'utilisateur possède ce commerce
   if (card.business.userId !== session.user.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
@@ -28,47 +27,50 @@ export async function POST(req: Request, { params }: { params: { qrCode: string 
   if (!config) return NextResponse.json({ error: "Config fidélité introuvable" }, { status: 404 });
 
   const stampsRequired = config.stampsRequired;
-  const activeStamps = card.stamps.filter((s) => !s.isReward).length;
-  const stampsSinceLastReward = activeStamps % stampsRequired;
 
-  // Ajouter le tampon
-  await prisma.loyaltyStamp.create({
-    data: { cardId: card.id },
-  });
-
-  let rewardGranted = false;
-
-  // Si on atteint le nombre requis → récompense
-  if (stampsSinceLastReward + 1 >= stampsRequired) {
-    await prisma.loyaltyStamp.create({
-      data: { cardId: card.id, isReward: true },
-    });
-
-    await prisma.loyaltyCard.update({
-      where: { id: card.id },
-      data: {
-        totalStamps: { increment: 1 },
-        totalRewards: { increment: 1 },
-      },
-    });
-
-    rewardGranted = true;
-  } else {
-    await prisma.loyaltyCard.update({
-      where: { id: card.id },
-      data: { totalStamps: { increment: 1 } },
-    });
+  // Calculer les récompenses gagnées (basé sur currentStamps du cycle actuel)
+  let progress = card.currentStamps % stampsRequired;
+  let rewardsGranted = 0;
+  for (let i = 0; i < count; i++) {
+    progress++;
+    if (progress >= stampsRequired) {
+      progress = 0;
+      rewardsGranted++;
+    }
   }
 
-  const updatedCard = await prisma.loyaltyCard.findUnique({
-    where: { id: card.id },
-    include: { stamps: { orderBy: { createdAt: "desc" } } },
-  });
+  const now = new Date();
+
+  // Transaction atomique
+  await prisma.$transaction([
+    ...Array.from({ length: count }, () =>
+      prisma.loyaltyStamp.create({ data: { cardId: card.id } })
+    ),
+    ...Array.from({ length: rewardsGranted }, () =>
+      prisma.loyaltyStamp.create({ data: { cardId: card.id, isReward: true } })
+    ),
+    prisma.loyaltyCard.update({
+      where: { id: card.id },
+      data: {
+        totalStamps: { increment: count },
+        currentStamps: { increment: count },
+        totalRewards: { increment: rewardsGranted },
+        lastActivityAt: now,
+      },
+    }),
+  ]);
 
   return NextResponse.json({
     success: true,
-    data: updatedCard,
-    rewardGranted,
-    rewardName: rewardGranted ? config.rewardName : null,
+    data: {
+      customerName: card.customerName,
+      totalStamps: card.totalStamps + count,
+      currentStamps: card.currentStamps + count,
+      progress,
+      stampsRequired,
+    },
+    stampsAdded: count,
+    rewardsGranted,
+    rewardName: rewardsGranted > 0 ? config.rewardName : null,
   });
 }

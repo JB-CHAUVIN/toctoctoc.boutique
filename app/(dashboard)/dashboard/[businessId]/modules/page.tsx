@@ -20,7 +20,7 @@ export default function ModulesPage() {
 
   useEffect(() => {
     async function load() {
-      const [bizRes, userRes] = await Promise.all([
+      const [bizRes] = await Promise.all([
         fetch(`/api/business/${params.businessId}`),
         fetch("/api/auth/session"),
       ]);

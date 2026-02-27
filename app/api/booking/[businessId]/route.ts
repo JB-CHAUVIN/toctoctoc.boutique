@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { addMinutes, format, parseISO, setHours, setMinutes, isAfter, isBefore } from "date-fns";
+import { addMinutes, format, parseISO, setHours, setMinutes, isBefore } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import type { TimeSlot } from "@/types";
 
 const createBookingSchema = z.object({
-  serviceId: z.string(),
-  date: z.string(), // ISO date string (YYYY-MM-DD)
-  time: z.string(), // HH:mm
+  serviceId: z.string().optional(),
+  date: z.string(),
+  time: z.string(),
   customerName: z.string().min(2),
   customerEmail: z.string().email(),
   customerPhone: z.string().optional(),
   notes: z.string().optional(),
+  guestCount: z.number().min(1).optional(),
+  customData: z.record(z.string()).optional(),
 });
 
 /** GET /api/booking/[businessId]?date=YYYY-MM-DD&serviceId=xxx → créneaux disponibles */
@@ -20,8 +22,8 @@ export async function GET(req: Request, { params }: { params: { businessId: stri
   const date = searchParams.get("date");
   const serviceId = searchParams.get("serviceId");
 
-  if (!date || !serviceId) {
-    return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
+  if (!date) {
+    return NextResponse.json({ error: "Paramètre date manquant" }, { status: 400 });
   }
 
   const config = await prisma.bookingConfig.findUnique({
@@ -31,9 +33,6 @@ export async function GET(req: Request, { params }: { params: { businessId: stri
 
   if (!config) return NextResponse.json({ error: "Réservations non configurées" }, { status: 404 });
 
-  const service = config.services.find((s) => s.id === serviceId && s.isActive);
-  if (!service) return NextResponse.json({ error: "Service introuvable" }, { status: 404 });
-
   const workDays = config.workDays as number[];
   const parsedDate = parseISO(date);
   const dayOfWeek = parsedDate.getDay();
@@ -42,36 +41,60 @@ export async function GET(req: Request, { params }: { params: { businessId: stri
     return NextResponse.json({ success: true, data: [] });
   }
 
-  // Générer les créneaux
+  // Durée d'un rendez-vous
+  let appointmentDuration = config.defaultDuration;
+  if (serviceId) {
+    const service = config.services.find((s) => s.id === serviceId && s.isActive);
+    if (service?.duration) appointmentDuration = service.duration;
+  }
+
+  // Intervalle entre créneaux (slotInterval ou durée du rendez-vous)
+  const step = config.slotInterval ?? appointmentDuration;
+
   const [openH, openM] = config.openTime.split(":").map(Number);
   const [closeH, closeM] = config.closeTime.split(":").map(Number);
 
   const dayStart = setMinutes(setHours(parsedDate, openH), openM);
   const dayEnd = setMinutes(setHours(parsedDate, closeH), closeM);
 
-  const slotDuration = service.duration + config.bufferTime;
   const slots: TimeSlot[] = [];
   let current = dayStart;
 
-  while (isBefore(addMinutes(current, service.duration), dayEnd) ||
-         addMinutes(current, service.duration).getTime() === dayEnd.getTime()) {
-    const slotEnd = addMinutes(current, service.duration);
+  while (
+    isBefore(addMinutes(current, appointmentDuration), dayEnd) ||
+    addMinutes(current, appointmentDuration).getTime() === dayEnd.getTime()
+  ) {
+    const slotEnd = addMinutes(current, appointmentDuration);
+    let available: boolean;
 
-    // Vérifier les conflits
-    const conflictingBooking = await prisma.booking.findFirst({
-      where: {
-        businessId: params.businessId,
-        status: { in: ["PENDING", "CONFIRMED"] },
-        date: { gte: current, lt: slotEnd },
-      },
-    });
+    if (config.maxPerSlot) {
+      // Mode TABLE / CLASS : vérifier la capacité du créneau
+      const count = await prisma.booking.count({
+        where: {
+          businessId: params.businessId,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          date: { gte: current, lt: addMinutes(current, 1) },
+        },
+      });
+      available = count < config.maxPerSlot;
+    } else {
+      // Mode APPOINTMENT : vérifier les conflits
+      const conflict = await prisma.booking.findFirst({
+        where: {
+          businessId: params.businessId,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          date: { gte: current, lt: slotEnd },
+        },
+      });
+      available = !conflict;
+    }
 
-    slots.push({
-      time: format(current, "HH:mm"),
-      available: !conflictingBooking,
-    });
+    slots.push({ time: format(current, "HH:mm"), available });
 
-    current = addMinutes(current, slotDuration);
+    const stepWithBuffer = config.maxPerSlot
+      ? step
+      : step + config.bufferTime;
+    current = addMinutes(current, stepWithBuffer);
   }
 
   return NextResponse.json({ success: true, data: slots });
@@ -86,7 +109,7 @@ export async function POST(req: Request, { params }: { params: { businessId: str
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { serviceId, date, time, customerName, customerEmail, customerPhone, notes } = parsed.data;
+    const { serviceId, date, time, customerName, customerEmail, customerPhone, notes, guestCount, customData } = parsed.data;
 
     const config = await prisma.bookingConfig.findUnique({
       where: { businessId: params.businessId },
@@ -95,37 +118,59 @@ export async function POST(req: Request, { params }: { params: { businessId: str
 
     if (!config) return NextResponse.json({ error: "Réservations non configurées" }, { status: 404 });
 
-    const service = config.services.find((s) => s.id === serviceId && s.isActive);
-    if (!service) return NextResponse.json({ error: "Service introuvable" }, { status: 404 });
+    let appointmentDuration = config.defaultDuration;
+    let resolvedServiceId: string | undefined = serviceId;
+
+    if (serviceId) {
+      const service = config.services.find((s) => s.id === serviceId && s.isActive);
+      if (!service) return NextResponse.json({ error: "Service introuvable" }, { status: 404 });
+      if (service.duration) appointmentDuration = service.duration;
+    } else {
+      resolvedServiceId = undefined;
+    }
 
     const [h, m] = time.split(":").map(Number);
     const bookingDate = setMinutes(setHours(parseISO(date), h), m);
-    const bookingEnd = addMinutes(bookingDate, service.duration);
+    const bookingEnd = addMinutes(bookingDate, appointmentDuration);
 
     // Vérifier la disponibilité
-    const conflict = await prisma.booking.findFirst({
-      where: {
-        businessId: params.businessId,
-        status: { in: ["PENDING", "CONFIRMED"] },
-        OR: [
-          { date: { gte: bookingDate, lt: bookingEnd } },
-          { endDate: { gt: bookingDate, lte: bookingEnd } },
-        ],
-      },
-    });
-
-    if (conflict) {
-      return NextResponse.json({ error: "Ce créneau n'est plus disponible" }, { status: 409 });
+    if (config.maxPerSlot) {
+      const count = await prisma.booking.count({
+        where: {
+          businessId: params.businessId,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          date: { gte: bookingDate, lt: addMinutes(bookingDate, 1) },
+        },
+      });
+      if (count >= config.maxPerSlot) {
+        return NextResponse.json({ error: "Ce créneau est complet" }, { status: 409 });
+      }
+    } else {
+      const conflict = await prisma.booking.findFirst({
+        where: {
+          businessId: params.businessId,
+          status: { in: ["PENDING", "CONFIRMED"] },
+          OR: [
+            { date: { gte: bookingDate, lt: bookingEnd } },
+            { endDate: { gt: bookingDate, lte: bookingEnd } },
+          ],
+        },
+      });
+      if (conflict) {
+        return NextResponse.json({ error: "Ce créneau n'est plus disponible" }, { status: 409 });
+      }
     }
 
     const booking = await prisma.booking.create({
       data: {
         businessId: params.businessId,
-        serviceId,
+        serviceId: resolvedServiceId,
         customerName,
         customerEmail,
         customerPhone,
         notes,
+        guestCount,
+        customData: customData ?? undefined,
         date: bookingDate,
         endDate: bookingEnd,
         status: "PENDING",

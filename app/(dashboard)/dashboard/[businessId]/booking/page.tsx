@@ -3,11 +3,9 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookingStatusWidget } from "@/components/booking/booking-status-widget";
-import { formatDateTime, formatPrice, formatDuration } from "@/lib/utils";
-import { BOOKING_STATUS_LABELS } from "@/lib/constants";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { BookingManager } from "@/components/booking/booking-manager";
 import { Settings, Calendar } from "lucide-react";
 
 export const metadata = { title: "Réservations" };
@@ -23,7 +21,6 @@ export default async function BookingDashboardPage({ params }: { params: { busin
       bookings: {
         include: { service: true },
         orderBy: { date: "desc" },
-        take: 20,
       },
       modules: true,
     },
@@ -45,12 +42,27 @@ export default async function BookingDashboardPage({ params }: { params: { busin
     );
   }
 
-  const bookingsByStatus = {
-    PENDING: business.bookings.filter((b) => b.status === "PENDING"),
-    CONFIRMED: business.bookings.filter((b) => b.status === "CONFIRMED"),
-    COMPLETED: business.bookings.filter((b) => b.status === "COMPLETED"),
-    CANCELLED: business.bookings.filter((b) => b.status === "CANCELLED"),
-  };
+  const pending = business.bookings.filter((b) => b.status === "PENDING").length;
+  const confirmed = business.bookings.filter((b) => b.status === "CONFIRMED").length;
+  const completed = business.bookings.filter((b) => b.status === "COMPLETED").length;
+  const cancelled = business.bookings.filter((b) => b.status === "CANCELLED").length;
+
+  // Serialize for client component (dates → strings)
+  const serializedBookings = business.bookings.map((b) => ({
+    ...b,
+    date: b.date.toISOString(),
+    endDate: b.endDate?.toISOString() ?? null,
+    createdAt: b.createdAt.toISOString(),
+    updatedAt: b.updatedAt.toISOString(),
+  }));
+
+  const services = (business.bookingConfig?.services ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    duration: s.duration,
+    price: s.price,
+    isActive: s.isActive,
+  }));
 
   return (
     <div className="p-8">
@@ -61,7 +73,7 @@ export default async function BookingDashboardPage({ params }: { params: { busin
         </div>
         <div className="flex gap-3">
           <Link href={`/${business.slug}/booking`} target="_blank">
-            <Button variant="outline" size="sm">Voir page de réservation</Button>
+            <Button variant="outline" size="sm">Page de réservation</Button>
           </Link>
           <Link href={`/dashboard/${params.businessId}/booking/settings`}>
             <Button variant="outline" size="sm" leftIcon={<Settings className="h-4 w-4" />}>
@@ -71,92 +83,26 @@ export default async function BookingDashboardPage({ params }: { params: { busin
         </div>
       </div>
 
-      {/* Stats rapides */}
-      <div className="mb-6 grid grid-cols-4 gap-4">
-        {Object.entries(bookingsByStatus).map(([status, bookings]) => {
-          const info = BOOKING_STATUS_LABELS[status];
-          return (
-            <Card key={status} padding="sm" className="text-center">
-              <div className="text-2xl font-bold text-slate-900">{bookings.length}</div>
-              <div className="text-xs text-slate-500">{info.label}</div>
-            </Card>
-          );
-        })}
+      {/* Stats */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatsCard label="En attente" value={pending} icon="🕐" color="amber" />
+        <StatsCard label="Confirmées" value={confirmed} icon="✅" color="emerald" />
+        <StatsCard label="Terminées" value={completed} icon="🏁" color="indigo" />
+        <StatsCard label="Annulées" value={cancelled} icon="❌" color="rose" />
       </div>
 
-      {/* Services configurés */}
-      {business.bookingConfig?.services && business.bookingConfig.services.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Services disponibles</CardTitle>
-          </CardHeader>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {business.bookingConfig.services.filter((s) => s.isActive).map((service) => (
-              <div key={service.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                <div className="font-medium text-slate-800">{service.name}</div>
-                <div className="mt-1 flex gap-3 text-xs text-slate-500">
-                  <span>{formatDuration(service.duration)}</span>
-                  {service.price !== null && <span>·</span>}
-                  {service.price !== null && <span>{formatPrice(service.price)}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Liste des réservations */}
+      {/* Booking manager with full CRUD */}
       <Card padding="none">
         <CardHeader className="px-6 pt-6">
-          <CardTitle>Toutes les réservations</CardTitle>
+          <CardTitle>Toutes les réservations ({business.bookings.length})</CardTitle>
         </CardHeader>
-        {business.bookings.length === 0 ? (
-          <div className="px-6 pb-6 text-center text-sm text-slate-400">
-            Aucune réservation pour le moment
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-                  <th className="px-6 py-3">Client</th>
-                  <th className="px-6 py-3">Service</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Statut</th>
-                  <th className="px-6 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {business.bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-800">{booking.customerName}</div>
-                      <div className="text-xs text-slate-400">{booking.customerEmail}</div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{booking.service?.name ?? "—"}</td>
-                    <td className="px-6 py-4 text-slate-600 whitespace-nowrap">
-                      {formatDateTime(booking.date)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant={
-                          booking.status === "CONFIRMED" ? "success" :
-                          booking.status === "CANCELLED" ? "danger" :
-                          booking.status === "PENDING" ? "warning" : "default"
-                        }
-                      >
-                        {BOOKING_STATUS_LABELS[booking.status].label}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <BookingStatusWidget bookingId={booking.id} currentStatus={booking.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="p-6 pt-4">
+          <BookingManager
+            businessId={params.businessId}
+            initialBookings={serializedBookings as Parameters<typeof BookingManager>[0]["initialBookings"]}
+            services={services}
+          />
+        </div>
       </Card>
     </div>
   );

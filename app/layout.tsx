@@ -4,17 +4,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "LocalSaaS — Digitalisez votre commerce local",
-    template: "%s | LocalSaaS",
+    default: "toctoctoc.boutique — Digitalisez votre commerce local",
+    template: "%s | toctoctoc.boutique",
   },
   description:
     "Plateforme SaaS tout-en-un pour les commerces locaux : réservations, avis, fidélité, site vitrine.",
   keywords: ["commerce local", "réservation", "fidélité", "avis google", "site vitrine"],
-  authors: [{ name: "LocalSaaS" }],
+  authors: [{ name: "toctoctoc.boutique" }],
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    siteName: "LocalSaaS",
+    siteName: "toctoctoc.boutique",
   },
 };
 

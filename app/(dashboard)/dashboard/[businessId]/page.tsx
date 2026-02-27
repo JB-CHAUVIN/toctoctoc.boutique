@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MODULES_INFO } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
-import { ArrowRight, ExternalLink } from "lucide-react";
+import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import type { ModuleType } from "@prisma/client";
 
 export async function generateMetadata({ params }: { params: { businessId: string } }) {
@@ -41,6 +41,8 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
   if (!business) notFound();
 
   const activeModules = business.modules.filter((m) => m.isActive);
+  const hasLoyalty = activeModules.some((m) => m.module === "LOYALTY");
+  const hasReviews = activeModules.some((m) => m.module === "REVIEWS");
 
   return (
     <div className="p-8">
@@ -99,6 +101,45 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           color="rose"
         />
       </div>
+
+      {/* Accès rapide — outils admin terrain */}
+      {(hasLoyalty || hasReviews) && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-400">
+            Accès rapide
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {hasLoyalty && (
+              <Link
+                href={`/dashboard/${params.businessId}/loyalty/stamp`}
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-100 bg-white p-5 text-center transition hover:border-indigo-300 hover:shadow-md"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition group-hover:bg-indigo-100">
+                  <ScanLine className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Scanner fidélité</div>
+                  <div className="mt-0.5 text-xs text-slate-400">Créditer des tampons</div>
+                </div>
+              </Link>
+            )}
+            {hasReviews && (
+              <Link
+                href={`/dashboard/${params.businessId}/reviews/validate`}
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-slate-100 bg-white p-5 text-center transition hover:border-amber-300 hover:shadow-md"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition group-hover:bg-amber-100">
+                  <Gift className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">Valider un lot</div>
+                  <div className="mt-0.5 text-xs text-slate-400">Consommer une récompense</div>
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Modules actifs */}

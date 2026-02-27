@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Trash2, Save, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Save, Loader2, AlertCircle } from "lucide-react";
 import type { ReviewConfig, Reward } from "@prisma/client";
 
 type ConfigWithRewards = ReviewConfig & { rewards: Reward[] };
@@ -91,7 +91,7 @@ export default function ReviewsSettingsPage() {
           <CardHeader>
             <div>
               <CardTitle>Lien Google Avis</CardTitle>
-              <CardDescription>URL vers votre page d'avis Google Maps</CardDescription>
+              <CardDescription>{"URL vers votre page d'avis Google Maps"}</CardDescription>
             </div>
           </CardHeader>
           <div className="space-y-4">

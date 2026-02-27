@@ -141,13 +141,15 @@ model Business {
   user   User   @relation(fields: [userId], references: [id])
 
   // Relations modules
-  modules       BusinessModule[]
-  bookingConfig BookingConfig?
-  reviewConfig  ReviewConfig?
-  loyaltyConfig LoyaltyConfig?
-  bookings      Booking[]
-  reviews       Review[]
-  loyaltyCards  LoyaltyCard[]
+  modules          BusinessModule[]
+  bookingConfig    BookingConfig?
+  reviewConfig     ReviewConfig?
+  loyaltyConfig    LoyaltyConfig?
+  bookings         Booking[]
+  reviews          Review[]
+  loyaltyCards     LoyaltyCard[]
+  loyaltyStatuses  LoyaltyStatus[]
+  showcaseBlocks   ShowcaseBlock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,10 +184,19 @@ enum ModuleType {
 // MODULE RÉSERVATIONS
 // ─────────────────────────────────────────
 
+enum BookingMode {
+  APPOINTMENT // RDV classique (coiffeur, médecin…)
+  TABLE       // Réservation de table (restaurant…)
+  CLASS       // Cours / activité (fitness, atelier…)
+}
+
 model BookingConfig {
   id         String   @id @default(cuid())
   businessId String   @unique
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Mode de réservation
+  mode BookingMode @default(APPOINTMENT)
 
   // Horaires
   openTime  String @default("09:00")
@@ -193,10 +204,15 @@ model BookingConfig {
   workDays  Json   @default("[1,2,3,4,5]") // 0=Dim, 1=Lun…6=Sam
 
   // Paramètres
-  defaultDuration Int @default(60) // minutes
-  bufferTime      Int @default(15) // minutes entre rendez-vous
-  maxAdvanceDays  Int @default(30)
-  minAdvanceHours Int @default(2)
+  defaultDuration Int  @default(60)  // minutes par défaut (et durée repas/cours)
+  slotInterval    Int?               // minutes entre créneaux (null = defaultDuration)
+  maxPerSlot      Int?               // max réservations par créneau (null = illimité)
+  bufferTime      Int  @default(15)  // minutes entre rendez-vous (mode APPOINTMENT)
+  maxAdvanceDays  Int  @default(30)
+  minAdvanceHours Int  @default(2)
+
+  // Champs libres pour le formulaire client
+  extraFields Json? // [{ key, label, type, required }]
 
   // Message de confirmation
   confirmationMsg String? @db.Text
@@ -214,7 +230,7 @@ model Service {
 
   name        String
   description String?
-  duration    Int // minutes
+  duration    Int?    // minutes (null = durée variable / hérite du defaultDuration)
   price       Float?
   isActive    Boolean @default(true)
 
@@ -235,10 +251,12 @@ model Booking {
   customerEmail String
   customerPhone String?
 
-  date    DateTime
-  endDate DateTime?
-  status  BookingStatus @default(PENDING)
-  notes   String?       @db.Text
+  date       DateTime
+  endDate    DateTime?
+  status     BookingStatus @default(PENDING)
+  notes      String?       @db.Text
+  guestCount Int?          // nombre de couverts / participants (TABLE, CLASS)
+  customData Json?         // champs libres renseignés par le client
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -356,8 +374,16 @@ model LoyaltyCard {
 
   qrCode String @unique @default(cuid())
 
+  // Compteurs lifetime (ne diminuent jamais)
   totalStamps  Int @default(0)
   totalRewards Int @default(0)
+
+  // Compteur du cycle actuel (repart à 0 sur reset merchant)
+  currentStamps Int @default(0)
+  resetCount    Int @default(0)
+
+  // Pour le calcul d'inactivité des statuts
+  lastActivityAt DateTime?
 
   stamps LoyaltyStamp[]
 
@@ -365,6 +391,24 @@ model LoyaltyCard {
   updatedAt DateTime @updatedAt
 
   @@unique([businessId, customerEmail])
+}
+
+// Statuts client configurables par le commerçant
+model LoyaltyStatus {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name           String
+  emoji          String  @default("⭐")
+  color          String  @default("#6366f1")
+  minRewards     Int     @default(1)   // Nb de récompenses lifetime minimum
+  extraReward    String? @db.Text      // Texte libre d'avantage supplémentaire
+  inactivityDays Int?                  // Jours sans activité → perte du statut (null = jamais)
+  order          Int     @default(0)   // Ordre croissant (le plus haut = meilleur statut)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model LoyaltyStamp {
@@ -376,4 +420,36 @@ model LoyaltyStamp {
   notes    String?
 
   createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────
+// MODULE SITE VITRINE — BLOCS CONFIGURABLES
+// ─────────────────────────────────────────
+
+enum ShowcaseBlockType {
+  HERO
+  ABOUT
+  SERVICES
+  BOOKING_CTA
+  LOYALTY_CTA
+  REVIEWS_CTA
+  CONTACT
+  HOURS
+  BANNER
+  SOCIAL
+  FAQ
+}
+
+model ShowcaseBlock {
+  id         String            @id @default(cuid())
+  businessId String
+  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  type     ShowcaseBlockType
+  isActive Boolean           @default(true)
+  order    Int               @default(0)
+  content  Json              @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

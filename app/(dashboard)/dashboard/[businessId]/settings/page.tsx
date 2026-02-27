@@ -103,7 +103,7 @@ export default function BusinessSettingsPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Configurez les informations et l'apparence de votre commerce
+          {"Configurez les informations et l'apparence de votre commerce"}
         </p>
       </div>
 

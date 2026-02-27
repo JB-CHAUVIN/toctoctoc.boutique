@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import QRCode from "qrcode";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RewardRoulette } from "./reward-roulette";
-import { Star, ExternalLink, Gift, CheckCircle, Loader2 } from "lucide-react";
+import { Star, ExternalLink, Gift, CheckCircle } from "lucide-react";
 import type { Reward } from "@prisma/client";
 
 interface Props {
@@ -35,6 +36,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
   const [loading, setLoading] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [rewardQrUrl, setRewardQrUrl] = useState<string>("");
 
   // Récupérer le token depuis localStorage si déjà visité
   useEffect(() => {
@@ -51,6 +53,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
     if (data.success) {
       setReviewData(data.data);
       if (data.data.rewardCode) {
+        QRCode.toDataURL(data.data.rewardCode, { width: 200, margin: 1 }).then(setRewardQrUrl);
         setStep("result");
       } else if (data.data.googleReviewInitiated) {
         setStep("roulette");
@@ -115,6 +118,9 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
 
     if (data.success) {
       setReviewData(data.data);
+      if (data.data.rewardCode) {
+        QRCode.toDataURL(data.data.rewardCode, { width: 200, margin: 1 }).then(setRewardQrUrl);
+      }
       setStep("result");
     } else {
       toast.error(data.error || "Erreur");
@@ -177,8 +183,8 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
             </div>
             <h2 className="text-xl font-bold text-slate-900">Laissez votre avis Google</h2>
             <p className="mt-2 text-sm text-slate-500">
-              Cliquez sur le bouton ci-dessous pour accéder à notre page d'avis Google.
-              Une fois votre avis déposé, revenez ici pour tenter votre chance !
+              {"Cliquez sur le bouton ci-dessous pour accéder à notre page d'avis Google."}
+              {" Une fois votre avis déposé, revenez ici pour tenter votre chance !"}
             </p>
           </div>
 
@@ -260,8 +266,17 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
                 >
                   {reviewData.rewardCode}
                 </div>
-                <p className="mt-2 text-xs text-slate-400">
-                  Présentez ce code au comptoir pour bénéficier de votre récompense
+                {rewardQrUrl && (
+                  <div className="mt-4 flex justify-center">
+                    <img
+                      src={rewardQrUrl}
+                      alt="QR code récompense"
+                      className="h-32 w-32 rounded-xl"
+                    />
+                  </div>
+                )}
+                <p className="mt-3 text-xs text-slate-400">
+                  Présentez ce QR code ou le code au comptoir pour bénéficier de votre récompense
                 </p>
               </div>
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
@@ -274,8 +289,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
               <Gift className="mx-auto mb-4 h-16 w-16 text-slate-300" />
               <h2 className="text-xl font-bold text-slate-900">Merci pour votre avis !</h2>
               <p className="mt-2 text-slate-500">
-                Nous n'avons pas de récompense à distribuer actuellement, mais merci de nous avoir
-                fait confiance !
+                {"Nous n'avons pas de récompense à distribuer actuellement, mais merci de nous avoir fait confiance !"}
               </p>
             </>
           )}

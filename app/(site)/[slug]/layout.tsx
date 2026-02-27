@@ -45,7 +45,7 @@ export default async function SiteLayout({
         className="mt-16 border-t py-8 text-center text-sm"
         style={{ borderColor: business.primaryColor + "20", color: "#94a3b8" }}
       >
-        <p>© {new Date().getFullYear()} {business.name}. Propulsé par LocalSaaS.</p>
+        <p>© {new Date().getFullYear()} {business.name}. Propulsé par toctoctoc.boutique.</p>
       </footer>
     </div>
   );

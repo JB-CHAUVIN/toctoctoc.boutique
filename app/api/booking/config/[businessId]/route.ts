@@ -1,24 +1,36 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+const extraFieldSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  type: z.enum(["text", "number", "tel", "email"]),
+  required: z.boolean(),
+});
+
 const configSchema = z.object({
+  mode: z.enum(["APPOINTMENT", "TABLE", "CLASS"]).optional(),
   openTime: z.string().optional(),
   closeTime: z.string().optional(),
   workDays: z.array(z.number().min(0).max(6)).optional(),
-  defaultDuration: z.number().min(15).max(480).optional(),
+  defaultDuration: z.number().min(5).max(480).optional(),
+  slotInterval: z.number().min(5).max(480).nullable().optional(),
+  maxPerSlot: z.number().min(1).max(10000).nullable().optional(),
   bufferTime: z.number().min(0).max(120).optional(),
   maxAdvanceDays: z.number().min(1).max(365).optional(),
   minAdvanceHours: z.number().min(0).max(72).optional(),
-  confirmationMsg: z.string().optional(),
+  confirmationMsg: z.string().nullable().optional(),
+  extraFields: z.array(extraFieldSchema).nullable().optional(),
 });
 
 const serviceSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  duration: z.number().min(15),
-  price: z.number().optional(),
+  duration: z.number().min(5).nullable().optional(),
+  price: z.number().min(0).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -51,10 +63,16 @@ export async function PATCH(req: Request, { params }: { params: { businessId: st
     return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
   }
 
+  const { extraFields, ...rest } = parsed.data;
+  const extraFieldsValue: Prisma.InputJsonValue | typeof Prisma.DbNull =
+    extraFields === null || extraFields === undefined
+      ? Prisma.DbNull
+      : (extraFields as Prisma.InputJsonValue);
+
   const config = await prisma.bookingConfig.upsert({
     where: { businessId: params.businessId },
-    update: parsed.data,
-    create: { businessId: params.businessId, ...parsed.data },
+    update: { ...rest, extraFields: extraFieldsValue },
+    create: { businessId: params.businessId, ...rest, extraFields: extraFieldsValue },
     include: { services: true },
   });
 

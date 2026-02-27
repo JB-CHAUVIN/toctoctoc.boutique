@@ -12,6 +12,8 @@ import {
   ChevronDown,
   Layers,
   Building2,
+  ScanLine,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -42,11 +44,17 @@ const MODULE_NAV: Record<
     label: string;
     overviewHref?: (id: string) => string;
     settingsHref: (id: string) => string;
+    extraLinks?: Array<{
+      label: string;
+      icon: React.ComponentType<{ className?: string }>;
+      href: (id: string) => string;
+    }>;
   }
 > = {
   SHOWCASE: {
     emoji: "🌐",
     label: "Site vitrine",
+    overviewHref: (id) => `/dashboard/${id}/showcase`,
     settingsHref: (id) => `/dashboard/${id}/settings`,
   },
   BOOKING: {
@@ -60,12 +68,26 @@ const MODULE_NAV: Record<
     label: "Avis & Roulette",
     overviewHref: (id) => `/dashboard/${id}/reviews`,
     settingsHref: (id) => `/dashboard/${id}/reviews/settings`,
+    extraLinks: [
+      {
+        label: "Valider un lot",
+        icon: Gift,
+        href: (id) => `/dashboard/${id}/reviews/validate`,
+      },
+    ],
   },
   LOYALTY: {
     emoji: "🎯",
     label: "Fidélité",
     overviewHref: (id) => `/dashboard/${id}/loyalty`,
     settingsHref: (id) => `/dashboard/${id}/loyalty/settings`,
+    extraLinks: [
+      {
+        label: "Scanner",
+        icon: ScanLine,
+        href: (id) => `/dashboard/${id}/loyalty/stamp`,
+      },
+    ],
   },
 };
 
@@ -80,7 +102,7 @@ export function Sidebar({ businesses }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
         <Link href="/dashboard" className="text-lg font-bold text-white">
-          LocalSaaS
+          toctoctoc.boutique
         </Link>
       </div>
 
@@ -141,7 +163,7 @@ export function Sidebar({ businesses }: SidebarProps) {
                       )}
                     >
                       <LayoutDashboard className="h-3.5 w-3.5" />
-                      Vue d'ensemble
+                      {"Vue d'ensemble"}
                     </Link>
 
                     {/* Modules */}
@@ -182,20 +204,40 @@ export function Sidebar({ businesses }: SidebarProps) {
                                 <span className="flex-1">{nav.label}</span>
                               </Link>
 
-                              {/* "Configurer" sub-link */}
+                              {/* Sub-links: Configurer + éventuels extras */}
                               {hasOverview && (
-                                <Link
-                                  href={settingsHref}
-                                  className={cn(
-                                    "ml-5 flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs transition-colors",
-                                    onSettings
-                                      ? "font-medium text-indigo-400"
-                                      : "text-slate-500 hover:text-slate-300"
-                                  )}
-                                >
-                                  <Settings className="h-3 w-3" />
-                                  Configurer
-                                </Link>
+                                <>
+                                  <Link
+                                    href={settingsHref}
+                                    className={cn(
+                                      "ml-5 flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs transition-colors",
+                                      onSettings
+                                        ? "font-medium text-indigo-400"
+                                        : "text-slate-500 hover:text-slate-300"
+                                    )}
+                                  >
+                                    <Settings className="h-3 w-3" />
+                                    Configurer
+                                  </Link>
+                                  {nav.extraLinks?.map((extra) => {
+                                    const extraHref = extra.href(business.id);
+                                    return (
+                                      <Link
+                                        key={extra.label}
+                                        href={extraHref}
+                                        className={cn(
+                                          "ml-5 flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs transition-colors",
+                                          pathname.startsWith(extraHref)
+                                            ? "font-medium text-indigo-400"
+                                            : "text-slate-500 hover:text-slate-300"
+                                        )}
+                                      >
+                                        <extra.icon className="h-3 w-3" />
+                                        {extra.label}
+                                      </Link>
+                                    );
+                                  })}
+                                </>
                               )}
                             </div>
                           );

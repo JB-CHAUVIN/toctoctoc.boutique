@@ -6,8 +6,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { LoyaltyCardPreview } from "@/components/loyalty/loyalty-card-preview";
-import { QrScanner } from "@/components/loyalty/qr-scanner";
-import { Settings, CreditCard } from "lucide-react";
+import { LoyaltyCardsManager } from "@/components/loyalty/loyalty-cards-manager";
+import { Settings, CreditCard, ScanLine } from "lucide-react";
 
 export const metadata = { title: "Fidélité" };
 
@@ -21,9 +21,8 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
       modules: true,
       loyaltyConfig: true,
       loyaltyCards: {
-        include: { stamps: { orderBy: { createdAt: "desc" }, take: 1 } },
+        include: { stamps: { orderBy: { createdAt: "desc" } } },
         orderBy: { updatedAt: "desc" },
-        take: 20,
       },
       _count: { select: { loyaltyCards: true } },
     },
@@ -54,6 +53,28 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
         )
       : 0;
 
+  const stampsRequired = business.loyaltyConfig?.stampsRequired ?? 10;
+  const stampIcon = business.loyaltyConfig?.stampIcon ?? "⭐";
+
+  // Serialize for client component
+  const serializedCards = business.loyaltyCards.map((c) => ({
+    id: c.id,
+    qrCode: c.qrCode,
+    customerName: c.customerName,
+    customerEmail: c.customerEmail,
+    customerPhone: c.customerPhone,
+    currentStamps: c.currentStamps,
+    totalStamps: c.totalStamps,
+    totalRewards: c.totalRewards,
+    resetCount: c.resetCount,
+    lastActivityAt: c.lastActivityAt?.toISOString() ?? null,
+    stamps: c.stamps.map((s) => ({
+      id: s.id,
+      isReward: s.isReward,
+      createdAt: s.createdAt.toISOString(),
+    })),
+  }));
+
   return (
     <div className="p-8">
       <div className="mb-8 flex items-start justify-between">
@@ -65,6 +86,11 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
           <Link href={`/${business.slug}/fidelite`} target="_blank">
             <Button variant="outline" size="sm">Page client</Button>
           </Link>
+          <Link href={`/dashboard/${params.businessId}/loyalty/stamp`}>
+            <Button variant="outline" size="sm" leftIcon={<ScanLine className="h-4 w-4" />}>
+              Scanner
+            </Button>
+          </Link>
           <Link href={`/dashboard/${params.businessId}/loyalty/settings`}>
             <Button variant="outline" size="sm" leftIcon={<Settings className="h-4 w-4" />}>
               Configurer
@@ -74,14 +100,14 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
       </div>
 
       {/* Stats */}
-      <div className="mb-6 grid grid-cols-3 gap-4">
+      <div className="mb-8 grid grid-cols-3 gap-4">
         <StatsCard label="Cartes actives" value={business._count.loyaltyCards} icon="🃏" color="indigo" />
         <StatsCard label="Récompenses distribuées" value={totalRewards} icon="🏆" color="amber" />
-        <StatsCard label="Tampons moyens/carte" value={avgStamps} icon="⭐" color="emerald" />
+        <StatsCard label="Tampons moyens/carte" value={avgStamps} icon={stampIcon} color="emerald" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Aperçu de la carte */}
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+        {/* Card preview */}
         {business.loyaltyConfig && (
           <Card>
             <CardHeader>
@@ -91,69 +117,39 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
           </Card>
         )}
 
-        {/* Scanner QR code */}
+        {/* Scanner shortcut */}
         <Card>
           <CardHeader>
             <CardTitle>Scanner une carte</CardTitle>
           </CardHeader>
-          <QrScanner businessId={params.businessId} />
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <p className="text-sm text-slate-500">
+              Utilisez le scanner mobile pour créditer des tampons
+            </p>
+            <Link href={`/dashboard/${params.businessId}/loyalty/stamp`}>
+              <Button leftIcon={<ScanLine className="h-4 w-4" />}>
+                Ouvrir le scanner
+              </Button>
+            </Link>
+          </div>
         </Card>
       </div>
 
-      {/* Liste des cartes */}
-      <Card className="mt-6" padding="none">
+      {/* Cards manager */}
+      <Card padding="none">
         <CardHeader className="px-6 pt-6">
-          <CardTitle>Cartes fidélité ({business._count.loyaltyCards})</CardTitle>
+          <CardTitle>
+            Cartes fidélité ({business._count.loyaltyCards})
+          </CardTitle>
         </CardHeader>
-        {business.loyaltyCards.length === 0 ? (
-          <div className="px-6 pb-6 text-center text-sm text-slate-400">
-            Aucune carte créée — vos clients peuvent en créer une depuis la page publique
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-medium text-slate-500">
-                  <th className="px-6 py-3">Client</th>
-                  <th className="px-6 py-3">Tampons</th>
-                  <th className="px-6 py-3">Récompenses</th>
-                  <th className="px-6 py-3">Dernière activité</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {business.loyaltyCards.map((card) => {
-                  const stampsRequired = business.loyaltyConfig?.stampsRequired ?? 10;
-                  const progress = (card.totalStamps % stampsRequired) || (card.totalStamps === 0 ? 0 : stampsRequired);
-                  return (
-                    <tr key={card.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-800">{card.customerName}</div>
-                        <div className="text-xs text-slate-400">{card.customerEmail ?? card.customerPhone ?? "—"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-24 rounded-full bg-slate-100">
-                            <div
-                              className="h-full rounded-full bg-indigo-500 transition-all"
-                              style={{ width: `${(progress / stampsRequired) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-slate-500">{progress}/{stampsRequired}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-600">{card.totalRewards}</td>
-                      <td className="px-6 py-4 text-slate-400 text-xs">
-                        {card.stamps[0]
-                          ? new Date(card.stamps[0].createdAt).toLocaleDateString("fr-FR")
-                          : "Jamais"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <div className="p-6 pt-2">
+          <LoyaltyCardsManager
+            businessId={params.businessId}
+            initialCards={serializedCards}
+            stampsRequired={stampsRequired}
+            stampIcon={stampIcon}
+          />
+        </div>
       </Card>
     </div>
   );

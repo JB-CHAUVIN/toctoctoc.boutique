@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Star, Calendar, Gift, CreditCard, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 
 const features = [
   {
@@ -57,7 +57,7 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-xl font-bold text-indigo-600">LocalSaaS</span>
+          <span className="text-xl font-bold text-indigo-600">toctoctoc.boutique</span>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
               Connexion
@@ -182,7 +182,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <p>© {new Date().getFullYear()} LocalSaaS. Fait avec ❤️ en France.</p>
+        <p>© {new Date().getFullYear()} toctoctoc.boutique. Fait avec ❤️ en France.</p>
       </footer>
     </div>
   );
