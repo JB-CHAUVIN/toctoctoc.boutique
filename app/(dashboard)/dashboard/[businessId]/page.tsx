@@ -9,6 +9,7 @@ import { MODULES_INFO } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import { PublishToggle } from "@/components/dashboard/publish-toggle";
+import { PrintableCards } from "@/components/dashboard/printable-cards";
 import type { ModuleType } from "@prisma/client";
 
 export async function generateMetadata({ params }: { params: { businessId: string } }) {
@@ -144,6 +145,18 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           </div>
         </div>
       )}
+
+      {/* Impressions */}
+      <PrintableCards
+        businessName={business.name}
+        slug={business.slug}
+        primaryColor={business.primaryColor}
+        secondaryColor={business.secondaryColor}
+        accentColor={business.accentColor}
+        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+        hasReviews={hasReviews}
+        hasLoyalty={hasLoyalty}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Modules actifs */}
