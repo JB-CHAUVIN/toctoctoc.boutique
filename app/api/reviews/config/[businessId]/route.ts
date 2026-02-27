@@ -4,8 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const configSchema = z.object({
-  googleUrl: z.string().url().optional().or(z.literal("")),
-  instructions: z.string().optional(),
+  googleUrl: z.string().url().optional().or(z.literal("")).nullable(),
+  instructions: z.string().optional().nullable(),
 });
 
 const rewardSchema = z.object({
