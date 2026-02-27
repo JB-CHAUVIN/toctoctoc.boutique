@@ -1,8 +1,8 @@
 {
   "name": "Le Pain d'Orée",
   "businessType": "Boulangerie / Pâtisserie",
-  "shortDesc": "Artisan boulanger-pâtissier au cœur du 19ème",
-  "description": "Le Pain d'Orée est une boulangerie-pâtisserie artisanale nichée dans le 19ème arrondissement de Paris. Chaque jour, notre équipe façonne à la main des pains de tradition, viennoiseries dorées et pâtisseries gourmandes, dans le respect des méthodes artisanales. Un savoir-faire transmis avec passion, pour régaler le quartier depuis des années.",
+  "shortDesc": "Artisan boulanger-pâtissier au cœur du 19ème arrondissement",
+  "description": "Le Pain d'Orée est une boulangerie-pâtisserie artisanale du 19ème arrondissement de Paris. Chaque jour, pains de tradition, viennoiseries dorées et pâtisseries maison sont préparés avec soin pour régaler le quartier.",
   "city": "Paris",
   "zipCode": "75019",
   "country": "FR",
