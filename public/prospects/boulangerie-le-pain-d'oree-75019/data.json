@@ -1,6 +1,9 @@
 {
   "name": "Le Pain d'Orée",
   "businessType": "Boulangerie / Pâtisserie",
+  "city": "Paris",
+  "zipCode": "75019",
+  "country": "FR",
   "primaryColor": "#c41e1e",
   "secondaryColor": "#1c1c1c",
   "accentColor": "#d4a843"
