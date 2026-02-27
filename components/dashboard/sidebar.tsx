@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -101,8 +102,11 @@ export function Sidebar({ businesses }: SidebarProps) {
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
-        <Link href="/dashboard" className="text-lg font-bold text-white">
-          toctoctoc.boutique
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
+            <Image src="/logo.png" alt="toctoctoc.boutique" width={20} height={20} priority />
+          </div>
+          <span className="text-sm font-bold text-white">toctoctoc.boutique</span>
         </Link>
       </div>
 

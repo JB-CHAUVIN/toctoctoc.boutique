@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, CheckCircle } from "lucide-react";
 
 const features = [
@@ -57,7 +58,10 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-xl font-bold text-indigo-600">toctoctoc.boutique</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/logo.png" alt="toctoctoc.boutique" width={32} height={32} priority />
+            <span className="text-xl font-bold text-indigo-600">toctoctoc.boutique</span>
+          </Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
               Connexion

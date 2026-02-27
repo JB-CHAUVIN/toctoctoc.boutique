@@ -1,0 +1,9 @@
+Traites tous les prospects du dossier.
+Attention, si le prospect est déjà traité (déjà dans le fichier dones.txt), ignores le.
+
+Le but est le suivant :
+- Analyse l'image devanture pour récupérer les couleurs principale, secondair et d'accent
+- Génère un JSON en respectant cela :
+app/(dashboard)/dashboard/page.tsx
+
+Stock le fichier dans le dossier du prospect, data.json et git add + git commit tout cela.

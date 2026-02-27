@@ -18,13 +18,30 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: { subscription: true },
+  });
+
+  const plan = user?.subscription?.plan ?? "FREE";
+  const limits = PLAN_LIMITS[plan];
+
   const businesses = await prisma.business.findMany({
     where: { userId: session.user.id },
     include: { modules: true, _count: { select: { bookings: true, loyaltyCards: true } } },
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ success: true, data: businesses });
+  return NextResponse.json({
+    success: true,
+    data: businesses,
+    meta: {
+      plan,
+      planLabel: limits.label,
+      maxBusinesses: limits.maxBusinesses,
+      businessCount: businesses.length,
+    },
+  });
 }
 
 export async function POST(req: Request) {

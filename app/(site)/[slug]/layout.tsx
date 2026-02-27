@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site/site-nav";
 import type { Metadata } from "next";
@@ -45,7 +46,11 @@ export default async function SiteLayout({
         className="mt-16 border-t py-8 text-center text-sm"
         style={{ borderColor: business.primaryColor + "20", color: "#94a3b8" }}
       >
-        <p>© {new Date().getFullYear()} {business.name}. Propulsé par toctoctoc.boutique.</p>
+        <span className="inline-flex items-center gap-1.5">
+          © {new Date().getFullYear()} {business.name}. Propulsé par
+          <Image src="/logo.png" alt="" width={14} height={14} className="inline rounded-sm opacity-70" />
+          toctoctoc.boutique.
+        </span>
       </footer>
     </div>
   );

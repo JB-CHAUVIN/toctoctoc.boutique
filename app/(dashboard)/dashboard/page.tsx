@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Plus, Building2, ExternalLink, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Building2, ExternalLink, ChevronRight, Loader2, Upload, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,18 +17,31 @@ type BusinessWithCount = BusinessWithModules & {
   _count: { bookings: number; loyaltyCards: number };
 };
 
+interface PlanMeta {
+  plan: string;
+  planLabel: string;
+  maxBusinesses: number;
+  businessCount: number;
+}
+
+const DEFAULT_FORM = {
+  name: "",
+  businessType: "",
+  primaryColor: "#4f46e5",
+  secondaryColor: "#312e81",
+  accentColor: "#f59e0b",
+};
+
 export default function DashboardPage() {
   const [businesses, setBusinesses] = useState<BusinessWithCount[]>([]);
+  const [meta, setMeta] = useState<PlanMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    businessType: "",
-    primaryColor: "#4f46e5",
-    secondaryColor: "#312e81",
-    accentColor: "#f59e0b",
-  });
+  const [form, setForm] = useState(DEFAULT_FORM);
+  const [showJsonImport, setShowJsonImport] = useState(false);
+  const [jsonText, setJsonText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchBusinesses();
@@ -38,7 +51,10 @@ export default function DashboardPage() {
     setLoading(true);
     const res = await fetch("/api/business");
     const data = await res.json();
-    if (data.success) setBusinesses(data.data);
+    if (data.success) {
+      setBusinesses(data.data);
+      setMeta(data.meta ?? null);
+    }
     setLoading(false);
   }
 
@@ -59,11 +75,46 @@ export default function DashboardPage() {
     } else {
       toast.success("Commerce créé avec succès !");
       setShowCreate(false);
-      setForm({ name: "", businessType: "", primaryColor: "#4f46e5", secondaryColor: "#312e81", accentColor: "#f59e0b" });
+      setForm(DEFAULT_FORM);
+      setJsonText("");
+      setShowJsonImport(false);
       fetchBusinesses();
     }
     setCreating(false);
   }
+
+  function handleJsonImport() {
+    try {
+      const parsed = JSON.parse(jsonText);
+      setForm((f) => ({
+        ...f,
+        name: parsed.name ?? f.name,
+        businessType: parsed.businessType ?? parsed.type ?? f.businessType,
+        primaryColor: parsed.primaryColor ?? f.primaryColor,
+        secondaryColor: parsed.secondaryColor ?? f.secondaryColor,
+        accentColor: parsed.accentColor ?? f.accentColor,
+      }));
+      setShowJsonImport(false);
+      setJsonText("");
+      toast.success("Données importées");
+    } catch {
+      toast.error("JSON invalide");
+    }
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setJsonText((ev.target?.result as string) ?? "");
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  const canCreate = !meta || meta.maxBusinesses === -1 || meta.businessCount < meta.maxBusinesses;
+  const upgradePlan = meta?.plan === "FREE" || meta?.plan === "STARTER" ? "Pro" : null;
 
   const activeModulesCount = (b: BusinessWithCount) =>
     b.modules.filter((m) => m.isActive).length;
@@ -73,14 +124,39 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mes commerces</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-900">Mes commerces</h1>
+            {meta && (
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                {meta.planLabel} · {meta.businessCount}/{meta.maxBusinesses === -1 ? "∞" : meta.maxBusinesses}
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-slate-500">
             Gérez vos établissements et configurez vos modules
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)} leftIcon={<Plus className="h-4 w-4" />}>
-          Nouveau commerce
-        </Button>
+
+        <div className="relative group/btn">
+          <Button
+            onClick={() => canCreate && setShowCreate(true)}
+            leftIcon={<Plus className="h-4 w-4" />}
+            disabled={!canCreate}
+            className={!canCreate ? "cursor-not-allowed opacity-50" : ""}
+          >
+            Nouveau commerce
+          </Button>
+          {!canCreate && (
+            <div className="pointer-events-none absolute right-0 top-full z-10 mt-1.5 hidden w-64 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-600 shadow-lg group-hover/btn:block">
+              Vous avez atteint la limite de votre offre {meta?.planLabel}.
+              {upgradePlan && (
+                <span className="ml-1 font-medium text-indigo-600">
+                  Passez à l&apos;offre {upgradePlan} pour ajouter plus de commerces.
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Liste */}
@@ -158,7 +234,7 @@ export default function DashboardPage() {
       {/* Modal création */}
       <Dialog
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={() => { setShowCreate(false); setShowJsonImport(false); setJsonText(""); }}
         title="Nouveau commerce"
         description="Renseignez les informations de base de votre établissement"
       >
@@ -195,6 +271,45 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
+          {/* JSON Import — discreet collapsible */}
+          <div className="border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowJsonImport((v) => !v)}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+            >
+              <Upload className="h-3 w-3" />
+              Importer depuis un JSON
+              <ChevronDown className={`h-3 w-3 transition-transform ${showJsonImport ? "rotate-180" : ""}`} />
+            </button>
+
+            {showJsonImport && (
+              <div className="mt-2 space-y-2">
+                <textarea
+                  rows={4}
+                  placeholder='{"name": "Mon Commerce", "businessType": "Café", "primaryColor": "#4f46e5"}'
+                  value={jsonText}
+                  onChange={(e) => setJsonText(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 p-2 font-mono text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-slate-500 underline hover:text-slate-700"
+                  >
+                    Charger un fichier
+                  </button>
+                  <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
+                  <Button type="button" size="sm" variant="outline" onClick={handleJsonImport} disabled={!jsonText.trim()}>
+                    Appliquer
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="flex-1" onClick={() => setShowCreate(false)}>
               Annuler
