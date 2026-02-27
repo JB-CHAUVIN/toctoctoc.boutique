@@ -170,6 +170,22 @@ export function Sidebar({ businesses }: SidebarProps) {
                       {"Vue d'ensemble"}
                     </Link>
 
+                    {/* Modules & Plan */}
+                    <div className="border-slate-800 pt-3">
+                      <Link
+                          href={`/dashboard/${business.id}/modules`}
+                          className={cn(
+                              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                              pathname.startsWith(`/dashboard/${business.id}/modules`)
+                                  ? "bg-indigo-600 text-white"
+                                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          )}
+                      >
+                        <Layers className="h-3.5 w-3.5" />
+                        Modules & Plan
+                      </Link>
+                    </div>
+
                     {/* Modules */}
                     {activeModules.length > 0 && (
                       <div className="mt-3">
@@ -248,22 +264,6 @@ export function Sidebar({ businesses }: SidebarProps) {
                         })}
                       </div>
                     )}
-
-                    {/* Modules & Plan */}
-                    <div className="mt-3 border-t border-slate-800 pt-3">
-                      <Link
-                        href={`/dashboard/${business.id}/modules`}
-                        className={cn(
-                          "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
-                          pathname.startsWith(`/dashboard/${business.id}/modules`)
-                            ? "bg-indigo-600 text-white"
-                            : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                        )}
-                      >
-                        <Layers className="h-3.5 w-3.5" />
-                        Modules & Plan
-                      </Link>
-                    </div>
                   </div>
                 )}
               </div>
