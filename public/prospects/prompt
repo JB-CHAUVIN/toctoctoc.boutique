@@ -1,9 +1,30 @@
 Traites tous les prospects du dossier.
 Attention, si le prospect est déjà traité (déjà dans le fichier dones.txt), ignores le.
 
+PRIMORDIAL : Recherche sur Google la page google business : "<NOM ENTREPRISE + DEPARTEMENT>" pour cette entreprise. Pour déterminer un max d'info ci-dessous.
+
 Le but est le suivant :
 - Analyse l'image devanture pour récupérer les couleurs principale, secondair et d'accent
+- Pour la description ou shortDesc, n'hésites pas à inventer quelques chose si tu n'as rien trouvé, basé sur le nom et le type de business (voire l'adresse).
 - Génère un JSON en respectant cela :
-app/(dashboard)/dashboard/page.tsx
+  {
+    "name": "Le Pain d'Orée",
+    "businessType": "Boulangerie / Pâtisserie",
+    "description": "...",
+    "shortDesc": "Artisan boulanger depuis 1987",
+    "address": "12 rue de la Paix",
+    "city": "Paris",
+    "zipCode": "75019",
+    "country": "FR",
+    "phone": "01 23 45 67 89",
+    "email": "contact@lepain.fr",
+    "website": "https://lepain.fr",
+    "primaryColor": "#c41e1e",
+    "secondaryColor": "#1c1c1c",
+    "accentColor": "#d4a843",
+    "facebookUrl": "...",
+    "instagramUrl": "...",
+    "googleMapsUrl": "..."
+  }
 
 Stock le fichier dans le dossier du prospect, data.json et git add + git commit tout cela.
