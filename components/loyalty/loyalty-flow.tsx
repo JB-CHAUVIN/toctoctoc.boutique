@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useCustomerInfo } from "@/hooks/use-customer-info";
 import QRCode from "qrcode";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -38,11 +39,15 @@ interface Props {
 }
 
 export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: Props) {
+  const { load: loadCustomer, save: saveCustomer } = useCustomerInfo();
   const [step, setStep] = useState<"form" | "card">("form");
   const [card, setCard] = useState<Card | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ customerName: "", customerEmail: "", customerPhone: "" });
+  const [form, setForm] = useState(() => {
+    const info = loadCustomer();
+    return { customerName: info.name ?? "", customerEmail: info.email ?? "", customerPhone: info.phone ?? "" };
+  });
   const [stampAnim, setStampAnim] = useState(false);
   const prevStampsRef = useRef<number | null>(null);
 
@@ -162,6 +167,7 @@ export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: 
     if (!res.ok) {
       toast.error(data.error || "Erreur");
     } else {
+      saveCustomer({ name: form.customerName, email: form.customerEmail, phone: form.customerPhone });
       if (form.customerEmail) {
         localStorage.setItem(`loyalty_email_${businessId}`, form.customerEmail);
       }

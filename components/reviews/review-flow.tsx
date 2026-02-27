@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useCustomerInfo } from "@/hooks/use-customer-info";
 import QRCode from "qrcode";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,9 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
+  const { load: loadCustomer, save: saveCustomer } = useCustomerInfo();
+  const [customerName, setCustomerName] = useState(() => loadCustomer().name ?? "");
+  const [customerEmail, setCustomerEmail] = useState(() => loadCustomer().email ?? "");
   const [rewardQrUrl, setRewardQrUrl] = useState<string>("");
 
   // Récupérer le token depuis localStorage si déjà visité
@@ -81,6 +83,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
       const newToken = data.data.token;
       setToken(newToken);
       localStorage.setItem(`review_token_${businessId}`, newToken);
+      saveCustomer({ name: customerName, email: customerEmail });
       setReviewData(data.data);
       setStep("google");
     }

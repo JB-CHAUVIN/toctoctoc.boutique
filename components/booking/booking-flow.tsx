@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCustomerInfo } from "@/hooks/use-customer-info";
 import { format, addDays, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import toast from "react-hot-toast";
@@ -48,6 +49,7 @@ export function BookingFlow({ businessId, primaryColor, services, config }: Prop
       ? ["service", "date", "time", "info"]
       : ["date", "time", "info"];
 
+  const { load: loadCustomer, save: saveCustomer } = useCustomerInfo();
   const [step, setStep] = useState<Step>(steps[0]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -57,11 +59,14 @@ export function BookingFlow({ businessId, primaryColor, services, config }: Prop
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [form, setForm] = useState({
-    customerName: "",
-    customerEmail: "",
-    customerPhone: "",
-    notes: "",
+  const [form, setForm] = useState(() => {
+    const info = loadCustomer();
+    return {
+      customerName: info.name ?? "",
+      customerEmail: info.email ?? "",
+      customerPhone: info.phone ?? "",
+      notes: "",
+    };
   });
   const [customData, setCustomData] = useState<Record<string, string>>({});
 
@@ -107,6 +112,7 @@ export function BookingFlow({ businessId, primaryColor, services, config }: Prop
     if (!res.ok) {
       toast.error(data.error || "Erreur lors de la réservation");
     } else {
+      saveCustomer({ name: form.customerName, email: form.customerEmail, phone: form.customerPhone });
       setDone(true);
     }
     setSubmitting(false);
