@@ -49,7 +49,7 @@ export default async function SiteLayout({
         <span className="inline-flex items-center gap-1.5">
           © {new Date().getFullYear()} {business.name}. Propulsé par
           <Image src="/logo.png" alt="" width={14} height={14} className="inline rounded-sm opacity-70" />
-          toctoctoc.boutique.
+          TocTocToc.boutique.
         </span>
       </footer>
     </div>

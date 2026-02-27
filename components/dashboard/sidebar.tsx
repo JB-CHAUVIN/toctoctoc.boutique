@@ -104,9 +104,9 @@ export function Sidebar({ businesses }: SidebarProps) {
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
-            <Image src="/logo.png" alt="toctoctoc.boutique" width={20} height={20} priority />
+            <Image src="/logo.png" alt="TocTocToc.boutique" width={20} height={20} priority />
           </div>
-          <span className="text-sm font-bold text-white">toctoctoc.boutique</span>
+          <span className="text-sm font-bold text-white">TocTocToc.boutique</span>
         </Link>
       </div>
 

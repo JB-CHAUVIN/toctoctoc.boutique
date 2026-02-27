@@ -4,17 +4,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "toctoctoc.boutique — Digitalisez votre commerce local",
-    template: "%s | toctoctoc.boutique",
+    default: "TocTocToc.boutique — Digitalisez votre commerce local",
+    template: "%s | TocTocToc.boutique",
   },
   description:
     "Plateforme SaaS tout-en-un pour les commerces locaux : réservations, avis, fidélité, site vitrine.",
   keywords: ["commerce local", "réservation", "fidélité", "avis google", "site vitrine"],
-  authors: [{ name: "toctoctoc.boutique" }],
+  authors: [{ name: "TocTocToc.boutique" }],
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    siteName: "toctoctoc.boutique",
+    siteName: "TocTocToc.boutique",
   },
 };
 

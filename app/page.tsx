@@ -59,8 +59,8 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="toctoctoc.boutique" width={32} height={32} priority />
-            <span className="text-xl font-bold text-indigo-600">toctoctoc.boutique</span>
+            <Image src="/logo.png" alt="TocTocToc.boutique" width={32} height={32} priority />
+            <span className="text-xl font-bold text-indigo-600">TocTocToc.boutique</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
@@ -186,7 +186,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <p>© {new Date().getFullYear()} toctoctoc.boutique. Fait avec ❤️ en France.</p>
+        <p>© {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en France.</p>
       </footer>
     </div>
   );
