@@ -1,0 +1,175 @@
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MODULES_INFO } from "@/lib/constants";
+import { formatDateTime } from "@/lib/utils";
+import { ArrowRight, ExternalLink } from "lucide-react";
+import type { ModuleType } from "@prisma/client";
+
+export async function generateMetadata({ params }: { params: { businessId: string } }) {
+  const session = await auth();
+  if (!session?.user?.id) return {};
+  const business = await prisma.business.findFirst({ where: { id: params.businessId, userId: session.user.id } });
+  return { title: business?.name ?? "Dashboard" };
+}
+
+export default async function BusinessOverviewPage({ params }: { params: { businessId: string } }) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  const business = await prisma.business.findFirst({
+    where: { id: params.businessId, userId: session.user.id },
+    include: {
+      modules: true,
+      bookings: { orderBy: { createdAt: "desc" }, take: 5, include: { service: true } },
+      reviews: { orderBy: { createdAt: "desc" }, take: 5 },
+      loyaltyCards: { orderBy: { updatedAt: "desc" }, take: 5 },
+      _count: {
+        select: {
+          bookings: true,
+          reviews: { where: { rewardCode: { not: null } } },
+          loyaltyCards: true,
+        },
+      },
+    },
+  });
+
+  if (!business) notFound();
+
+  const activeModules = business.modules.filter((m) => m.isActive);
+
+  return (
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white"
+              style={{ backgroundColor: business.primaryColor }}
+            >
+              {business.name[0].toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">{business.name}</h1>
+              <p className="text-sm text-slate-400">/{business.slug}</p>
+            </div>
+          </div>
+          <Badge variant={business.isPublished ? "success" : "outline"}>
+            {business.isPublished ? "En ligne" : "Brouillon — non visible"}
+          </Badge>
+        </div>
+        <Link
+          href={`/${business.slug}`}
+          target="_blank"
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+        >
+          Voir le site <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatsCard
+          label="Réservations"
+          value={business._count.bookings}
+          icon="📅"
+          color="indigo"
+        />
+        <StatsCard
+          label="Avis récoltés"
+          value={business._count.reviews}
+          icon="⭐"
+          color="amber"
+        />
+        <StatsCard
+          label="Cartes fidélité"
+          value={business._count.loyaltyCards}
+          icon="🎯"
+          color="emerald"
+        />
+        <StatsCard
+          label="Modules actifs"
+          value={activeModules.length}
+          icon="🔧"
+          color="rose"
+        />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Modules actifs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Modules actifs</CardTitle>
+            <Link href={`/dashboard/${params.businessId}/modules`} className="flex items-center gap-1 text-sm text-indigo-600 hover:underline">
+              Gérer <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardHeader>
+          <div className="space-y-2">
+            {activeModules.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucun module activé</p>
+            ) : (
+              activeModules.map((m) => {
+                const info = MODULES_INFO[m.module as ModuleType];
+                return (
+                  <div key={m.id} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                    <span className="text-xl">{info.emoji}</span>
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">{info.name}</div>
+                      <div className="text-xs text-slate-400">{info.description}</div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </Card>
+
+        {/* Dernières réservations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dernières réservations</CardTitle>
+            <Link href={`/dashboard/${params.businessId}/booking`} className="flex items-center gap-1 text-sm text-indigo-600 hover:underline">
+              Voir tout <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </CardHeader>
+          <div className="space-y-2">
+            {business.bookings.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucune réservation</p>
+            ) : (
+              business.bookings.map((b) => (
+                <div key={b.id} className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{b.customerName}</div>
+                    <div className="text-xs text-slate-400">
+                      {b.service?.name ?? "—"} · {formatDateTime(b.date)}
+                    </div>
+                  </div>
+                  <Badge
+                    variant={
+                      b.status === "CONFIRMED"
+                        ? "success"
+                        : b.status === "CANCELLED"
+                        ? "danger"
+                        : b.status === "PENDING"
+                        ? "warning"
+                        : "default"
+                    }
+                  >
+                    {b.status === "PENDING" ? "En attente" :
+                     b.status === "CONFIRMED" ? "Confirmé" :
+                     b.status === "CANCELLED" ? "Annulé" : "Terminé"}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Inter", system-ui, sans-serif;
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  /* Scrollbar custom */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  /* Roulette wheel */
+  .roulette-segment {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 50%, 50% 0%, var(--clip-x) var(--clip-y));
+    transform-origin: center;
+    transform: rotate(var(--rotation));
+  }
+
+  /* Card styles */
+  .card-glass {
+    @apply rounded-2xl bg-white/80 backdrop-blur-sm border border-white/50 shadow-xl;
+  }
+
+  /* Loyalty card */
+  .loyalty-card {
+    aspect-ratio: 1.586 / 1; /* Ratio carte bancaire */
+    @apply rounded-2xl p-6 shadow-2xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-spin-once {
+    animation: spin 0.5s linear;
+  }
+}
