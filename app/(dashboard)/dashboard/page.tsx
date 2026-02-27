@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Building2, ExternalLink, ChevronRight, Loader2, Upload, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ const DEFAULT_FORM = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [businesses, setBusinesses] = useState<BusinessWithCount[]>([]);
   const [meta, setMeta] = useState<PlanMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +81,7 @@ export default function DashboardPage() {
       setJsonText("");
       setShowJsonImport(false);
       fetchBusinesses();
+      router.refresh(); // rafraîchit le layout server (sidebar)
     }
     setCreating(false);
   }

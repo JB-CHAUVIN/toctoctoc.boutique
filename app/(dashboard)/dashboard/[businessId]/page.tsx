@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { MODULES_INFO } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
+import { PublishToggle } from "@/components/dashboard/publish-toggle";
 import type { ModuleType } from "@prisma/client";
 
 export async function generateMetadata({ params }: { params: { businessId: string } }) {
@@ -65,13 +66,16 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
             {business.isPublished ? "En ligne" : "Brouillon — non visible"}
           </Badge>
         </div>
-        <Link
-          href={`/${business.slug}`}
-          target="_blank"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-        >
-          Voir le site <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <PublishToggle businessId={params.businessId} isPublished={business.isPublished} />
+          <Link
+            href={`/${business.slug}`}
+            target="_blank"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            Voir le site <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
