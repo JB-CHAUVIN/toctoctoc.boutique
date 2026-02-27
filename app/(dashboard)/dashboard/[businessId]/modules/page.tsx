@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Card } from "@/components/ui/card";
 import { Toggle } from "@/components/ui/toggle";
@@ -13,6 +13,7 @@ import type { BusinessFull } from "@/types";
 
 export default function ModulesPage() {
   const params = useParams<{ businessId: string }>();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<Record<string, boolean>>({});
   const [plan, setPlan] = useState<PlanType>("FREE");
@@ -57,6 +58,7 @@ export default function ModulesPage() {
     } else {
       setModules((m) => ({ ...m, [module]: newState }));
       toast.success(newState ? "Module activé" : "Module désactivé");
+      router.refresh();
     }
     setToggling(null);
   }
