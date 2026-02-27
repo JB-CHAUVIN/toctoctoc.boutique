@@ -15,7 +15,8 @@ export async function POST(req: Request, { params }: { params: { businessId: str
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const business = await prisma.business.findFirst({
-    where: { id: params.businessId, userId: session.user.id },
+    where: { id: params.businessId, userId: session.user.id, deletedAt: null },
+    select: { id: true, primaryColor: true, secondaryColor: true, accentColor: true },
   });
   if (!business) return NextResponse.json({ error: "Commerce introuvable" }, { status: 404 });
 
@@ -59,18 +60,59 @@ export async function POST(req: Request, { params }: { params: { businessId: str
         create: { businessId: params.businessId },
       });
     }
+
     if (module === "REVIEWS") {
-      await prisma.reviewConfig.upsert({
+      const existing = await prisma.reviewConfig.findUnique({
         where: { businessId: params.businessId },
-        update: {},
-        create: { businessId: params.businessId },
+        select: { id: true },
       });
+      if (!existing) {
+        await prisma.reviewConfig.create({
+          data: {
+            businessId: params.businessId,
+            rewards: {
+              create: [
+                {
+                  name: "Café offert",
+                  description: "Un café de votre choix offert sur votre prochaine visite",
+                  emoji: "☕",
+                  color: business.primaryColor,
+                  probability: 0.35,
+                  expiryDays: 30,
+                },
+                {
+                  name: "10% de réduction",
+                  description: "10% de réduction sur votre prochaine commande",
+                  emoji: "🎉",
+                  color: business.accentColor,
+                  probability: 0.45,
+                  expiryDays: 30,
+                },
+                {
+                  name: "Produit offert",
+                  description: "Un produit de votre choix offert (valeur jusqu'à 5€)",
+                  emoji: "🎁",
+                  color: business.secondaryColor,
+                  probability: 0.2,
+                  expiryDays: 15,
+                },
+              ],
+            },
+          },
+        });
+      }
     }
+
     if (module === "LOYALTY") {
       await prisma.loyaltyConfig.upsert({
         where: { businessId: params.businessId },
         update: {},
-        create: { businessId: params.businessId },
+        create: {
+          businessId: params.businessId,
+          cardColor: business.primaryColor,
+          stampColor: business.accentColor,
+          cardTextColor: "#ffffff",
+        },
       });
     }
   }
