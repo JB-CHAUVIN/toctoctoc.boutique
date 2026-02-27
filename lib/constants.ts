@@ -16,13 +16,13 @@ export const PLAN_LIMITS: Record<
   },
   STARTER: {
     label: "Starter",
-    priceMonthly: 29,
+    priceMonthly: 9,
     maxBusinesses: 1,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"],
   },
   PRO: {
     label: "Pro",
-    priceMonthly: 59,
+    priceMonthly: 19,
     maxBusinesses: 3,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY", "SOCIAL"],
   },

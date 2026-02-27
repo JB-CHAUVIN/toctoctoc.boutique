@@ -36,18 +36,18 @@ const plans = [
   },
   {
     name: "Starter",
-    price: "29€",
+    price: "9€",
     desc: "/ mois",
     features: ["1 commerce", "Site vitrine", "Réservations", "Avis + Roulette", "Fidélité"],
-    cta: "Essayer 14 jours",
+    cta: "S'abonner",
     highlight: true,
   },
   {
     name: "Pro",
-    price: "59€",
+    price: "19€",
     desc: "/ mois",
-    features: ["3 commerces", "Tout Starter", "Réseaux sociaux (bientôt)"],
-    cta: "Essayer 14 jours",
+    features: ["3 commerce", "Site vitrine", "Réservations", "Avis + Roulette", "Fidélité"],
+    cta: "S'abonner",
     highlight: false,
   },
 ];
@@ -97,12 +97,12 @@ export default function HomePage() {
           >
             Commencer gratuitement <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link
-            href="/cafe-de-la-paix"
-            className="rounded-xl border border-slate-200 px-8 py-4 font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-          >
-            Voir une démo
-          </Link>
+          {/*<Link*/}
+          {/*  href="/cafe-de-la-paix"*/}
+          {/*  className="rounded-xl border border-slate-200 px-8 py-4 font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"*/}
+          {/*>*/}
+          {/*  Voir une démo*/}
+          {/*</Link>*/}
         </div>
       </section>
 
@@ -131,7 +131,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Tarifs simples</h2>
-          <p className="mb-12 text-center text-slate-500">Sans engagement, résiliable à tout moment</p>
+          <p className="mb-12 text-center text-slate-500">Sans engagement, résiliable à tout moment.<br />Retour sur investissement garantit !</p>
           <div className="grid gap-6 sm:grid-cols-3">
             {plans.map((plan) => (
               <div
