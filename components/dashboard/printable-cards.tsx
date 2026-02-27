@@ -211,9 +211,9 @@ function PrintCard({
         {card.hasNFC && (
           <div style={{
             ...boxStyle,
-            background: "rgba(255,255,255,0.14)",
-            backdropFilter: "blur(4px)",
-            border: "1px solid rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.12)",
+            border: "1.5px solid rgba(255,255,255,0.5)",
+            boxShadow: "0 0 0 0.5px rgba(255,255,255,0.15) inset",
           }}>
             <IconNFC size={36} color="#fff" />
             <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: 0.3, textAlign: "center", lineHeight: 1.35 }}>
