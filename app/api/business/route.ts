@@ -9,9 +9,21 @@ const createBusinessSchema = z.object({
   name: z.string().min(2).max(100),
   businessType: z.string().optional(),
   description: z.string().optional(),
+  shortDesc: z.string().max(160).optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  website: z.string().url().optional().or(z.literal("")),
   primaryColor: z.string().default("#4f46e5"),
   secondaryColor: z.string().default("#312e81"),
   accentColor: z.string().default("#f59e0b"),
+  fontFamily: z.string().optional(),
+  facebookUrl: z.string().optional(),
+  instagramUrl: z.string().optional(),
+  googleMapsUrl: z.string().optional(),
 });
 
 export async function GET() {
@@ -75,7 +87,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, businessType, description, primaryColor, secondaryColor, accentColor } = parsed.data;
+    const { name, ...rest } = parsed.data;
 
     // Générer un slug unique
     let slug = slugify(name);
@@ -86,11 +98,7 @@ export async function POST(req: Request) {
       data: {
         name,
         slug,
-        businessType,
-        description,
-        primaryColor,
-        secondaryColor,
-        accentColor,
+        ...rest,
         userId: session.user.id,
         modules: {
           create: [{ module: "SHOWCASE", isActive: true }],

@@ -25,7 +25,7 @@ interface PlanMeta {
   businessCount: number;
 }
 
-const DEFAULT_FORM = {
+const DEFAULT_FORM: Record<string, string> = {
   name: "",
   businessType: "",
   primaryColor: "#4f46e5",
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState(DEFAULT_FORM);
+  const [form, setForm] = useState<Record<string, string>>(DEFAULT_FORM);
   const [showJsonImport, setShowJsonImport] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,14 +88,28 @@ export default function DashboardPage() {
 
   function handleJsonImport() {
     try {
-      const parsed = JSON.parse(jsonText);
+      const p = JSON.parse(jsonText);
+      const pick = <T,>(v: T | undefined, fallback: T) => v ?? fallback;
       setForm((f) => ({
-        ...f,
-        name: parsed.name ?? f.name,
-        businessType: parsed.businessType ?? parsed.type ?? f.businessType,
-        primaryColor: parsed.primaryColor ?? f.primaryColor,
-        secondaryColor: parsed.secondaryColor ?? f.secondaryColor,
-        accentColor: parsed.accentColor ?? f.accentColor,
+        name: pick(p.name, f.name),
+        businessType: pick(p.businessType ?? p.type, f.businessType),
+        primaryColor: pick(p.primaryColor, f.primaryColor),
+        secondaryColor: pick(p.secondaryColor, f.secondaryColor),
+        accentColor: pick(p.accentColor, f.accentColor),
+        // champs supplémentaires transmis tels quels à l'API
+        ...(p.description !== undefined && { description: p.description }),
+        ...(p.shortDesc !== undefined && { shortDesc: p.shortDesc }),
+        ...(p.address !== undefined && { address: p.address }),
+        ...(p.city !== undefined && { city: p.city }),
+        ...(p.zipCode !== undefined && { zipCode: p.zipCode }),
+        ...(p.country !== undefined && { country: p.country }),
+        ...(p.phone !== undefined && { phone: p.phone }),
+        ...(p.email !== undefined && { email: p.email }),
+        ...(p.website !== undefined && { website: p.website }),
+        ...(p.fontFamily !== undefined && { fontFamily: p.fontFamily }),
+        ...(p.facebookUrl !== undefined && { facebookUrl: p.facebookUrl }),
+        ...(p.instagramUrl !== undefined && { instagramUrl: p.instagramUrl }),
+        ...(p.googleMapsUrl !== undefined && { googleMapsUrl: p.googleMapsUrl }),
       }));
       setShowJsonImport(false);
       setJsonText("");
