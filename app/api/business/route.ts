@@ -70,15 +70,14 @@ export async function POST(req: Request) {
     // Vérifier les limites du plan
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      include: {
-        subscription: true,
-        _count: { select: { businesses: true } },
-      },
+      include: { subscription: true },
     });
 
     const plan = user?.subscription?.plan ?? "FREE";
     const limits = PLAN_LIMITS[plan];
-    const businessCount = user?._count.businesses ?? 0;
+    const businessCount = await prisma.business.count({
+      where: { userId: session.user.id, deletedAt: null },
+    });
 
     if (limits.maxBusinesses !== -1 && businessCount >= limits.maxBusinesses) {
       return NextResponse.json(
