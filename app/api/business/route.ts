@@ -100,7 +100,11 @@ export async function POST(req: Request) {
         ...rest,
         userId: session.user.id,
         modules: {
-          create: [{ module: "SHOWCASE", isActive: true }],
+          create: [
+            { module: "SHOWCASE", isActive: true },
+            { module: "REVIEWS",  isActive: true },
+            { module: "LOYALTY",  isActive: true },
+          ],
         },
       },
       include: { modules: true },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PLAN_LIMITS } from "@/lib/constants";
 
 const createCardSchema = z.object({
   businessId: z.string(),
@@ -47,13 +48,31 @@ export async function POST(req: Request) {
     // Vérifier que le business existe et que la fidélité est activée
     const business = await prisma.business.findFirst({
       where: { id: businessId, isPublished: true },
-      include: { modules: true },
+      include: { modules: true, user: { include: { subscription: true } } },
     });
     if (!business) return NextResponse.json({ error: "Commerce introuvable" }, { status: 404 });
 
     const loyaltyModule = business.modules.find((m) => m.module === "LOYALTY" && m.isActive);
     if (!loyaltyModule) {
       return NextResponse.json({ error: "Module fidélité non activé" }, { status: 400 });
+    }
+
+    // Vérifier la limite du plan FREE (sauf si la carte existe déjà pour cet email)
+    const plan = business.user?.subscription?.plan ?? "FREE";
+    const limits = PLAN_LIMITS[plan];
+    if (limits.maxLoyaltyCards !== -1) {
+      const existingCard = customerEmail
+        ? await prisma.loyaltyCard.findUnique({ where: { businessId_customerEmail: { businessId, customerEmail } } })
+        : null;
+      if (!existingCard) {
+        const cardCount = await prisma.loyaltyCard.count({ where: { businessId } });
+        if (cardCount >= limits.maxLoyaltyCards) {
+          return NextResponse.json(
+            { error: "demo_limit_reached", message: "Ce commerce a atteint la limite de sa version gratuite." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     // Upsert : récupérer ou créer la carte

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 interface Props {
@@ -61,12 +62,12 @@ export function ClaimForm({ token, businessName }: Props) {
           Votre espace <strong>{businessName}</strong> vous attend. Connectez-vous maintenant pour
           le configurer.
         </p>
-        <a
-          href="/login"
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
           className="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700 transition"
         >
-          Se connecter
-        </a>
+          Se connecter à mon espace
+        </button>
       </div>
     );
   }

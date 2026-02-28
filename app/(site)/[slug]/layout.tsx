@@ -2,13 +2,17 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site/site-nav";
+import { FreeDemoBadge } from "@/components/site/free-demo-badge";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 async function getBusiness(slug: string) {
   return prisma.business.findUnique({
     where: { slug, isPublished: true },
-    include: { modules: true },
+    include: {
+      modules: true,
+      user: { include: { subscription: true } },
+    },
   });
 }
 
@@ -37,9 +41,12 @@ export default async function SiteLayout({
   const business = await getBusiness(params.slug);
   if (!business) notFound();
 
+  const isFree = !business.user.subscription || business.user.subscription.plan === "FREE";
+
   return (
     <div style={{ fontFamily: business.fontFamily }}>
       <SiteNav business={business} />
+      {isFree && <FreeDemoBadge />}
       <main>{children}</main>
 
       {/* Footer */}

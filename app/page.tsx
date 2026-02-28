@@ -30,7 +30,7 @@ const plans = [
     name: "Gratuit",
     price: "0€",
     desc: "Pour démarrer",
-    features: ["1 commerce", "Site vitrine"],
+    features: ["1 commerce", "Site vitrine", "Avis Google (3 max)", "Fidélité (3 cartes)"],
     cta: "Commencer",
     highlight: false,
   },

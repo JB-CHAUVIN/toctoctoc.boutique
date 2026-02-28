@@ -55,7 +55,7 @@ $SSH bash << ENDSSH
   git reset --hard "origin/${BRANCH}"
 
   echo "→ Installation des dépendances (yarn --frozen-lockfile)..."
-  yarn install --frozen-lockfile
+  yarn install --frozen-lockfile --ignore-engines
 
   echo "→ Génération du client Prisma..."
   npx prisma generate
@@ -72,7 +72,8 @@ $SSH bash << ENDSSH
   else
     pm2 start yarn --name "${PM2_APP_NAME}" \
       --interpreter none \
-      -- start
+      --env production \
+      -- start -- -p 3800 -H 127.0.0.1
     pm2 save
   fi
 

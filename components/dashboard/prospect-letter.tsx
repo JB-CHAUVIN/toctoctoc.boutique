@@ -74,7 +74,7 @@ function buildLetterHtml(
           pour <strong>créer votre compte gratuit</strong> et prendre possession de votre espace
           <strong>${business.name}</strong> qui vous a été préparé.
         </p>
-        <p style="margin-top:2mm; font-family:'Courier New',monospace; font-size:7.5pt; color:#64748b; word-break:break-all;">
+        <p style="margin-top:2mm; font-size:7.5pt; color:#64748b; word-break:break-all; font-family:'Courier New',monospace;">
           ${claimUrl}
         </p>
         <p style="margin-top:2mm; font-size:8.5pt; color:#64748b;">
@@ -145,7 +145,6 @@ function buildLetterHtml(
   .brand-tagline {
     font-size: 8.5pt;
     color: #64748b;
-    font-family: 'Inter', sans-serif;
     font-style: italic;
   }
 
@@ -153,7 +152,6 @@ function buildLetterHtml(
     text-align: right;
     font-size: 8.5pt;
     color: #475569;
-    font-family: 'Inter', sans-serif;
     line-height: 1.6;
   }
 
@@ -166,7 +164,6 @@ function buildLetterHtml(
   }
 
   .recipient-address {
-    font-family: 'Inter', sans-serif;
     font-size: 10pt;
     line-height: 1.7;
     color: #334155;
@@ -179,7 +176,6 @@ function buildLetterHtml(
   }
 
   .date-place {
-    font-family: 'Inter', sans-serif;
     font-size: 9.5pt;
     color: #64748b;
     text-align: right;
@@ -239,7 +235,6 @@ function buildLetterHtml(
     display: flex;
     align-items: flex-start;
     gap: 2mm;
-    font-family: 'Inter', sans-serif;
     font-size: 9.5pt;
     color: #334155;
   }
@@ -283,7 +278,6 @@ function buildLetterHtml(
   }
 
   .cards-desc {
-    font-family: 'Inter', sans-serif;
     font-size: 9pt;
     color: #475569;
   }
@@ -305,7 +299,6 @@ function buildLetterHtml(
   }
 
   .price-block-label {
-    font-family: 'Inter', sans-serif;
     font-size: 8pt;
     font-weight: 700;
     text-transform: uppercase;
@@ -321,7 +314,6 @@ function buildLetterHtml(
   }
 
   .price-amount {
-    font-family: 'Inter', sans-serif;
     font-size: 28pt;
     font-weight: 900;
     line-height: 1;
@@ -329,14 +321,12 @@ function buildLetterHtml(
   }
 
   .price-period {
-    font-family: 'Inter', sans-serif;
     font-size: 13pt;
     font-weight: 700;
     opacity: 0.9;
   }
 
   .price-vs {
-    font-family: 'Inter', sans-serif;
     font-size: 9pt;
     opacity: 0.8;
     margin-left: 3mm;
@@ -345,7 +335,6 @@ function buildLetterHtml(
 
   .price-trial {
     margin-top: 2mm;
-    font-family: 'Inter', sans-serif;
     font-size: 8.5pt;
     opacity: 0.85;
   }
@@ -360,7 +349,6 @@ function buildLetterHtml(
   }
 
   .claim-title {
-    font-family: 'Inter', sans-serif;
     font-size: 13pt;
     font-weight: 700;
     color: ${primary};
@@ -379,14 +367,12 @@ function buildLetterHtml(
   }
 
   .claim-qr-label {
-    font-family: 'Inter', sans-serif;
     font-size: 7.5pt;
     color: #64748b;
     margin-top: 1.5mm;
   }
 
   .claim-text {
-    font-family: 'Inter', sans-serif;
     font-size: 9pt;
     color: #334155;
     line-height: 1.55;
@@ -399,7 +385,6 @@ function buildLetterHtml(
     background: #f8fafc;
     border-radius: 6px;
     font-size: 8.5pt;
-    font-family: 'Inter', sans-serif;
     color: #475569;
     font-style: italic;
   }
@@ -412,7 +397,6 @@ function buildLetterHtml(
   }
 
   .signature-text {
-    font-family: 'Inter', sans-serif;
     font-size: 10pt;
     color: #334155;
     margin-bottom: 3mm;
@@ -428,7 +412,6 @@ function buildLetterHtml(
   .signature-role {
     font-size: 8.5pt;
     color: #94a3b8;
-    font-family: 'Inter', sans-serif;
   }
 
   /* ── FOOTER ── */
@@ -438,7 +421,6 @@ function buildLetterHtml(
     border-top: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
-    font-family: 'Inter', sans-serif;
     font-size: 7.5pt;
     color: #94a3b8;
   }
@@ -465,7 +447,7 @@ function buildLetterHtml(
   <!-- RECIPIENT + DATE -->
   <div class="recipient-block">
     <div class="recipient-address">
-      <div style="font-family:'Inter',sans-serif; font-size:8.5pt; color:#94a3b8; margin-bottom:2mm; font-style:italic;">À l'attention du/de la responsable</div>
+      <div style="font-size:8.5pt; color:#94a3b8; margin-bottom:2mm; font-style:italic;">À l'attention du/de la responsable</div>
       <div class="recipient-name">${business.name}</div>
       ${addressLines || `<div style="color:#94a3b8; font-size:9pt;">Adresse non renseignée</div>`}
     </div>
@@ -490,9 +472,11 @@ function buildLetterHtml(
     </p>
 
     <p>
-      Notre solution a été conçue spécifiquement pour les commerces de proximité comme le vôtre.
-      En quelques minutes, vos clients peuvent vous trouver en ligne, laisser des avis Google pour booster
-      votre visibilité, et profiter d'un programme de fidélité numérique — sans aucune application à télécharger.
+      Notre conviction est simple : la vraie valeur d'une présence digitale se joue <strong>en magasin</strong>.
+      Deux outils suffisent à transformer l'expérience client au quotidien : une invitation à laisser un
+      <span class="highlight">avis Google</span> — pour booster votre visibilité locale —
+      et une <span class="highlight">carte de fidélité numérique</span> — pour fidéliser sans carton ni impression.
+      Vos clients scannent un QR code depuis leur téléphone, en quelques secondes, sans rien télécharger.
     </p>
 
     <!-- FEATURES -->
@@ -579,7 +563,7 @@ function buildLetterHtml(
     <div class="signature-text">Cordialement,</div>
     <div class="signature-name">Jean-Baptiste CHAUVIN</div>
     <div class="signature-role">Fondateur · TocTocToc.boutique</div>
-    <div style="font-family:'Inter',sans-serif; font-size:8pt; color:#94a3b8; margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
+    <div style="font-size:8pt; color:#94a3b8; margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
   </div>
 
   <!-- FOOTER -->

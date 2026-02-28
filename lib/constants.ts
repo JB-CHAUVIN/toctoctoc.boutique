@@ -6,25 +6,40 @@ import { ModuleType, PlanType } from "@prisma/client";
 
 export const PLAN_LIMITS: Record<
   PlanType,
-  { maxBusinesses: number; modules: ModuleType[]; label: string; priceMonthly: number }
+  {
+    maxBusinesses: number;
+    modules: ModuleType[];
+    label: string;
+    priceMonthly: number;
+    /** -1 = illimité */
+    maxReviews: number;
+    /** -1 = illimité */
+    maxLoyaltyCards: number;
+  }
 > = {
   FREE: {
     label: "Gratuit",
     priceMonthly: 0,
     maxBusinesses: 1,
-    modules: ["SHOWCASE"],
+    modules: ["SHOWCASE", "REVIEWS", "LOYALTY"],
+    maxReviews: 3,
+    maxLoyaltyCards: 3,
   },
   STARTER: {
     label: "Starter",
     priceMonthly: 9,
     maxBusinesses: 1,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"],
+    maxReviews: -1,
+    maxLoyaltyCards: -1,
   },
   PRO: {
     label: "Pro",
     priceMonthly: 19,
     maxBusinesses: 3,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY", "SOCIAL"],
+    maxReviews: -1,
+    maxLoyaltyCards: -1,
   },
   ENTERPRISE: {
     label: "Enterprise",
@@ -41,6 +56,8 @@ export const PLAN_LIMITS: Record<
       "STAFF",
       "INVOICING",
     ],
+    maxReviews: -1,
+    maxLoyaltyCards: -1,
   },
 };
 
