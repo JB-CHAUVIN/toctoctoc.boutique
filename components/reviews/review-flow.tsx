@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RewardRoulette } from "./reward-roulette";
-import { Star, ExternalLink, Gift, CheckCircle } from "lucide-react";
+import { Star, ExternalLink, Gift, CheckCircle, Ban } from "lucide-react";
 import type { Reward } from "@prisma/client";
 
 interface Props {
@@ -27,6 +27,8 @@ interface ReviewData {
   rewardCode: string | null;
   reward: Reward | null;
   googleReviewInitiated: boolean;
+  rewardClaimed: boolean;
+  rewardClaimedAt: string | null;
 }
 
 export function ReviewFlow({ businessId, businessName, primaryColor, accentColor, googleUrl, instructions, rewards }: Props) {
@@ -90,19 +92,18 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
     setLoading(false);
   }
 
-  async function handleGoogleClick() {
-    if (!token) return;
-    // Marquer comme initié
-    await fetch(`/api/reviews/${token}`, {
+  function handleGoogleClick() {
+    if (!token || !googleUrl) return;
+
+    // Fire-and-forget : ne pas await pour rester dans le contexte
+    // du geste utilisateur (sinon popup bloqué sur mobile)
+    fetch(`/api/reviews/${token}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "initiate" }),
     });
 
-    // Ouvrir Google dans un nouvel onglet
-    if (googleUrl) {
-      window.open(googleUrl, "_blank");
-    }
+    window.open(googleUrl, "_blank", "noopener,noreferrer");
   }
 
   async function handleSpin() {
@@ -222,6 +223,14 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
       {/* Step 3 : Roulette */}
       {step === "roulette" && (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          {!spinning && (
+            <button
+              onClick={() => setStep("google")}
+              className="mb-4 flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              ← Retour / Laisser un avis
+            </button>
+          )}
           <h2 className="mb-2 text-xl font-bold text-slate-900">Tentez votre chance !</h2>
           <p className="mb-6 text-sm text-slate-500">Merci pour votre avis 🙏 Tournez la roue !</p>
 
@@ -231,7 +240,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
             primaryColor={primaryColor}
           />
 
-          {!spinning && (
+          {!spinning && !reviewData?.rewardClaimed && (
             <Button
               onClick={handleSpin}
               className="mt-6 w-full text-lg py-4"
@@ -250,43 +259,69 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
       {step === "result" && reviewData && (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           {reviewData.reward ? (
-            <>
-              <div className="mb-4 text-6xl">{reviewData.reward.emoji}</div>
-              <h2 className="text-2xl font-bold text-slate-900">Félicitations !</h2>
-              <p className="mt-2 text-lg font-semibold" style={{ color: primaryColor }}>
-                {reviewData.reward.name}
-              </p>
-              {reviewData.reward.description && (
-                <p className="mt-2 text-sm text-slate-500">{reviewData.reward.description}</p>
-              )}
-              <div className="mt-6 rounded-xl border-2 border-dashed p-6" style={{ borderColor: primaryColor + "40" }}>
-                <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
-                  Votre code récompense
+            reviewData.rewardClaimed ? (
+              /* ── Lot déjà consommé ── */
+              <>
+                <div className="mb-4 text-6xl opacity-30">{reviewData.reward.emoji}</div>
+                <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500">
+                  <Ban className="h-4 w-4" />
+                  Lot déjà utilisé
                 </div>
-                <div
-                  className="mt-2 text-3xl font-bold font-mono tracking-widest"
-                  style={{ color: primaryColor }}
-                >
-                  {reviewData.rewardCode}
-                </div>
-                {rewardQrUrl && (
-                  <div className="mt-4 flex justify-center">
-                    <img
-                      src={rewardQrUrl}
-                      alt="QR code récompense"
-                      className="h-32 w-32 rounded-xl"
-                    />
-                  </div>
-                )}
-                <p className="mt-3 text-xs text-slate-400">
-                  Présentez ce QR code ou le code au comptoir pour bénéficier de votre récompense
+                <p className="text-base font-semibold text-slate-400 line-through">
+                  {reviewData.reward.name}
                 </p>
-              </div>
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
-                <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
-                Valable {reviewData.reward.expiryDays} jours
-              </div>
-            </>
+                {reviewData.rewardClaimedAt && (
+                  <p className="mt-2 text-xs text-slate-400">
+                    Consommé le{" "}
+                    {new Date(reviewData.rewardClaimedAt).toLocaleDateString("fr-FR", {
+                      day: "numeric", month: "long", year: "numeric",
+                    })}
+                  </p>
+                )}
+                <p className="mt-6 text-sm text-slate-400">
+                  Merci d&apos;avoir joué et de faire confiance à {businessName}&nbsp;!
+                </p>
+              </>
+            ) : (
+              /* ── Lot actif ── */
+              <>
+                <div className="mb-4 text-6xl">{reviewData.reward.emoji}</div>
+                <h2 className="text-2xl font-bold text-slate-900">Félicitations !</h2>
+                <p className="mt-2 text-lg font-semibold" style={{ color: primaryColor }}>
+                  {reviewData.reward.name}
+                </p>
+                {reviewData.reward.description && (
+                  <p className="mt-2 text-sm text-slate-500">{reviewData.reward.description}</p>
+                )}
+                <div className="mt-6 rounded-xl border-2 border-dashed p-6" style={{ borderColor: primaryColor + "40" }}>
+                  <div className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                    Votre code récompense
+                  </div>
+                  <div
+                    className="mt-2 text-3xl font-bold font-mono tracking-widest"
+                    style={{ color: primaryColor }}
+                  >
+                    {reviewData.rewardCode}
+                  </div>
+                  {rewardQrUrl && (
+                    <div className="mt-4 flex justify-center">
+                      <img
+                        src={rewardQrUrl}
+                        alt="QR code récompense"
+                        className="h-32 w-32 rounded-xl"
+                      />
+                    </div>
+                  )}
+                  <p className="mt-3 text-xs text-slate-400">
+                    Présentez ce QR code ou le code au comptoir pour bénéficier de votre récompense
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                  Valable {reviewData.reward.expiryDays} jours
+                </div>
+              </>
+            )
           ) : (
             <>
               <Gift className="mx-auto mb-4 h-16 w-16 text-slate-300" />

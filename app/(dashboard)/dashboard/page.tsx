@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Plus, Building2, ExternalLink, ChevronRight, Loader2, Upload, ChevronDown } from "lucide-react";
+import { Plus, Building2, ExternalLink, ChevronRight, Loader2, Upload, ChevronDown, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,8 +33,20 @@ const DEFAULT_FORM: Record<string, string> = {
   accentColor: "#f59e0b",
 };
 
-export default function DashboardPage() {
+type AdminBusiness = {
+  id: string; name: string; slug: string; primaryColor: string; businessType: string | null;
+  isPublished: boolean; city: string | null;
+  user: { name: string | null; email: string };
+  modules: { module: string; isActive: boolean }[];
+  _count: { bookings: number; loyaltyCards: number };
+};
+
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminBusinesses, setAdminBusinesses] = useState<AdminBusiness[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [businesses, setBusinesses] = useState<BusinessWithCount[]>([]);
   const [meta, setMeta] = useState<PlanMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +59,27 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchBusinesses();
+    fetch("/api/user/me")
+      .then((r) => r.json())
+      .then((d) => { if (d.success && d.data.role === "ADMIN") setIsAdmin(true); });
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    setAdminLoading(true);
+    fetch("/api/admin/businesses")
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setAdminBusinesses(d.data); })
+      .finally(() => setAdminLoading(false));
+  }, [isAdmin]);
+
+  // Auto-ouvrir la dialog si ?new=1
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setShowCreate(true);
+      router.replace("/dashboard", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   async function fetchBusinesses() {
     setLoading(true);
@@ -337,6 +369,63 @@ export default function DashboardPage() {
           </div>
         </form>
       </Dialog>
+
+      {/* ── Vue Admin : tous les commerces ── */}
+      {isAdmin && (
+        <div className="mt-12">
+          <div className="mb-4 flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-violet-500" />
+            <h2 className="text-lg font-bold text-slate-900">Vue Admin — tous les commerces</h2>
+            <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
+              {adminBusinesses.length}
+            </span>
+          </div>
+
+          {adminLoading ? (
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {adminBusinesses.map((b) => (
+                <Link
+                  key={b.id}
+                  href={`/dashboard/${b.id}`}
+                  className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md"
+                >
+                  <div className="mb-3 flex items-start gap-3">
+                    <div
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
+                      style={{ backgroundColor: b.primaryColor }}
+                    >
+                      {b.name[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-slate-900">{b.name}</div>
+                      <div className="text-xs text-slate-400">
+                        {b.businessType ?? "—"}{b.city ? ` · ${b.city}` : ""}
+                      </div>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-slate-300 group-hover:text-violet-400" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span>{b.user.name ?? b.user.email}</span>
+                    <span>{b.modules.filter((m) => m.isActive).length} modules</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   );
 }

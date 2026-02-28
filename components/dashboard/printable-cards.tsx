@@ -35,6 +35,16 @@ const LOYALTY_CARDS: CardDef[] = [
   { id: "l-qr",  type: "loyalty", hasNFC: false, hasReward: true },
 ];
 
+const SIZE_OPTIONS = [
+  { id: "5x5",   label: "5 × 5 cm",   cardW: 175, cardH: 175 },
+  { id: "10x10", label: "10 × 10 cm", cardW: 215, cardH: 215 },
+  { id: "10x15", label: "10 × 15 cm", cardW: 220, cardH: 330 },
+] as const;
+type SizeId = typeof SIZE_OPTIONS[number]["id"];
+
+// 3× the display size → exported at pixelRatio 2 → ~300-340 DPI
+const DOWNLOAD_SCALE = 3;
+
 // ── Inline SVG icons (no emoji, consistent across OS) ────────────────────────
 
 function IconStar({ size = 36, color = "#fff" }: { size?: number; color?: string }) {
@@ -70,13 +80,28 @@ function IconGift({ size = 14, color = "#fff" }: { size?: number; color?: string
   );
 }
 
-function IconNFC({ size = 32, color = "#fff" }: { size?: number; color?: string }) {
+function NfcPhoneIllustration({ scale = 1 }: { scale?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round">
-      <path d="M6.5 17.5A8 8 0 0 1 6.5 6.5" opacity=".4"/>
-      <path d="M9.5 14.5A4.5 4.5 0 0 1 9.5 9.5" opacity=".7"/>
-      <path d="M12.5 11.5a1.5 1.5 0 0 1 0 1" />
-      <circle cx="13" cy="12" r="1.5" fill={color} stroke="none" />
+    <svg width={52 * scale} height={52 * scale} viewBox="0 0 52 52" fill="none">
+      {/* Phone body */}
+      <rect x="13" y="0" width="26" height="32" rx="5" fill="rgba(255,255,255,0.88)" />
+      {/* Camera dot */}
+      <circle cx="26" cy="3" r="1.2" fill="rgba(0,0,0,0.12)" />
+      {/* Screen area */}
+      <rect x="16" y="6" width="20" height="20" rx="2" fill="rgba(0,0,0,0.10)" />
+      {/* Home bar */}
+      <rect x="21" y="28" width="10" height="1.5" rx="1" fill="rgba(0,0,0,0.10)" />
+
+      {/* Motion indicator: dashes */}
+      <line x1="26" y1="34" x2="26" y2="38" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 2" />
+      {/* Arrowhead pointing down */}
+      <polyline points="23,36 26,40 29,36" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Card / terminal surface */}
+      <rect x="5" y="44" width="42" height="8" rx="3" fill="rgba(255,255,255,0.22)" />
+      {/* NFC ripples on card */}
+      <path d="M19 48 Q26 45 33 48" stroke="rgba(255,255,255,0.45)" strokeWidth="1" strokeLinecap="round" />
+      <path d="M22 49.5 Q26 47.5 30 49.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1" strokeLinecap="round" />
     </svg>
   );
 }
@@ -95,7 +120,7 @@ function IconLogo({ size = 12, logoB64 }: { size?: number; logoB64?: string }) {
 // ── PrintCard ────────────────────────────────────────────────────────────────
 function PrintCard({
   card, businessName, primaryColor, secondaryColor, accentColor,
-  qrDataUrl, logoB64, style,
+  qrDataUrl, logoB64, style, cardW = 220, cardH = 330,
 }: {
   card: CardDef;
   businessName: string;
@@ -105,135 +130,141 @@ function PrintCard({
   qrDataUrl: string;
   logoB64?: string;
   style?: React.CSSProperties;
+  cardW?: number;
+  cardH?: number;
 }) {
   const isReviews = card.type === "reviews";
+  const isSquare = cardH <= cardW;
   const initial = businessName[0]?.toUpperCase() ?? "?";
   const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+  // Scale factor relative to the base portrait card (220×330)
+  const s = Math.min(cardW / 220, cardH / 330);
+  const px = (n: number) => n * s;
 
   const boxStyle: React.CSSProperties = {
     flex: 1,
-    borderRadius: 10,
-    padding: "10px 8px 8px",
+    borderRadius: px(10),
+    padding: `${px(10)}px ${px(8)}px ${px(8)}px`,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
+    gap: px(4),
   };
 
   return (
     <div style={{
-      width: 220, height: 330,
+      width: cardW, height: cardH,
       background: bg,
-      borderRadius: 16,
+      borderRadius: px(16),
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      padding: "16px 14px 12px",
+      padding: `${px(16)}px ${px(14)}px ${px(12)}px`,
       overflow: "hidden",
       position: "relative",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
       ...style,
     }}>
       {/* Decorative circles */}
-      <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.07)", top: -50, right: -50, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: 60, left: -30, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: px(160), height: px(160), borderRadius: "50%", background: "rgba(255,255,255,0.07)", top: -px(50), right: -px(50), pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: px(100), height: px(100), borderRadius: "50%", background: "rgba(255,255,255,0.04)", bottom: px(60), left: -px(30), pointerEvents: "none" }} />
 
       {/* Header: business name */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", zIndex: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: px(6), width: "100%", zIndex: 1 }}>
         <div style={{
-          width: 28, height: 28, borderRadius: 7,
+          width: px(28), height: px(28), borderRadius: px(7),
           background: accentColor,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0,
+          fontSize: px(13), fontWeight: 800, color: "#fff", flexShrink: 0,
         }}>
           {initial}
         </div>
-        <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: px(10), fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: 0.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {businessName}
         </span>
       </div>
 
       {/* Main content */}
-      <div style={{ zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", padding: "4px 0" }}>
-        {/* Icon */}
+      <div style={{ zIndex: 1, flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: px(8), textAlign: "center", padding: `${px(4)}px 0` }}>
         {isReviews
-          ? <IconStar size={34} color="#fff" />
-          : <IconLoyalty size={34} color="#fff" />
+          ? <IconStar size={px(34)} color="#fff" />
+          : <IconLoyalty size={px(34)} color="#fff" />
         }
 
-        {/* Title */}
-        <div style={{ fontSize: 19, fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: -0.5 }}>
+        <div style={{ fontSize: px(19), fontWeight: 800, color: "#fff", lineHeight: 1.2, letterSpacing: -0.5 }}>
           {isReviews ? <>Laissez-nous<br />un avis Google</> : <>Votre carte<br />de fidélité</>}
         </div>
 
-        {/* Reward badge */}
         {card.hasReward && (
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
+            display: "inline-flex", alignItems: "center", gap: px(5),
             background: accentColor,
-            borderRadius: 20, padding: "5px 11px",
-            fontSize: 9.5, fontWeight: 700, color: "#fff",
+            borderRadius: px(20), padding: `${px(5)}px ${px(11)}px`,
+            fontSize: px(9.5), fontWeight: 700, color: "#fff",
             boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
           }}>
-            <IconGift size={11} color="#fff" />
+            <IconGift size={px(11)} color="#fff" />
             {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
           </div>
         )}
 
-        {/* Instruction */}
-        <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>
-          {card.hasNFC
-            ? isReviews
-              ? "Scannez le QR code ou approchez\nvotre téléphone pour laisser un avis"
-              : "Scannez le QR code ou approchez\nvotre téléphone pour ouvrir votre carte"
-            : isReviews
-              ? "Scannez le QR code pour\nnous laisser un avis Google"
-              : "Scannez le QR code pour\nouvrir votre carte de fidélité"
-          }
-        </div>
+        {/* Instruction — masquée sur format carré pour économiser l'espace */}
+        {!isSquare && (
+          <div style={{ fontSize: px(9.5), color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>
+            {card.hasNFC
+              ? isReviews
+                ? "Scannez le QR code ou approchez\nvotre téléphone pour laisser un avis"
+                : "Scannez le QR code ou approchez\nvotre téléphone pour ouvrir votre carte"
+              : isReviews
+                ? "Scannez le QR code pour\nnous laisser un avis Google"
+                : "Scannez le QR code pour\nouvrir votre carte de fidélité"
+            }
+          </div>
+        )}
       </div>
 
-      {/* Bottom: QR + NFC (equal width) */}
-      <div style={{ display: "flex", gap: 8, width: "100%", zIndex: 1, alignItems: "stretch" }}>
-        {/* QR code */}
+      {/* Bottom: QR + NFC */}
+      <div style={{ display: "flex", gap: px(8), width: "100%", zIndex: 1, alignItems: "stretch" }}>
         <div style={{ ...boxStyle, background: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
           {qrDataUrl ? (
-            <img src={qrDataUrl} alt="QR" style={{ width: 64, height: 64, borderRadius: 3 }} />
+            <img src={qrDataUrl} alt="QR" style={{ width: px(64), height: px(64), borderRadius: px(3) }} />
           ) : (
-            <div style={{ width: 64, height: 64, background: "#f1f5f9", borderRadius: 3 }} />
+            <div style={{ width: px(64), height: px(64), background: "#f1f5f9", borderRadius: px(3) }} />
           )}
-          <span style={{ fontSize: 7.5, fontWeight: 700, color: "#64748b", letterSpacing: 0.8, textTransform: "uppercase" }}>
+          <span style={{ fontSize: px(7.5), fontWeight: 700, color: "#64748b", letterSpacing: 0.8, textTransform: "uppercase" }}>
             Scanner
           </span>
         </div>
 
-        {/* NFC — same width as QR */}
         {card.hasNFC && (
           <div style={{
             ...boxStyle,
             background: "rgba(255,255,255,0.12)",
-            border: "1.5px solid rgba(255,255,255,0.5)",
+            border: `${Math.max(1, px(1.5))}px solid rgba(255,255,255,0.5)`,
             boxShadow: "0 0 0 0.5px rgba(255,255,255,0.15) inset",
+            gap: px(2),
           }}>
-            <IconNFC size={36} color="#fff" />
-            <span style={{ fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: 0.3, textAlign: "center", lineHeight: 1.35 }}>
+            <NfcPhoneIllustration scale={s} />
+            <span style={{ fontSize: px(7.5), fontWeight: 700, color: "rgba(255,255,255,0.95)", letterSpacing: 0.2, textAlign: "center", lineHeight: 1.4 }}>
               Approchez<br />votre téléphone
             </span>
+            {!isSquare && (
+              <span style={{ fontSize: px(6.5), fontWeight: 500, color: "rgba(255,255,255,0.55)", letterSpacing: 0.5, textTransform: "uppercase" }}>
+                Sans contact
+              </span>
+            )}
           </div>
         )}
       </div>
 
       {/* Footer */}
       <div style={{
-        marginTop: 5, zIndex: 1,
-        display: "flex", alignItems: "center", gap: 4,
+        marginTop: px(5), zIndex: 1,
+        display: "flex", alignItems: "center", gap: px(4),
         opacity: 0.45,
       }}>
-        <span style={{ fontSize: 6.5, fontWeight: 300, color: "#fff", letterSpacing: 0.1 }}>
-          Propulsé par
-        </span>
-        <IconLogo size={10} logoB64={logoB64} />
-        <span style={{ fontSize: 6.5, fontWeight: 800, color: "#fff", letterSpacing: 0.2 }}>
+        <IconLogo size={px(10)} logoB64={logoB64} />
+        <span style={{ fontSize: px(6.5), fontWeight: 800, color: "#fff", letterSpacing: 0.2, marginBottom: px(-2) }}>
           TocTocToc.boutique
         </span>
       </div>
@@ -256,9 +287,14 @@ function CardStack({
   logoB64?: string;
 }) {
   const [index, setIndex] = useState(0);
+  const [sizeId, setSizeId] = useState<SizeId>("10x15");
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
+
+  const sizeOpt = SIZE_OPTIONS.find((o) => o.id === sizeId)!;
+  const { cardW, cardH } = sizeOpt;
 
   useEffect(() => {
     const generate = async () => {
@@ -266,7 +302,7 @@ function CardStack({
       for (const card of cards) {
         const url = card.type === "reviews" ? reviewsUrl : loyaltyUrl;
         urls[card.id] = await QRCode.toDataURL(url, {
-          width: 220, margin: 1,
+          width: 600, margin: 1,
           color: { dark: "#1e293b", light: "#ffffff" },
         });
       }
@@ -280,12 +316,13 @@ function CardStack({
   const next = () => setIndex((i) => (i + 1) % cards.length);
 
   const handleDownload = useCallback(async () => {
-    if (!cardRef.current) return;
+    if (!downloadRef.current) return;
     setDownloading(true);
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 4 });
+      // Render from the hidden 3× card → pixelRatio 2 → ~300-340 DPI output
+      const dataUrl = await toPng(downloadRef.current, { pixelRatio: 2 });
       const link = document.createElement("a");
-      link.download = `carte-${current.type}-${current.id}.png`;
+      link.download = `carte-${current.type}-${current.id}-${sizeId}.png`;
       link.href = dataUrl;
       link.click();
     } catch (e) {
@@ -293,14 +330,31 @@ function CardStack({
     } finally {
       setDownloading(false);
     }
-  }, [current]);
+  }, [current, sizeId]);
 
-  const shared = { businessName, primaryColor, secondaryColor, accentColor, logoB64 };
+  const shared = { businessName, primaryColor, secondaryColor, accentColor, logoB64, cardW, cardH };
 
   return (
     <div className="flex flex-col items-center gap-3">
+      {/* Size selector */}
+      <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+        {SIZE_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => setSizeId(opt.id)}
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
+              sizeId === opt.id
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Stack */}
-      <div style={{ position: "relative", width: 220, height: 345 }}>
+      <div style={{ position: "relative", width: cardW + 16, height: cardH + 15 }}>
         {cards.length > 2 && (
           <div style={{ position: "absolute", top: 10, left: 8, opacity: 0.2, transform: "rotate(5deg)", pointerEvents: "none" }}>
             <PrintCard card={cards[(index + 2) % cards.length]} qrDataUrl={qrUrls[cards[(index + 2) % cards.length].id] ?? ""} {...shared} />
@@ -346,6 +400,19 @@ function CardStack({
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Hidden high-resolution card for download (3× display size) */}
+      <div style={{ position: "fixed", left: -99999, top: -99999, pointerEvents: "none", opacity: 0 }} aria-hidden>
+        <div ref={downloadRef}>
+          <PrintCard
+            card={current}
+            qrDataUrl={qrUrls[current.id] ?? ""}
+            {...shared}
+            cardW={cardW * DOWNLOAD_SCALE}
+            cardH={cardH * DOWNLOAD_SCALE}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -382,7 +449,7 @@ export function PrintableCards({
         Impressions
       </h2>
       <p className="mb-5 text-xs text-slate-400">
-        Cartes 10×15cm à imprimer et poser en caisse. Téléchargez en PNG haute résolution (300 DPI).
+        Cartes à imprimer et poser en caisse. Choisissez le format puis téléchargez en PNG haute résolution.
       </p>
 
       <div className="flex flex-wrap gap-12">

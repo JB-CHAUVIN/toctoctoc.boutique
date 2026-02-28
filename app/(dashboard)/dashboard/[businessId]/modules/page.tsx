@@ -21,9 +21,9 @@ export default function ModulesPage() {
 
   useEffect(() => {
     async function load() {
-      const [bizRes] = await Promise.all([
+      const [bizRes, subRes] = await Promise.all([
         fetch(`/api/business/${params.businessId}`),
-        fetch("/api/auth/session"),
+        fetch("/api/billing/subscription"),
       ]);
 
       const bizData = await bizRes.json();
@@ -34,10 +34,8 @@ export default function ModulesPage() {
         setModules(moduleMap);
       }
 
-      // Récupérer le plan depuis la session via l'API user
-      const planRes = await fetch("/api/user/plan");
-      const planData = await planRes.json();
-      if (planData.success) setPlan(planData.data);
+      const subData = await subRes.json();
+      if (subData.success) setPlan(subData.data?.plan ?? "FREE");
 
       setLoading(false);
     }
@@ -81,21 +79,6 @@ export default function ModulesPage() {
         <h1 className="text-2xl font-bold text-slate-900">Modules</h1>
         <p className="mt-1 text-sm text-slate-500">
           Activez ou désactivez les fonctionnalités selon vos besoins
-        </p>
-      </div>
-
-      <div className="mb-6 rounded-xl bg-indigo-50 border border-indigo-100 px-5 py-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-indigo-800">
-            Plan actuel : <strong>{PLAN_LIMITS[plan].label}</strong>
-          </span>
-          <Badge variant="info">{PLAN_LIMITS[plan].priceMonthly}€/mois</Badge>
-        </div>
-        <p className="mt-1 text-xs text-indigo-600">
-          {PLAN_LIMITS[plan].maxBusinesses === -1
-            ? "Commerces illimités"
-            : `${PLAN_LIMITS[plan].maxBusinesses} commerce(s) inclus`}
-          {" · "}{PLAN_LIMITS[plan].modules.length} module(s) disponible(s)
         </p>
       </div>
 

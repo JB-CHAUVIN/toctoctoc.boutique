@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
-import { Plus, Save, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Save, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import type { ReviewConfig, Reward } from "@prisma/client";
 
 type ConfigWithRewards = ReviewConfig & { rewards: Reward[] };
@@ -101,8 +101,44 @@ export default function ReviewsSettingsPage() {
               placeholder="https://g.page/r/.../review"
               value={config?.googleUrl ?? ""}
               onChange={(e) => setConfig((c) => c ? { ...c, googleUrl: e.target.value } : c)}
-              hint="Retrouvez ce lien depuis votre fiche Google My Business"
             />
+
+            {/* Tutoriel */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-blue-600">
+                Comment trouver ce lien ?
+              </p>
+              <ol className="space-y-2.5">
+                <li className="flex gap-3 text-sm text-slate-700">
+                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">1</span>
+                  <span>
+                    Ouvrez{" "}
+                    <a
+                      href="https://maps.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-0.5 font-medium text-blue-600 hover:underline"
+                    >
+                      Google Maps
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {" "}et recherchez le nom de votre établissement.
+                  </span>
+                </li>
+                <li className="flex gap-3 text-sm text-slate-700">
+                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">2</span>
+                  <span>
+                    Sur la fiche de votre établissement, cliquez sur <strong>Avis</strong>, puis sur <strong>Gérer vos avis</strong>.
+                  </span>
+                </li>
+                <li className="flex gap-3 text-sm text-slate-700">
+                  <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">3</span>
+                  <span>
+                    Cliquez sur <strong>Recueillez plus d&apos;avis</strong> — un lien s&apos;affiche, copiez-le et collez-le ci-dessus.
+                  </span>
+                </li>
+              </ol>
+            </div>
             <Textarea
               label="Instructions pour les clients"
               placeholder="Ex: Laissez-nous un avis et gagnez une surprise !"

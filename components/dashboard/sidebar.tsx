@@ -15,6 +15,9 @@ import {
   Building2,
   ScanLine,
   Gift,
+  CreditCard,
+  Plus,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -34,6 +37,9 @@ interface BusinessNav {
 
 interface SidebarProps {
   businesses: BusinessNav[];
+  maxBusinesses: number;
+  businessCount: number;
+  planLabel: string;
 }
 
 const VISIBLE_MODULES: ModuleType[] = ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"];
@@ -92,11 +98,10 @@ const MODULE_NAV: Record<
   },
 };
 
-export function Sidebar({ businesses }: SidebarProps) {
+export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel }: SidebarProps) {
   const pathname = usePathname();
   // Dérive le businessId courant depuis l'URL (/dashboard/[businessId]/...)
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
-  const currentBusiness = businesses.find((b) => b.id === currentBusinessId);
 
   return (
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
@@ -170,8 +175,8 @@ export function Sidebar({ businesses }: SidebarProps) {
                       {"Vue d'ensemble"}
                     </Link>
 
-                    {/* Modules & Plan */}
-                    <div className="border-slate-800 pt-3">
+                    {/* Modules */}
+                    <div className="border-slate-800 pt-1">
                       <Link
                           href={`/dashboard/${business.id}/modules`}
                           className={cn(
@@ -182,7 +187,19 @@ export function Sidebar({ businesses }: SidebarProps) {
                           )}
                       >
                         <Layers className="h-3.5 w-3.5" />
-                        Modules & Plan
+                        Modules
+                      </Link>
+                    </div>
+
+                    {/* Voir le site public */}
+                    <div className="pt-1">
+                      <Link
+                        href={`/${business.slug}`}
+                        target="_blank"
+                        className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white"
+                      >
+                        <Globe className="h-3.5 w-3.5" />
+                        Voir le site public
                       </Link>
                     </div>
 
@@ -270,20 +287,54 @@ export function Sidebar({ businesses }: SidebarProps) {
             );
           })
         )}
+
+        {/* Bouton ajouter un commerce */}
+        {(() => {
+          const canAdd = maxBusinesses === -1 || businessCount < maxBusinesses;
+          if (canAdd) {
+            return (
+              <div className="px-4 pt-1 pb-3">
+                <Link
+                  href="/dashboard?new=1"
+                  className="flex w-full items-center gap-2 rounded-lg border border-dashed border-slate-700 px-3 py-2 text-sm text-slate-400 transition hover:border-indigo-500 hover:bg-slate-800 hover:text-indigo-300"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Ajouter un commerce
+                </Link>
+              </div>
+            );
+          }
+          return (
+            <div className="px-4 pt-1 pb-3 space-y-1.5">
+              <div className="flex w-full cursor-not-allowed items-center gap-2 rounded-lg border border-dashed border-slate-800 px-3 py-2 text-sm text-slate-600">
+                <Lock className="h-3.5 w-3.5 flex-shrink-0" />
+                Ajouter un commerce
+              </div>
+              <p className="px-1 text-xs text-slate-600">
+                Offre <span className="text-slate-500">{planLabel}</span> : limité à {maxBusinesses} commerce{maxBusinesses > 1 ? "s" : ""}.{" "}
+                <Link href="/dashboard/billing" className="text-indigo-400 hover:text-indigo-300 underline">
+                  Upgrader
+                </Link>
+              </p>
+            </div>
+          );
+        })()}
       </nav>
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-3 space-y-0.5">
-        {currentBusiness && (
-          <Link
-            href={`/${currentBusiness.slug}`}
-            target="_blank"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-white"
-          >
-            <Globe className="h-4 w-4" />
-            Voir le site public
-          </Link>
-        )}
+        <Link
+          href="/dashboard/billing"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
+            pathname === "/dashboard/billing"
+              ? "bg-indigo-600 text-white"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+          )}
+        >
+          <CreditCard className="h-4 w-4" />
+          Abonnement
+        </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-slate-800 hover:text-red-400"

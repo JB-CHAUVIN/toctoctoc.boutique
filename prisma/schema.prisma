@@ -10,6 +10,11 @@ datasource db {
 // USERS & AUTH (NextAuth v5 compatible)
 // ─────────────────────────────────────────
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -17,6 +22,7 @@ model User {
   password      String? // bcrypt hashed
   image         String?
   emailVerified DateTime?
+  role          UserRole  @default(USER)
 
   businesses   Business[]
   subscription Subscription?
@@ -75,12 +81,16 @@ model Subscription {
   plan   PlanType  @default(FREE)
   status SubStatus @default(ACTIVE)
 
-  // Stripe (préparé, pas encore actif)
+  // Stripe
   stripeCustomerId     String?
   stripeSubscriptionId String?
+  stripePriceId        String?
   currentPeriodStart   DateTime?
   currentPeriodEnd     DateTime?
   cancelAtPeriodEnd    Boolean   @default(false)
+  trialEnd             DateTime?
+  cancelledAt          DateTime?
+  cancelReason         String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,6 +147,10 @@ model Business {
   // Statut
   isPublished Boolean   @default(false)
   deletedAt   DateTime?
+
+  // Prise en main par le prospect
+  claimToken String?   @unique
+  claimedAt  DateTime?
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -453,4 +467,26 @@ model ShowcaseBlock {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────
+// LOGS
+// ─────────────────────────────────────────
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  level     LogLevel @default(INFO)
+  action    String
+  userId    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

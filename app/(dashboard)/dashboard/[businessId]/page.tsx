@@ -10,6 +10,7 @@ import { formatDateTime } from "@/lib/utils";
 import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import { PublishToggle } from "@/components/dashboard/publish-toggle";
 import { PrintableCards } from "@/components/dashboard/printable-cards";
+import { ProspectLetterButton } from "@/components/dashboard/prospect-letter";
 import type { ModuleType } from "@prisma/client";
 
 export async function generateMetadata({ params }: { params: { businessId: string } }) {
@@ -23,8 +24,13 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  const isAdmin = dbUser?.role === "ADMIN";
+
   const business = await prisma.business.findFirst({
-    where: { id: params.businessId, userId: session.user.id },
+    where: isAdmin
+      ? { id: params.businessId }
+      : { id: params.businessId, userId: session.user.id },
     include: {
       modules: true,
       bookings: { orderBy: { createdAt: "desc" }, take: 5, include: { service: true } },
@@ -76,6 +82,25 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           >
             Voir le site <ExternalLink className="h-3.5 w-3.5" />
           </Link>
+          {isAdmin && (
+            <ProspectLetterButton
+              business={{
+                name: business.name,
+                slug: business.slug,
+                businessType: business.businessType,
+                address: business.address,
+                city: business.city,
+                zipCode: business.zipCode,
+                phone: business.phone,
+                email: business.email,
+                primaryColor: business.primaryColor,
+                accentColor: business.accentColor,
+              }}
+              businessId={params.businessId}
+              claimToken={business.claimToken}
+              appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:2203"}
+            />
+          )}
         </div>
       </div>
 

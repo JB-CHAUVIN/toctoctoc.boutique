@@ -4,11 +4,6 @@ import { ArrowRight, CheckCircle } from "lucide-react";
 
 const features = [
   {
-    emoji: "📅",
-    title: "Réservations en ligne",
-    desc: "Vos clients réservent directement depuis votre site, 24h/24.",
-  },
-  {
     emoji: "⭐",
     title: "Avis Google + Roulette",
     desc: "Incitez vos clients à laisser des avis et récompensez-les.",
@@ -17,6 +12,11 @@ const features = [
     emoji: "🎯",
     title: "Carte de fidélité digitale",
     desc: "Programme de tampons personnalisé, zéro papier.",
+  },
+  {
+    emoji: "📅",
+    title: "Réservations en ligne",
+    desc: "Vos clients réservent directement depuis votre site, 24h/24.",
   },
   {
     emoji: "🌐",
@@ -38,7 +38,13 @@ const plans = [
     name: "Starter",
     price: "9€",
     desc: "/ mois",
-    features: ["1 commerce", "Site vitrine", "Réservations", "Avis + Roulette", "Fidélité"],
+    features: [
+      "1 commerce",
+      "Site vitrine",
+      "Réservations",
+      "Avis + Roulette",
+      "Fidélité",
+    ],
     cta: "S'abonner",
     highlight: true,
   },
@@ -46,7 +52,13 @@ const plans = [
     name: "Pro",
     price: "19€",
     desc: "/ mois",
-    features: ["3 commerce", "Site vitrine", "Réservations", "Avis + Roulette", "Fidélité"],
+    features: [
+      "3 commerce",
+      "Site vitrine",
+      "Réservations",
+      "Avis + Roulette",
+      "Fidélité",
+    ],
     cta: "S'abonner",
     highlight: false,
   },
@@ -59,11 +71,22 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="TocTocToc.boutique" width={32} height={32} priority />
-            <span className="text-xl font-bold text-indigo-600">TocTocToc.boutique</span>
+            <Image
+              src="/logo.png"
+              alt="TocTocToc.boutique"
+              width={32}
+              height={32}
+              priority
+            />
+            <span className="text-xl font-bold text-indigo-600">
+              TocTocToc.boutique
+            </span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
+            <Link
+              href="/login"
+              className="text-sm text-slate-600 hover:text-slate-900"
+            >
               Connexion
             </Link>
             <Link
@@ -87,8 +110,9 @@ export default function HomePage() {
           <span className="text-indigo-600">en 5 minutes</span>
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-500">
-          Réservations en ligne, avis Google, carte de fidélité et site vitrine — tout en un,
-          personnalisé à votre image, sans aucune compétence technique.
+          Réservations en ligne, avis Google, carte de fidélité et site vitrine
+          — tout en un, personnalisé à votre image, sans aucune compétence
+          technique.
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
@@ -120,7 +144,9 @@ export default function HomePage() {
               >
                 <div className="mb-3 text-3xl">{f.emoji}</div>
                 <h3 className="mb-2 font-semibold text-slate-900">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-500">{f.desc}</p>
+                <p className="text-sm leading-relaxed text-slate-500">
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -130,8 +156,14 @@ export default function HomePage() {
       {/* Pricing */}
       <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">Tarifs simples</h2>
-          <p className="mb-12 text-center text-slate-500">Sans engagement, résiliable à tout moment.<br />Retour sur investissement garantit !</p>
+          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
+            Tarifs simples
+          </h2>
+          <p className="mb-12 text-center text-slate-500">
+            Sans engagement, résiliable à tout moment.
+            <br />
+            Retour sur investissement garantit !
+          </p>
           <div className="grid gap-6 sm:grid-cols-3">
             {plans.map((plan) => (
               <div
@@ -148,12 +180,16 @@ export default function HomePage() {
                   </span>
                 )}
                 <div className="mb-4">
-                  <div className={`text-xl font-bold ${plan.highlight ? "" : "text-slate-900"}`}>
+                  <div
+                    className={`text-xl font-bold ${plan.highlight ? "" : "text-slate-900"}`}
+                  >
                     {plan.name}
                   </div>
                   <div className="mt-2">
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className={`text-sm ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>
+                    <span
+                      className={`text-sm ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}
+                    >
                       {plan.desc}
                     </span>
                   </div>
@@ -164,7 +200,13 @@ export default function HomePage() {
                       <CheckCircle
                         className={`h-4 w-4 flex-shrink-0 ${plan.highlight ? "text-indigo-200" : "text-green-500"}`}
                       />
-                      <span className={plan.highlight ? "text-indigo-100" : "text-slate-600"}>{f}</span>
+                      <span
+                        className={
+                          plan.highlight ? "text-indigo-100" : "text-slate-600"
+                        }
+                      >
+                        {f}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -186,7 +228,10 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <p>© {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en France.</p>
+        <p>
+          © {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en
+          France.
+        </p>
       </footer>
     </div>
   );

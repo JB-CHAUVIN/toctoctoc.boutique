@@ -153,6 +153,19 @@ export const FONT_FAMILIES = [
 ] as const;
 
 // ─────────────────────────────────────────
+// RAISONS DE DÉSABONNEMENT
+// ─────────────────────────────────────────
+
+export const CANCEL_REASONS = [
+  "Trop cher",
+  "Je n'utilise plus le service",
+  "J'ai trouvé une alternative",
+  "Fonctionnalités insuffisantes",
+  "Problèmes techniques",
+  "Autre raison",
+] as const;
+
+// ─────────────────────────────────────────
 // STATUTS RÉSERVATIONS
 // ─────────────────────────────────────────
 

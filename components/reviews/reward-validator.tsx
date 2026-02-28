@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Camera, QrCode, ArrowLeft, X, Gift, CheckCircle, AlertTriangle } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
+import { useQrScanner } from "@/hooks/use-qr-scanner";
 
 interface RewardInfo {
   reviewId: string;
@@ -30,32 +31,12 @@ export function RewardValidator({ businessId }: { businessId: string }) {
   const [codeInput, setCodeInput] = useState("");
   const [reward, setReward] = useState<RewardInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraSupported, setCameraSupported] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const scanningRef = useRef(false);
-  const rafRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // businessId used for future per-business scope if needed
   void businessId;
 
-  useEffect(() => {
-    if ("BarcodeDetector" in window && !!navigator.mediaDevices?.getUserMedia) {
-      setCameraSupported(true);
-    }
-  }, []);
-
-  const stopCamera = useCallback(() => {
-    scanningRef.current = false;
-    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); streamRef.current = null; }
-    setCameraActive(false);
-  }, []);
-
-  useEffect(() => () => stopCamera(), [stopCamera]);
+  const { cameraSupported, cameraActive, videoRef, canvasRef, startCamera, stopCamera } =
+    useQrScanner({ onScan: (value) => lookupCode(value) });
 
   async function lookupCode(code: string) {
     const trimmed = code.trim().toUpperCase();
@@ -77,42 +58,14 @@ export function RewardValidator({ businessId }: { businessId: string }) {
     }
   }
 
-  async function startCamera() {
+  async function handleStartCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      streamRef.current = stream;
-      scanningRef.current = true;
-      setCameraActive(true);
-
-      type BarcodeDetectorType = { detect: (src: HTMLVideoElement) => Promise<{ rawValue: string }[]> };
-      const detector = new (window as unknown as {
-        BarcodeDetector: new (opts: { formats: string[] }) => BarcodeDetectorType;
-      }).BarcodeDetector({ formats: ["qr_code"] });
-
-      const scanFrame = async () => {
-        if (!scanningRef.current || !videoRef.current) return;
-        try {
-          if (videoRef.current.readyState >= 2) {
-            const codes = await detector.detect(videoRef.current);
-            if (codes.length > 0) {
-              stopCamera();
-              await lookupCode(codes[0].rawValue);
-              return;
-            }
-          }
-        } catch { /* continue */ }
-        rafRef.current = requestAnimationFrame(scanFrame);
-      };
-      rafRef.current = requestAnimationFrame(scanFrame);
-    } catch {
-      toast.error("Impossible d'accéder à la caméra");
-      setCameraSupported(false);
+      await startCamera();
+    } catch (e) {
+      const msg = e instanceof Error && e.message === "camera_insecure"
+        ? "Caméra indisponible sur HTTP. Utilisez localhost ou HTTPS."
+        : "Impossible d'accéder à la caméra. Vérifiez les permissions.";
+      toast.error(msg);
     }
   }
 
@@ -171,13 +124,17 @@ export function RewardValidator({ businessId }: { businessId: string }) {
           </div>
         ) : (
           cameraSupported && (
+            <>
+            {/* Canvas caché pour jsQR (fallback iOS/Firefox) */}
+            <canvas ref={canvasRef} style={{ display: "none" }} />
             <button
-              onClick={startCamera}
+              onClick={handleStartCamera}
               className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-10 text-slate-500 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600 active:scale-95"
             >
               <Camera className="h-8 w-8" />
               <span className="text-sm font-medium">Scanner le QR code du lot</span>
             </button>
+            </>
           )
         )}
 
