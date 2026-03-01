@@ -36,9 +36,10 @@ const LOYALTY_CARDS: CardDef[] = [
 ];
 
 const SIZE_OPTIONS = [
-  { id: "5x5",   label: "5 × 5 cm",   cardW: 175, cardH: 175 },
-  { id: "10x10", label: "10 × 10 cm", cardW: 215, cardH: 215 },
-  { id: "10x15", label: "10 × 15 cm", cardW: 220, cardH: 330 },
+  { id: "5x5",   label: "5 × 5 cm",     cardW: 175, cardH: 175 },
+  { id: "9x9",   label: "9,3 × 9,3 cm", cardW: 200, cardH: 200 },
+  { id: "10x10", label: "10 × 10 cm",   cardW: 215, cardH: 215 },
+  { id: "10x15", label: "10 × 15 cm",   cardW: 220, cardH: 330 },
 ] as const;
 type SizeId = typeof SIZE_OPTIONS[number]["id"];
 

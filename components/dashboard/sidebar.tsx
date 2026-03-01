@@ -18,6 +18,7 @@ import {
   CreditCard,
   Plus,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -33,6 +34,7 @@ interface BusinessNav {
   slug: string;
   primaryColor: string;
   modules: BusinessModule[];
+  user: { name: string | null; email: string };
 }
 
 interface SidebarProps {
@@ -40,6 +42,7 @@ interface SidebarProps {
   maxBusinesses: number;
   businessCount: number;
   planLabel: string;
+  isAdmin?: boolean;
 }
 
 const VISIBLE_MODULES: ModuleType[] = ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"];
@@ -98,7 +101,7 @@ const MODULE_NAV: Record<
   },
 };
 
-export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel }: SidebarProps) {
+export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, isAdmin }: SidebarProps) {
   const pathname = usePathname();
   // Dérive le businessId courant depuis l'URL (/dashboard/[businessId]/...)
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
@@ -107,12 +110,18 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel }:
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/dashboard" className="flex flex-1 items-center gap-2.5">
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
             <Image src="/logo.png" alt="TocTocToc.boutique" width={20} height={20} priority />
           </div>
           <span className="text-sm font-bold text-white">TocTocToc.boutique</span>
         </Link>
+        {isAdmin && (
+          <span className="ml-1 flex items-center gap-0.5 rounded-full bg-violet-700 px-2 py-0.5 text-[10px] font-bold text-white">
+            <ShieldCheck className="h-2.5 w-2.5" />
+            ADMIN
+          </span>
+        )}
       </div>
 
       {/* Navigation */}
@@ -150,7 +159,14 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel }:
                   >
                     {business.name[0].toUpperCase()}
                   </div>
-                  <span className="flex-1 truncate text-sm font-semibold">{business.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block truncate text-sm font-semibold">{business.name}</span>
+                    {isAdmin && (
+                      <span className="block truncate text-[10px] text-slate-500">
+                        {business.user.name ?? business.user.email}
+                      </span>
+                    )}
+                  </div>
                   {isCurrent ? (
                     <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 text-slate-400" />
                   ) : (
