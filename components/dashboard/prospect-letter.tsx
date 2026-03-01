@@ -458,7 +458,7 @@ function buildLetterHtml(
 
   <!-- SUBJECT -->
   <div class="subject-line">
-    Objet : Présence digitale pour ${business.name}
+    Objet : Outils digitaux pour ${business.name} (carte de <b>fidélité</b>, <b>boost avis</b> Google, ...)
   </div>
 
   <!-- BODY -->

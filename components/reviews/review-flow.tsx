@@ -20,7 +20,7 @@ interface Props {
   rewards: Reward[];
 }
 
-type Step = "info" | "google" | "roulette" | "result";
+type Step = "info" | "google" | "roulette" | "result" | "thanks";
 
 interface ReviewData {
   token: string;
@@ -106,6 +106,11 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
     window.open(googleUrl, "_blank", "noopener,noreferrer");
   }
 
+  function handleSimpleReview() {
+    if (googleUrl) window.open(googleUrl, "_blank", "noopener,noreferrer");
+    setStep("thanks");
+  }
+
   async function handleSpin() {
     if (!token || spinning) return;
     setSpinning(true);
@@ -175,6 +180,17 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
               Continuer →
             </Button>
           </form>
+
+          {googleUrl && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={handleSimpleReview}
+                className="text-sm text-slate-400 hover:text-slate-600 transition-colors underline underline-offset-2"
+              >
+                Laisser un avis sans récompense →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -331,6 +347,16 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
               </p>
             </>
           )}
+        </div>
+      )}
+      {/* Step 5 : Merci (sans récompense) */}
+      {step === "thanks" && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mb-4 text-5xl">🙏</div>
+          <h2 className="text-xl font-bold text-slate-900">Merci pour votre avis !</h2>
+          <p className="mt-2 text-slate-500">
+            Votre retour compte beaucoup pour {businessName}. À bientôt !
+          </p>
         </div>
       )}
     </div>

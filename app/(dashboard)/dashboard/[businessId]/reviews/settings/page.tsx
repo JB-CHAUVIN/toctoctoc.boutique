@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import Link from "next/link";
 import { Plus, Save, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import type { ReviewConfig, Reward } from "@prisma/client";
 
@@ -139,6 +140,17 @@ export default function ReviewsSettingsPage() {
                 </li>
               </ol>
             </div>
+            <p className="text-xs text-slate-500">
+              Vous ne trouvez pas ce lien ?{" "}
+              <Link
+                href="/contact?subject=aide-google-avis"
+                className="font-medium text-blue-600 hover:underline"
+              >
+                Contactez-nous
+              </Link>
+              {" "}— nous vous aiderons à le retrouver.
+            </p>
+
             <Textarea
               label="Instructions pour les clients"
               placeholder="Ex: Laissez-nous un avis et gagnez une surprise !"
