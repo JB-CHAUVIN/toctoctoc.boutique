@@ -760,7 +760,7 @@ function CardStack({
 // ── Main export ───────────────────────────────────────────────────────────────
 export function PrintableCards({
   businessName,
-  slug,
+  slug: _slug,
   businessId,
   primaryColor,
   secondaryColor,

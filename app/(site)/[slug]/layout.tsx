@@ -39,7 +39,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
   params: { slug: string };
 }) {
-  let business = await getBusiness(params.slug);
+  const business = await getBusiness(params.slug);
   if (!business) {
     // Fallback: params.slug might be a businessId (CUID) from a printed QR code
     const byId = await prisma.business.findUnique({
