@@ -11,6 +11,11 @@
     @apply border-slate-200;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
     font-family: var(--font-sans);

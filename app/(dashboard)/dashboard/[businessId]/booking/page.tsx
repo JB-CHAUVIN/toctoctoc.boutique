@@ -65,8 +65,8 @@ export default async function BookingDashboardPage({ params }: { params: { busin
   }));
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-start justify-between">
+    <div className="p-4 sm:p-8">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Réservations</h1>
           <p className="mt-1 text-sm text-slate-500">Gérez vos rendez-vous et prestations</p>
@@ -84,7 +84,7 @@ export default async function BookingDashboardPage({ params }: { params: { busin
       </div>
 
       {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatsCard label="En attente" value={pending} icon="🕐" color="amber" />
         <StatsCard label="Confirmées" value={confirmed} icon="✅" color="emerald" />
         <StatsCard label="Terminées" value={completed} icon="🏁" color="indigo" />

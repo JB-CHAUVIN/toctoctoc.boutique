@@ -41,8 +41,13 @@ export default async function DashboardLayout({
         planLabel={planLabel}
         isAdmin={isAdmin}
       />
-      <main className="flex-1 overflow-y-auto">
-        {children}
+      <main className="flex flex-1 flex-col overflow-hidden">
+        {/* Barre mobile pour laisser de la place au hamburger */}
+        <div className="flex h-14 flex-shrink-0 items-center border-b border-slate-200 bg-white px-16 md:hidden">
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </main>
     </div>
   );

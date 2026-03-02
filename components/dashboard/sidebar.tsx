@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -23,6 +23,8 @@ import {
   CalendarDays,
   Activity,
   Wallet,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -120,6 +122,10 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
   const pathname = usePathname();
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Fermer le drawer à chaque navigation
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   function toggleModule(moduleKey: string) {
     setCollapsedModules((prev) => {
@@ -131,7 +137,32 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
   }
 
   return (
-    <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
+    <>
+      {/* Bouton hamburger mobile */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed left-4 top-3.5 z-40 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md md:hidden"
+        aria-label="Ouvrir le menu"
+      >
+        <Menu className="h-4 w-4" />
+      </button>
+
+      {/* Backdrop mobile */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+    <aside className={cn(
+      "flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900 transition-transform duration-300",
+      // Desktop : toujours visible dans le flux
+      "md:relative md:translate-x-0",
+      // Mobile : drawer fixe depuis la gauche
+      "fixed inset-y-0 left-0 z-50 md:static",
+      mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+    )}>
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
         <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -146,6 +177,13 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
             </span>
           )}
         </Link>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="ml-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white md:hidden"
+          aria-label="Fermer le menu"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -409,5 +447,6 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
         </button>
       </div>
     </aside>
+    </>
   );
 }

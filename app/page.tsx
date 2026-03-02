@@ -78,11 +78,11 @@ export default function HomePage() {
               height={32}
               priority
             />
-            <span className="font-brand text-xl font-bold text-indigo-600">
+            <span className="font-brand hidden text-xl font-bold text-indigo-600 sm:inline">
               TocTocToc.boutique
             </span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/login"
               className="text-sm text-slate-600 hover:text-slate-900"
@@ -93,7 +93,8 @@ export default function HomePage() {
               href="/register"
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
-              Démarrer gratuitement
+              <span className="hidden sm:inline">Démarrer gratuitement</span>
+              <span className="sm:hidden">Démarrer</span>
             </Link>
           </div>
         </div>

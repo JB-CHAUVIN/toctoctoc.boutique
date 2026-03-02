@@ -59,8 +59,8 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
   const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/${business.slug}/avis`;
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-start justify-between">
+    <div className="p-4 sm:p-8">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Avis Google & Roulette</h1>
           <p className="mt-1 text-sm text-slate-500">

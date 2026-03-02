@@ -53,9 +53,9 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
   const hasReviews = activeModules.some((m) => m.module === "REVIEWS");
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-3">
             <div
@@ -73,7 +73,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
             {business.isPublished ? "En ligne" : "Brouillon — non visible"}
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <PublishToggle businessId={params.businessId} isPublished={business.isPublished} />
           <Link
             href={`/${business.slug}`}
@@ -105,7 +105,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
       </div>
 
       {/* Stats */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatsCard
           label="Réservations"
           value={business._count.bookings}
