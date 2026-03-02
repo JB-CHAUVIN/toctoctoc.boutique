@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageCircle, X, Loader2, CheckCircle, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -17,11 +17,22 @@ export function ContactButton() {
       setForm((f) => ({ ...f, [field]: e.target.value }));
   }
 
-  function handleOpen() {
+  function handleOpen(subject?: string) {
     setSent(false);
-    setForm({ name: "", email: "", subject: "", message: "" });
+    setForm({ name: "", email: "", subject: subject ?? "", message: "" });
     setOpen(true);
   }
+
+  // Écouter les demandes d'ouverture depuis d'autres composants
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const subject = (e as CustomEvent<{ subject?: string }>).detail?.subject;
+      handleOpen(subject);
+    };
+    window.addEventListener("open-contact-form", handler);
+    return () => window.removeEventListener("open-contact-form", handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +60,7 @@ export function ContactButton() {
     <>
       {/* Bouton flottant */}
       <button
-        onClick={handleOpen}
+        onClick={() => handleOpen()}
         aria-label="Contactez-nous"
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-500/40 active:scale-95"
       >

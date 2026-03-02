@@ -142,12 +142,19 @@ export default function ReviewsSettingsPage() {
             </div>
             <p className="text-xs text-slate-500">
               Vous ne trouvez pas ce lien ?{" "}
-              <Link
-                href="/contact?subject=aide-google-avis"
-                className="font-medium text-blue-600 hover:underline"
+              <button
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("open-contact-form", {
+                      detail: { subject: "Aide — lien Google Avis" },
+                    })
+                  )
+                }
+                className="font-medium text-indigo-600 hover:underline"
               >
                 Contactez-nous
-              </Link>
+              </button>
               {" "}— nous vous aiderons à le retrouver.
             </p>
 

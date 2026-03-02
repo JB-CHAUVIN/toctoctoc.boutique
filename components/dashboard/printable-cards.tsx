@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
-import { Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface Props {
   businessName: string;
@@ -36,8 +36,6 @@ const LOYALTY_CARDS: CardDef[] = [
 ];
 
 const SIZE_OPTIONS = [
-  { id: "5x5", label: "5 × 5 cm", cardW: 175, cardH: 175 },
-  { id: "9x9", label: "9,3 × 9,3 cm", cardW: 200, cardH: 200 },
   { id: "10x10", label: "10 × 10 cm", cardW: 215, cardH: 215 },
   { id: "10x15", label: "10 × 15 cm", cardW: 220, cardH: 330 },
 ] as const;
@@ -552,6 +550,7 @@ function CardStack({
   reviewsUrl,
   loyaltyUrl,
   logoB64,
+  appUrl,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -561,10 +560,12 @@ function CardStack({
   reviewsUrl: string;
   loyaltyUrl: string;
   logoB64?: string;
+  appUrl: string;
 }) {
   const [index, setIndex] = useState(0);
-  const [sizeId, setSizeId] = useState<SizeId>("10x15");
+  const [sizeId, setSizeId] = useState<SizeId>("10x10");
   const [downloading, setDownloading] = useState(false);
+  const [nfcOpen, setNfcOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const downloadRef = useRef<HTMLDivElement>(null);
   const [qrUrls, setQrUrls] = useState<Record<string, string>>({});
@@ -728,6 +729,50 @@ function CardStack({
         </button>
       </div>
 
+      {/* NFC explanation */}
+      {current.hasNFC && (
+        <div className="max-w-xs rounded-xl border border-indigo-100 bg-indigo-50 text-xs overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setNfcOpen((o) => !o)}
+            className="flex w-full items-center justify-between px-3.5 py-3 text-left font-semibold text-indigo-800 hover:bg-indigo-100 transition-colors"
+          >
+            <span>⚡ Qu&apos;est-ce que le NFC ?</span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 flex-shrink-0 text-indigo-400 transition-transform duration-200 ${nfcOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {nfcOpen && (
+            <div className="px-3.5 pb-3.5 pt-0.5 flex flex-col gap-2">
+              <p className="leading-relaxed text-indigo-700">
+                Le <strong>NFC</strong> (Near Field Communication) permet à vos
+                clients d&apos;accéder à votre page en approchant simplement leur
+                smartphone de la carte — sans avoir à scanner de QR code. La
+                plupart des iPhones (depuis 2018) et Android le supportent
+                nativement. Résultat : zéro friction, expérience instantanée.
+              </p>
+              <p className="leading-relaxed text-indigo-700">
+                Vous souhaitez des cartes physiques avec{" "}
+                <strong>puce NFC intégrée</strong> ?{" "}
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("open-contact-form", {
+                        detail: { subject: "Cartes physiques NFC" },
+                      })
+                    )
+                  }
+                  className="font-semibold underline underline-offset-2 hover:text-indigo-900"
+                >
+                  Contactez-nous →
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Hidden high-resolution card for download (3× display size) */}
       <div
         style={{
@@ -794,6 +839,7 @@ export function PrintableCards({
     reviewsUrl,
     loyaltyUrl,
     logoB64,
+    appUrl,
   };
 
   return (

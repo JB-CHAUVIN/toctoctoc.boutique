@@ -35,7 +35,7 @@ function buildLetterHtml(
   business: BusinessInfo,
   appUrl: string,
   claimUrl: string | null,
-  claimQrDataUrl: string | null
+  claimQrDataUrl: string | null,
 ): string {
   const today = new Date().toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -59,7 +59,9 @@ function buildLetterHtml(
     .map((l) => `<div>${l}</div>`)
     .join("");
 
-  const claimSection = claimUrl && claimQrDataUrl ? `
+  const claimSection =
+    claimUrl && claimQrDataUrl
+      ? `
   <!-- CLAIM QR CODE -->
   <div class="claim-section">
     <div class="claim-title">📲 Presque rien à faire : prenez possession de votre espace en 2 minutes !</div>
@@ -82,7 +84,8 @@ function buildLetterHtml(
         </p>
       </div>
     </div>
-  </div>` : "";
+  </div>`
+      : "";
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -90,7 +93,7 @@ function buildLetterHtml(
 <meta charset="UTF-8" />
 <title>Lettre prospect — ${business.name}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -402,11 +405,23 @@ function buildLetterHtml(
     margin-bottom: 3mm;
   }
 
+  .signature-handwriting {
+    font-family: 'Great Vibes', cursive;
+    font-size: 16pt;
+    color: #312e81;
+    line-height: 1;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    margin: 3mm 0 1mm;
+    letter-spacing: 1px;
+    margin-left: 2mm;
+  }
+
   .signature-name {
-    font-size: 13pt;
-    font-weight: 700;
-    color: ${primary};
-    font-family: 'Playfair Display', serif;
+    font-size: 10pt;
+    font-weight: 600;
+    color: #334155;
+    letter-spacing: 0.3px;
   }
 
   .signature-role {
@@ -561,7 +576,9 @@ function buildLetterHtml(
   <!-- SIGNATURE -->
   <div class="signature">
     <div class="signature-text">Cordialement,</div>
-    <div class="signature-name">Jean-Baptiste CHAUVIN</div>
+    <div class="signature-handwriting">jbc</div>
+    <div class="signature-name">Jean-Baptiste CHAUVIN
+    </div>
     <div class="signature-role">Fondateur · TocTocToc.boutique</div>
     <div style="font-size:8pt; color:#94a3b8; margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
   </div>
@@ -577,7 +594,12 @@ function buildLetterHtml(
 </html>`;
 }
 
-export function ProspectLetterButton({ business, businessId, claimToken, appUrl }: Props) {
+export function ProspectLetterButton({
+  business,
+  businessId,
+  claimToken,
+  appUrl,
+}: Props) {
   const [loading, setLoading] = useState(false);
 
   async function handlePrint() {
@@ -589,9 +611,12 @@ export function ProspectLetterButton({ business, businessId, claimToken, appUrl 
 
       // Generate token if none exists
       if (!token) {
-        const res = await fetch(`/api/admin/businesses/${businessId}/claim-token`, {
-          method: "POST",
-        });
+        const res = await fetch(
+          `/api/admin/businesses/${businessId}/claim-token`,
+          {
+            method: "POST",
+          },
+        );
         const data = await res.json();
         if (data.success) token = data.token;
       }

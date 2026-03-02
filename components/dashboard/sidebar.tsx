@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -19,6 +20,9 @@ import {
   Plus,
   Lock,
   ShieldCheck,
+  CalendarDays,
+  Activity,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -47,35 +51,44 @@ interface SidebarProps {
 
 const VISIBLE_MODULES: ModuleType[] = ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"];
 
-const MODULE_NAV: Record<
-  string,
-  {
-    emoji: string;
-    label: string;
-    overviewHref?: (id: string) => string;
-    settingsHref: (id: string) => string;
-    extraLinks?: Array<{
-      label: string;
-      icon: React.ComponentType<{ className?: string }>;
-      href: (id: string) => string;
-    }>;
-  }
-> = {
+interface SubLink {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: (id: string) => string;
+}
+
+interface ModuleNavDef {
+  emoji: string;
+  label: string;
+  overviewLabel: string;
+  overviewIcon: React.ComponentType<{ className?: string }>;
+  overviewHref: (id: string) => string;
+  settingsHref: (id: string) => string;
+  extraLinks?: SubLink[];
+}
+
+const MODULE_NAV: Record<string, ModuleNavDef> = {
   SHOWCASE: {
     emoji: "🌐",
     label: "Site vitrine",
+    overviewLabel: "Blocs & contenu",
+    overviewIcon: Layers,
     overviewHref: (id) => `/dashboard/${id}/showcase`,
     settingsHref: (id) => `/dashboard/${id}/settings`,
   },
   BOOKING: {
     emoji: "📅",
     label: "Réservations",
+    overviewLabel: "Agenda",
+    overviewIcon: CalendarDays,
     overviewHref: (id) => `/dashboard/${id}/booking`,
     settingsHref: (id) => `/dashboard/${id}/booking/settings`,
   },
   REVIEWS: {
     emoji: "⭐",
     label: "Avis & Roulette",
+    overviewLabel: "Activité",
+    overviewIcon: Activity,
     overviewHref: (id) => `/dashboard/${id}/reviews`,
     settingsHref: (id) => `/dashboard/${id}/reviews/settings`,
     extraLinks: [
@@ -89,6 +102,8 @@ const MODULE_NAV: Record<
   LOYALTY: {
     emoji: "🎯",
     label: "Fidélité",
+    overviewLabel: "Cartes",
+    overviewIcon: Wallet,
     overviewHref: (id) => `/dashboard/${id}/loyalty`,
     settingsHref: (id) => `/dashboard/${id}/loyalty/settings`,
     extraLinks: [
@@ -103,8 +118,17 @@ const MODULE_NAV: Record<
 
 export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, isAdmin }: SidebarProps) {
   const pathname = usePathname();
-  // Dérive le businessId courant depuis l'URL (/dashboard/[businessId]/...)
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
+  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+
+  function toggleModule(moduleKey: string) {
+    setCollapsedModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(moduleKey)) next.delete(moduleKey);
+      else next.add(moduleKey);
+      return next;
+    });
+  }
 
   return (
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
@@ -230,48 +254,59 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                           const nav = MODULE_NAV[moduleKey];
                           if (!nav) return null;
 
-                          const hasOverview = !!nav.overviewHref;
+                          const overviewHref = nav.overviewHref(business.id);
                           const settingsHref = nav.settingsHref(business.id);
-                          const overviewHref = nav.overviewHref?.(business.id) ?? settingsHref;
+                          const extraHrefs = nav.extraLinks?.map((e) => e.href(business.id)) ?? [];
 
                           const onSettings = pathname.startsWith(settingsHref);
-                          const onOverview = hasOverview && pathname.startsWith(overviewHref) && !onSettings;
+                          const onExtra = extraHrefs.some((h) => pathname.startsWith(h));
+                          const onOverview = pathname.startsWith(overviewHref) && !onSettings && !onExtra;
+                          const onAny = onOverview || onSettings || onExtra;
+                          const isExpanded = onAny && !collapsedModules.has(moduleKey);
 
                           return (
                             <div key={moduleKey} className="mt-0.5">
-                              {/* Module link → overview (or settings for SHOWCASE) */}
-                              <Link
-                                href={hasOverview ? overviewHref : settingsHref}
-                                className={cn(
-                                  "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
-                                  onOverview
-                                    ? "bg-slate-700 text-white"
-                                    : !hasOverview && onSettings
-                                    ? "bg-indigo-600 text-white"
-                                    : hasOverview && onSettings
-                                    ? "bg-slate-800 text-slate-300"
-                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                                )}
-                              >
-                                <span className="text-sm leading-none">{nav.emoji}</span>
-                                <span className="flex-1">{nav.label}</span>
-                              </Link>
+                              {/* En-tête module — Link si inactif, bouton toggle si actif */}
+                              {onAny ? (
+                                <button
+                                  onClick={() => toggleModule(moduleKey)}
+                                  className="flex w-full items-center gap-2 rounded-lg bg-slate-800 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-slate-700"
+                                >
+                                  <span className="text-sm leading-none">{nav.emoji}</span>
+                                  <span className="flex-1 text-left">{nav.label}</span>
+                                  {isExpanded
+                                    ? <ChevronDown className="h-3 w-3 flex-shrink-0 text-slate-500" />
+                                    : <ChevronRight className="h-3 w-3 flex-shrink-0 text-slate-500" />
+                                  }
+                                </button>
+                              ) : (
+                                <Link
+                                  href={overviewHref}
+                                  className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                                >
+                                  <span className="text-sm leading-none">{nav.emoji}</span>
+                                  <span className="flex-1">{nav.label}</span>
+                                </Link>
+                              )}
 
-                              {/* Sub-links: Configurer + éventuels extras */}
-                              {hasOverview && (
-                                <>
+                              {/* Sous-liens */}
+                              {isExpanded && (
+                                <div className="ml-3 mt-0.5 border-l border-slate-700 pl-2">
+                                  {/* Aperçu */}
                                   <Link
-                                    href={settingsHref}
+                                    href={overviewHref}
                                     className={cn(
-                                      "ml-5 flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs transition-colors",
-                                      onSettings
-                                        ? "font-medium text-indigo-400"
+                                      "flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
+                                      onOverview
+                                        ? "font-semibold text-indigo-400"
                                         : "text-slate-500 hover:text-slate-300"
                                     )}
                                   >
-                                    <Settings className="h-3 w-3" />
-                                    Configurer
+                                    <nav.overviewIcon className="h-3 w-3 flex-shrink-0" />
+                                    {nav.overviewLabel}
                                   </Link>
+
+                                  {/* Liens supplémentaires */}
                                   {nav.extraLinks?.map((extra) => {
                                     const extraHref = extra.href(business.id);
                                     return (
@@ -279,18 +314,32 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                                         key={extra.label}
                                         href={extraHref}
                                         className={cn(
-                                          "ml-5 flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs transition-colors",
+                                          "flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
                                           pathname.startsWith(extraHref)
-                                            ? "font-medium text-indigo-400"
+                                            ? "font-semibold text-indigo-400"
                                             : "text-slate-500 hover:text-slate-300"
                                         )}
                                       >
-                                        <extra.icon className="h-3 w-3" />
+                                        <extra.icon className="h-3 w-3 flex-shrink-0" />
                                         {extra.label}
                                       </Link>
                                     );
                                   })}
-                                </>
+
+                                  {/* Configurer — toujours en dernier */}
+                                  <Link
+                                    href={settingsHref}
+                                    className={cn(
+                                      "flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
+                                      onSettings
+                                        ? "font-semibold text-indigo-400"
+                                        : "text-slate-500 hover:text-slate-300"
+                                    )}
+                                  >
+                                    <Settings className="h-3 w-3 flex-shrink-0" />
+                                    Configurer
+                                  </Link>
+                                </div>
                               )}
                             </div>
                           );
