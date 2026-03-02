@@ -138,7 +138,7 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
             <Image src="/logo.png" alt="TocTocToc.boutique" width={20} height={20} priority />
           </div>
-          <span className="truncate text-sm font-bold text-white">TocTocToc.boutique</span>
+          <span className="font-brand truncate text-sm font-bold text-white">TocTocToc.boutique</span>
           {isAdmin && (
             <span className="ml-auto flex flex-shrink-0 items-center gap-0.5 rounded-full bg-violet-700 px-2 py-0.5 text-[10px] font-bold text-white">
               <ShieldCheck className="h-2.5 w-2.5" />

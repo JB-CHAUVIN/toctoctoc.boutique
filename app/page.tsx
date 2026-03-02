@@ -78,7 +78,7 @@ export default function HomePage() {
               height={32}
               priority
             />
-            <span className="text-xl font-bold text-indigo-600">
+            <span className="font-brand text-xl font-bold text-indigo-600">
               TocTocToc.boutique
             </span>
           </Link>
@@ -127,6 +127,20 @@ export default function HomePage() {
           {/*>*/}
           {/*  Voir une démo*/}
           {/*</Link>*/}
+        </div>
+      </section>
+
+      {/* Promo video */}
+      <section className="mx-auto max-w-4xl px-6 pb-20">
+        <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-slate-200">
+          <video
+            src="/promo.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full"
+          />
         </div>
       </section>
 

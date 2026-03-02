@@ -162,7 +162,7 @@ export default function ContactPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/logo.png" alt="TocTocToc.boutique" width={28} height={28} />
-            <span className="text-base font-bold text-indigo-600">TocTocToc.boutique</span>
+            <span className="font-brand text-base font-bold text-indigo-600">TocTocToc.boutique</span>
           </Link>
           <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-700 transition">
             ← Tableau de bord

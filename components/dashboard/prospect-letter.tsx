@@ -93,7 +93,7 @@ function buildLetterHtml(
 <meta charset="UTF-8" />
 <title>Lettre prospect — ${business.name}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -140,7 +140,7 @@ function buildLetterHtml(
   .brand-name {
     font-size: 17pt;
     font-weight: 700;
-    font-family: 'Playfair Display', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     color: #4f46e5;
     letter-spacing: -0.3px;
   }
@@ -448,12 +448,12 @@ function buildLetterHtml(
   <div class="header">
     <div class="header-brand">
       <div class="brand-name">
-        <img src="${appUrl}/logo.png" alt="" style="height:22px;width:22px;vertical-align:middle;margin-right:5px;border-radius:5px;display:inline-block;" />TocTocToc.boutique
+        <img src="${appUrl}/logo.png" alt="" style="height:25px;width:25px;vertical-align:middle;margin-right:5px;border-radius:5px;display:inline-block;" />TocTocToc.boutique
       </div>
       <div class="brand-tagline">Digitalisation abordable pour les commerces locaux (avis, fidélité, site...)</div>
     </div>
     <div class="header-contact">
-      <div style="font-weight:700; color:#0f172a; font-size:9pt;">TocTocToc.boutique</div>
+      <div style="font-weight:700; color:#0f172a; font-size:9pt; font-family:'Plus Jakarta Sans', sans-serif;">TocTocToc.boutique</div>
       <div>contact@toctoctoc.boutique</div>
       <div>www.toctoctoc.boutique</div>
     </div>
