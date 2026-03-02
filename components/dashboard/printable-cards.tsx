@@ -115,9 +115,9 @@ function IconGift({
   );
 }
 
-function NfcPhoneIllustration({ scale = 1 }: { scale?: number }) {
+function NfcPhoneIllustration({ size = 52 }: { size?: number }) {
   return (
-    <svg width={52 * scale} height={52 * scale} viewBox="0 0 52 52" fill="none">
+    <svg width={size} height={size} viewBox="0 0 52 52" fill="none">
       {/* Phone body */}
       <rect
         x="13"
@@ -266,7 +266,7 @@ function PrintCard({
         padding: `${px(16)}px ${px(14)}px ${px(12)}px`,
         overflow: "hidden",
         position: "relative",
-        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+        fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif',
         ...style,
       }}
     >
@@ -348,21 +348,15 @@ function PrintCard({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          gap: px(8),
+          justifyContent: "flex-start",
+          gap: px(6),
           textAlign: "center",
-          padding: `${px(4)}px 0`,
+          padding: `${px(6)}px 0`,
         }}
       >
-        {isReviews ? (
-          <IconStar size={px(34)} color="#fff" />
-        ) : (
-          <IconLoyalty size={px(34)} color="#fff" />
-        )}
-
         <div
           style={{
-            fontSize: px(24),
+            fontSize: px(isSquare ? 26 : 30),
             fontWeight: 800,
             color: "#fff",
             lineHeight: 1.2,
@@ -444,7 +438,7 @@ function PrintCard({
               gap: px(2),
             }}
           >
-            <NfcPhoneIllustration scale={s} />
+            <NfcPhoneIllustration size={px(64)} />
             <span
               style={{
                 fontSize: px(7.5),
@@ -503,11 +497,14 @@ function PrintCard({
               fontSize: px(7.5),
               fontWeight: 700,
               color: "#64748b",
-              letterSpacing: 0.8,
-              textTransform: "uppercase",
+              letterSpacing: 0.2,
+              textAlign: "center",
+              lineHeight: 1.4,
             }}
           >
-            Scanner
+            SCANNER
+            <br />
+            avec votre appareil photo
           </span>
         </div>
       </div>

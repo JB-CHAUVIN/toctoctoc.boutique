@@ -93,14 +93,14 @@ function buildLetterHtml(
 <meta charset="UTF-8" />
 <title>Lettre prospect — ${business.name}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   @page { size: A4; margin: 0; }
 
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10.5pt;
     line-height: 1.65;
     color: #1e293b;
@@ -191,7 +191,7 @@ function buildLetterHtml(
     border-left: 4px solid ${primary};
     padding: 4mm 5mm;
     margin-bottom: 7mm;
-    font-family: 'Playfair Display', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 12pt;
     font-weight: 600;
     color: ${primary};
@@ -220,7 +220,7 @@ function buildLetterHtml(
   }
 
   .features-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10pt;
     font-weight: 600;
     letter-spacing: 0;
@@ -272,7 +272,7 @@ function buildLetterHtml(
   }
 
   .cards-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 11pt;
     font-weight: 600;
     letter-spacing: 0;
