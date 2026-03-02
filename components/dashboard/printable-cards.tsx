@@ -46,47 +46,6 @@ const DOWNLOAD_SCALE = 3;
 
 // ── Inline SVG icons (no emoji, consistent across OS) ────────────────────────
 
-function IconStar({
-  size = 36,
-  color = "#fff",
-}: {
-  size?: number;
-  color?: string;
-}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M12 2l2.83 5.73 6.32.92-4.57 4.45 1.08 6.28L12 16.52l-5.66 2.98 1.08-6.28L2.85 8.65l6.32-.92L12 2z" />
-    </svg>
-  );
-}
-
-function IconLoyalty({
-  size = 36,
-  color = "#fff",
-}: {
-  size?: number;
-  color?: string;
-}) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2" y="6" width="20" height="14" rx="3" />
-      <path d="M2 11h20" />
-      <circle cx="7.5" cy="16" r="1.2" fill={color} stroke="none" />
-      <circle cx="11.5" cy="16" r="1.2" fill={color} stroke="none" />
-      <circle cx="15.5" cy="16" r="1.2" fill={color} stroke="none" />
-      <path d="M8 6V4a4 4 0 018 0v2" />
-    </svg>
-  );
-}
 
 function IconGift({
   size = 14,
@@ -547,7 +506,6 @@ function CardStack({
   reviewsUrl,
   loyaltyUrl,
   logoB64,
-  appUrl,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -557,7 +515,6 @@ function CardStack({
   reviewsUrl: string;
   loyaltyUrl: string;
   logoB64?: string;
-  appUrl: string;
 }) {
   const [index, setIndex] = useState(0);
   const [sizeId, setSizeId] = useState<SizeId>("10x10");

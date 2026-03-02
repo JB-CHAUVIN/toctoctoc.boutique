@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
-import Link from "next/link";
 import { Plus, Save, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import type { ReviewConfig, Reward } from "@prisma/client";
 
