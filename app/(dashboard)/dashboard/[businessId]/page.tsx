@@ -181,7 +181,6 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
       {/* Impressions */}
       <PrintableCards
         businessName={business.name}
-        slug={business.slug}
         businessId={params.businessId}
         primaryColor={business.primaryColor}
         secondaryColor={business.secondaryColor}

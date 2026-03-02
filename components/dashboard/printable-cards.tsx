@@ -7,7 +7,6 @@ import { Download, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface Props {
   businessName: string;
-  slug: string;
   businessId: string;
   primaryColor: string;
   secondaryColor: string;
@@ -760,7 +759,6 @@ function CardStack({
 // ── Main export ───────────────────────────────────────────────────────────────
 export function PrintableCards({
   businessName,
-  slug: _slug,
   businessId,
   primaryColor,
   secondaryColor,
