@@ -435,7 +435,7 @@ function buildLetterHtml(
       <div class="brand-name">
         <img src="${appUrl}/logo.png" alt="" style="height:22px;width:22px;vertical-align:middle;margin-right:5px;border-radius:5px;display:inline-block;" />TocTocToc.boutique
       </div>
-      <div class="brand-tagline">La présence digitale simple &amp; abordable pour les commerces locaux</div>
+      <div class="brand-tagline">Digitalisation abordable pour les commerces locaux (avis, fidélité, site...)</div>
     </div>
     <div class="header-contact">
       <div style="font-weight:700; color:#0f172a; font-size:9pt;">TocTocToc.boutique</div>

@@ -110,18 +110,18 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
     <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-slate-800 bg-slate-900">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-slate-800 px-5">
-        <Link href="/dashboard" className="flex flex-1 items-center gap-2.5">
+        <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-2.5">
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white">
             <Image src="/logo.png" alt="TocTocToc.boutique" width={20} height={20} priority />
           </div>
-          <span className="text-sm font-bold text-white">TocTocToc.boutique</span>
+          <span className="truncate text-sm font-bold text-white">TocTocToc.boutique</span>
+          {isAdmin && (
+            <span className="ml-auto flex flex-shrink-0 items-center gap-0.5 rounded-full bg-violet-700 px-2 py-0.5 text-[10px] font-bold text-white">
+              <ShieldCheck className="h-2.5 w-2.5" />
+              ADMIN
+            </span>
+          )}
         </Link>
-        {isAdmin && (
-          <span className="ml-1 flex items-center gap-0.5 rounded-full bg-violet-700 px-2 py-0.5 text-[10px] font-bold text-white">
-            <ShieldCheck className="h-2.5 w-2.5" />
-            ADMIN
-          </span>
-        )}
       </div>
 
       {/* Navigation */}

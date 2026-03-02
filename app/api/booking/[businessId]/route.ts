@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addMinutes, format, parseISO, setHours, setMinutes, isBefore } from "date-fns";
+import { fr } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
 import type { TimeSlot } from "@/types";
+import { sendEmail } from "@/lib/email";
+import { BookingConfirmedEmail } from "@/emails/booking-confirmed";
 
 const createBookingSchema = z.object({
   serviceId: z.string().optional(),
@@ -175,8 +178,30 @@ export async function POST(req: Request, { params }: { params: { businessId: str
         endDate: bookingEnd,
         status: "PENDING",
       },
-      include: { service: true },
+      include: {
+        service: true,
+        business: { select: { name: true, slug: true, address: true, city: true } },
+      },
     });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toctoctoc.boutique";
+    const formattedDate = format(bookingDate, "EEEE d MMMM yyyy", { locale: fr });
+    const formattedTime = format(bookingDate, "HH:mm");
+    const address = [booking.business.address, booking.business.city].filter(Boolean).join(", ");
+
+    sendEmail({
+      to: customerEmail,
+      subject: `Réservation chez ${booking.business.name} — ${formattedDate}`,
+      template: BookingConfirmedEmail({
+        customerName,
+        businessName: booking.business.name,
+        serviceName: booking.service?.name,
+        date: formattedDate,
+        time: formattedTime,
+        address: address || null,
+        businessUrl: `${appUrl}/${booking.business.slug}`,
+      }),
+    }).catch((err) => console.error("[EMAIL_BOOKING]", err));
 
     return NextResponse.json({ success: true, data: booking }, { status: 201 });
   } catch (error) {

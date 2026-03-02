@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { sendEmail } from "@/lib/email";
+import { ClaimSuccessEmail } from "@/emails/claim-success";
 
 export async function POST(
   req: Request,
@@ -14,7 +16,7 @@ export async function POST(
 
   const business = await prisma.business.findUnique({
     where: { claimToken: params.token },
-    select: { id: true, claimedAt: true },
+    select: { id: true, name: true, claimedAt: true },
   });
 
   if (!business) {
@@ -57,6 +59,18 @@ export async function POST(
       },
     });
   });
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toctoctoc.boutique";
+  sendEmail({
+    to: email,
+    subject: `Votre espace "${business.name}" est activé !`,
+    template: ClaimSuccessEmail({
+      businessName: business.name,
+      email,
+      dashboardUrl: `${appUrl}/dashboard`,
+      upgradePlanUrl: `${appUrl}/dashboard/billing`,
+    }),
+  }).catch((err) => console.error("[EMAIL_CLAIM]", err));
 
   return NextResponse.json({ success: true });
 }

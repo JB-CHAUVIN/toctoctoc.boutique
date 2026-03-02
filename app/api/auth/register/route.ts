@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { WelcomeEmail } from "@/emails/welcome";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -46,6 +48,13 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toctoctoc.boutique";
+    sendEmail({
+      to: email,
+      subject: "Bienvenue sur TocTocToc.boutique !",
+      template: WelcomeEmail({ name, dashboardUrl: `${appUrl}/dashboard` }),
+    }).catch((err) => console.error("[EMAIL_WELCOME]", err));
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
