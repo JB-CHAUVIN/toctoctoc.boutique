@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { ContactNotificationEmail } from "@/emails/contact-notification";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 const schema = z.object({
   name: z.string().min(2).max(100),
@@ -17,7 +21,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
+    const { name, email, subject, message } = parsed.data;
+
     await prisma.contactRequest.create({ data: parsed.data });
+
+    const receivedAt = format(new Date(), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
+
+    sendEmail({
+      to: "contact@toctoctoc.boutique",
+      subject: `[Contact] ${subject ?? "Nouveau message"} — ${name}`,
+      template: ContactNotificationEmail({ senderName: name, senderEmail: email, subject, message, receivedAt }),
+    }).catch((err) => console.error("[EMAIL_CONTACT]", err));
 
     return NextResponse.json({ success: true });
   } catch {
