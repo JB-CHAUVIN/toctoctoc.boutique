@@ -8,6 +8,7 @@ import { Download, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 interface Props {
   businessName: string;
   slug: string;
+  businessId: string;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -199,9 +200,12 @@ function PrintCard({
   const isSquare = cardH <= cardW;
   const initial = businessName[0]?.toUpperCase() ?? "?";
   const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
-  // Scale factor relative to the base portrait card (220×330)
+  // s  : structural/vertical scale (height-limited in square format)
   const s = Math.min(cardW / 220, cardH / 330);
+  // sF : font & horizontal scale (width-limited only — prevents text overflow)
+  const sF = cardW / 220;
   const px = (n: number) => n * s;
+  const pf = (n: number) => n * sF;
 
   const boxStyle: React.CSSProperties = {
     flex: 1,
@@ -222,7 +226,7 @@ function PrintCard({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: `${px(16)}px ${px(14)}px ${px(12)}px`,
+        padding: `${px(16)}px ${pf(14)}px ${px(12)}px`,
         overflow: "hidden",
         position: "relative",
         fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif',
@@ -260,21 +264,21 @@ function PrintCard({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: px(6),
+          gap: pf(6),
           width: "100%",
           zIndex: 1,
         }}
       >
         <div
           style={{
-            width: px(28),
-            height: px(28),
-            borderRadius: px(7),
+            width: pf(28),
+            height: pf(28),
+            borderRadius: pf(7),
             background: accentColor,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: px(13),
+            fontSize: pf(13),
             fontWeight: 800,
             color: "#fff",
             flexShrink: 0,
@@ -284,7 +288,7 @@ function PrintCard({
         </div>
         <span
           style={{
-            fontSize: px(10),
+            fontSize: pf(10),
             fontWeight: 600,
             color: "rgba(255,255,255,0.75)",
             letterSpacing: 0.2,
@@ -304,10 +308,11 @@ function PrintCard({
           flex: 1,
           minHeight: 0,
           overflow: "hidden",
+          width: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "flex-start",
+          justifyContent: "center",
           gap: px(6),
           textAlign: "center",
           padding: `${px(6)}px 0`,
@@ -315,7 +320,7 @@ function PrintCard({
       >
         <div
           style={{
-            fontSize: px(isSquare ? 26 : 30),
+            fontSize: pf(22),
             fontWeight: 800,
             color: "#fff",
             lineHeight: 1.2,
@@ -342,17 +347,17 @@ function PrintCard({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: px(5),
+              gap: pf(5),
               background: accentColor,
-              borderRadius: px(20),
-              padding: `${px(5)}px ${px(11)}px`,
-              fontSize: px(9.5),
+              borderRadius: pf(20),
+              padding: `${px(5)}px ${pf(11)}px`,
+              fontSize: pf(9.5),
               fontWeight: 700,
               color: "#fff",
               boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
             }}
           >
-            <IconGift size={px(11)} color="#fff" />
+            <IconGift size={pf(11)} color="#fff" />
             {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
           </div>
         )}
@@ -361,7 +366,7 @@ function PrintCard({
         {!isSquare && (
           <div
             style={{
-              fontSize: px(9.5),
+              fontSize: pf(9.5),
               color: "rgba(255,255,255,0.65)",
               lineHeight: 1.45,
             }}
@@ -756,6 +761,7 @@ function CardStack({
 export function PrintableCards({
   businessName,
   slug,
+  businessId,
   primaryColor,
   secondaryColor,
   accentColor,
@@ -783,8 +789,8 @@ export function PrintableCards({
 
   if (!hasReviews && !hasLoyalty) return null;
 
-  const reviewsUrl = `${appUrl}/${slug}/avis`;
-  const loyaltyUrl = `${appUrl}/${slug}/fidelite`;
+  const reviewsUrl = `${appUrl}/${businessId}/avis`;
+  const loyaltyUrl = `${appUrl}/${businessId}/fidelite`;
   const shared = {
     businessName,
     primaryColor,

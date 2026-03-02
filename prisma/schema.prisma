@@ -160,8 +160,9 @@ model Business {
   deletedAt   DateTime?
 
   // Prise en main par le prospect
-  claimToken String?   @unique
-  claimedAt  DateTime?
+  claimToken   String?   @unique
+  claimedAt    DateTime?
+  prospectedAt DateTime?
 
   userId String
   user   User   @relation(fields: [userId], references: [id])

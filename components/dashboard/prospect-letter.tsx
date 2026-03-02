@@ -33,6 +33,7 @@ function hexToRgb(hex: string): string {
 
 function buildLetterHtml(
   business: BusinessInfo,
+  businessId: string,
   appUrl: string,
   claimUrl: string | null,
   claimQrDataUrl: string | null,
@@ -43,8 +44,8 @@ function buildLetterHtml(
     year: "numeric",
   });
 
-  const reviewUrl = `${appUrl}/${business.slug}/avis`;
-  const loyaltyUrl = `${appUrl}/${business.slug}/fidelite`;
+  const reviewUrl = `${appUrl}/${businessId}/avis`;
+  const loyaltyUrl = `${appUrl}/${businessId}/fidelite`;
   const siteUrl = `${appUrl}/${business.slug}`;
 
   const primary = business.primaryColor;
@@ -95,14 +96,14 @@ function buildLetterHtml(
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
 
   @page { size: A4; margin: 0; }
 
   body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10.5pt;
-    line-height: 1.65;
+    line-height: 1.55;
     color: #1e293b;
     background: white;
     width: 210mm;
@@ -126,9 +127,9 @@ function buildLetterHtml(
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 10mm;
+    padding-bottom: 7mm;
     border-bottom: 3px solid ${primary};
-    margin-bottom: 8mm;
+    margin-bottom: 5mm;
   }
 
   .header-brand {
@@ -163,7 +164,7 @@ function buildLetterHtml(
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 9mm;
+    margin-bottom: 6mm;
   }
 
   .recipient-address {
@@ -189,8 +190,8 @@ function buildLetterHtml(
   .subject-line {
     background: rgba(${primaryRgb}, 0.08);
     border-left: 4px solid ${primary};
-    padding: 4mm 5mm;
-    margin-bottom: 7mm;
+    padding: 3mm 5mm;
+    margin-bottom: 5mm;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 12pt;
     font-weight: 600;
@@ -212,11 +213,11 @@ function buildLetterHtml(
 
   /* ── FEATURES ── */
   .features {
-    margin: 5mm 0;
+    margin: 4mm 0;
     background: rgba(${primaryRgb}, 0.04);
     border: 1px solid rgba(${primaryRgb}, 0.18);
     border-radius: 6px;
-    padding: 4mm 6mm;
+    padding: 3mm 6mm;
   }
 
   .features-title {
@@ -542,6 +543,9 @@ function buildLetterHtml(
       </div>
     </div>
 
+    <!-- PAGE BREAK + marge haute page 2 -->
+    <div style="break-before:page;page-break-before:always;height:18mm;"></div>
+
     <!-- PRICE -->
     <div class="price-block">
       <div class="price-block-label">Le tarif le plus compétitif du marché</div>
@@ -630,13 +634,14 @@ export function ProspectLetterButton({
         });
       }
 
-      const html = buildLetterHtml(business, appUrl, claimUrl, claimQrDataUrl);
+      const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl);
       const win = window.open("", "_blank", "width=900,height=1100");
       if (!win) return;
       win.document.write(html);
       win.document.close();
       win.focus();
-      setTimeout(() => win.print(), 500);
+      // Attendre que les fonts Google soient chargées avant d'imprimer
+      win.document.fonts.ready.then(() => setTimeout(() => win.print(), 200));
     } finally {
       setLoading(false);
     }

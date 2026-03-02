@@ -10,8 +10,10 @@ import { formatDateTime } from "@/lib/utils";
 import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import { PublishToggle } from "@/components/dashboard/publish-toggle";
 import { PrintableCards } from "@/components/dashboard/printable-cards";
-import { ProspectLetterButton } from "@/components/dashboard/prospect-letter";
+import { SetupPanel } from "@/components/dashboard/setup-panel";
 import type { ModuleType } from "@prisma/client";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:2203";
 
 export async function generateMetadata({ params }: { params: { businessId: string } }) {
   const session = await auth();
@@ -52,6 +54,19 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
   const hasLoyalty = activeModules.some((m) => m.module === "LOYALTY");
   const hasReviews = activeModules.some((m) => m.module === "REVIEWS");
 
+  const businessInfo = {
+    name: business.name,
+    slug: business.slug,
+    businessType: business.businessType,
+    address: business.address,
+    city: business.city,
+    zipCode: business.zipCode,
+    phone: business.phone,
+    email: business.email,
+    primaryColor: business.primaryColor,
+    accentColor: business.accentColor,
+  };
+
   return (
     <div className="p-4 sm:p-8">
       {/* Header */}
@@ -82,27 +97,19 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           >
             Voir le site <ExternalLink className="h-3.5 w-3.5" />
           </Link>
-          {isAdmin && (
-            <ProspectLetterButton
-              business={{
-                name: business.name,
-                slug: business.slug,
-                businessType: business.businessType,
-                address: business.address,
-                city: business.city,
-                zipCode: business.zipCode,
-                phone: business.phone,
-                email: business.email,
-                primaryColor: business.primaryColor,
-                accentColor: business.accentColor,
-              }}
-              businessId={params.businessId}
-              claimToken={business.claimToken}
-              appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:2203"}
-            />
-          )}
         </div>
       </div>
+
+      {/* Setup Panel (admin only) */}
+      {isAdmin && (
+        <SetupPanel
+          businessId={params.businessId}
+          appUrl={APP_URL}
+          prospectedAt={business.prospectedAt}
+          business={businessInfo}
+          claimToken={business.claimToken}
+        />
+      )}
 
       {/* Stats */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -175,10 +182,11 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
       <PrintableCards
         businessName={business.name}
         slug={business.slug}
+        businessId={params.businessId}
         primaryColor={business.primaryColor}
         secondaryColor={business.secondaryColor}
         accentColor={business.accentColor}
-        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+        appUrl={APP_URL}
         hasReviews={hasReviews}
         hasLoyalty={hasLoyalty}
       />

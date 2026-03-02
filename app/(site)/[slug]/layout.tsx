@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site/site-nav";
@@ -38,8 +39,19 @@ export default async function SiteLayout({
   children: React.ReactNode;
   params: { slug: string };
 }) {
-  const business = await getBusiness(params.slug);
-  if (!business) notFound();
+  let business = await getBusiness(params.slug);
+  if (!business) {
+    // Fallback: params.slug might be a businessId (CUID) from a printed QR code
+    const byId = await prisma.business.findUnique({
+      where: { id: params.slug },
+      select: { slug: true },
+    });
+    if (byId) {
+      const pathname = headers().get("x-pathname") ?? `/${params.slug}`;
+      redirect(pathname.replace(`/${params.slug}`, `/${byId.slug}`));
+    }
+    notFound();
+  }
 
   const isFree = !business.user.subscription || business.user.subscription.plan === "FREE";
 

@@ -48,7 +48,7 @@ export default async function DashboardLayout({
         <div className="flex h-14 flex-shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 md:hidden">
           <MobileMenuButton />
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900">
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
               <Image src="/logo.png" alt="TocTocToc.boutique" width={20} height={20} priority />
             </div>
             <span className="font-brand text-sm font-bold text-slate-900">TocTocToc.boutique</span>
