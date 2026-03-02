@@ -107,16 +107,18 @@ function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-4 rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-500">
-        <strong>Compte démo :</strong> test@localsaas.fr / password123
-        <button
-          type="button"
-          onClick={() => { setEmail("test@localsaas.fr"); setPassword("password123"); }}
-          className="ml-2 rounded-lg bg-indigo-100 px-2 py-0.5 font-medium text-indigo-600 hover:bg-indigo-200 transition"
-        >
-          Auto-fill
-        </button>
-      </div>
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-4 rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-500">
+          <strong>Compte démo :</strong> test@localsaas.fr / password123
+          <button
+            type="button"
+            onClick={() => { setEmail("test@localsaas.fr"); setPassword("password123"); }}
+            className="ml-2 rounded-lg bg-indigo-100 px-2 py-0.5 font-medium text-indigo-600 hover:bg-indigo-200 transition"
+          >
+            Auto-fill
+          </button>
+        </div>
+      )}
 
       <p className="mt-6 text-center text-sm text-slate-500">
         Pas encore de compte ?{" "}
