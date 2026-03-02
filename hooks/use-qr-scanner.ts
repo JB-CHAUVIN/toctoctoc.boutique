@@ -41,9 +41,10 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } },
       });
+      // videoRef est toujours dans le DOM (caché) — on peut attacher le stream avant d'afficher
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        try { await videoRef.current.play(); } catch { /* autoPlay attribute handles it */ }
       }
       streamRef.current = stream;
       scanningRef.current = true;

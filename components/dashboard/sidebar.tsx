@@ -23,7 +23,6 @@ import {
   CalendarDays,
   Activity,
   Wallet,
-  Menu,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -127,6 +126,13 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
   // Fermer le drawer à chaque navigation
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
+  // Écouter l'événement depuis le bouton de la topbar mobile
+  useEffect(() => {
+    const handler = () => setMobileOpen(true);
+    window.addEventListener("sidebar:open", handler);
+    return () => window.removeEventListener("sidebar:open", handler);
+  }, []);
+
   function toggleModule(moduleKey: string) {
     setCollapsedModules((prev) => {
       const next = new Set(prev);
@@ -138,15 +144,6 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
 
   return (
     <>
-      {/* Bouton hamburger mobile */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="fixed left-4 top-3.5 z-40 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shadow-md md:hidden"
-        aria-label="Ouvrir le menu"
-      >
-        <Menu className="h-4 w-4" />
-      </button>
-
       {/* Backdrop mobile */}
       {mobileOpen && (
         <div
