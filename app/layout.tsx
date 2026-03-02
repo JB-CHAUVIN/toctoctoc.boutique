@@ -35,13 +35,49 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ContactButton />
         <Toaster
           position="top-right"
+          gutter={10}
           toastOptions={{
             duration: 4000,
             style: {
-              background: "#1e293b",
-              color: "#f8fafc",
-              borderRadius: "12px",
+              background: "#ffffff",
+              color: "#0f172a",
+              borderRadius: "14px",
               fontSize: "14px",
+              fontWeight: 500,
+              padding: "14px 16px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)",
+              border: "1px solid rgba(0,0,0,0.07)",
+              maxWidth: "380px",
+              fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+            },
+            success: {
+              duration: 3500,
+              style: {
+                borderLeft: "4px solid #22c55e",
+              },
+              iconTheme: {
+                primary: "#22c55e",
+                secondary: "#ffffff",
+              },
+            },
+            error: {
+              duration: 5000,
+              style: {
+                borderLeft: "4px solid #ef4444",
+              },
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#ffffff",
+              },
+            },
+            loading: {
+              style: {
+                borderLeft: "4px solid #6366f1",
+              },
+              iconTheme: {
+                primary: "#6366f1",
+                secondary: "#ffffff",
+              },
             },
           }}
         />
