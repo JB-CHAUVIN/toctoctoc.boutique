@@ -15,7 +15,7 @@ export async function POST(
   }
 
   const business = await prisma.business.findUnique({
-    where: { claimToken: params.token },
+    where: { claimToken: params.token, deletedAt: null },
     select: { id: true, name: true, claimedAt: true, promoCode: true },
   });
 

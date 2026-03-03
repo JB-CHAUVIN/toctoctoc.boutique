@@ -92,10 +92,17 @@ export async function DELETE(req: Request, { params }: { params: { businessId: s
   const business = await getOwnedBusiness(params.businessId, session.user.id);
   if (!business) return NextResponse.json({ error: "Commerce introuvable" }, { status: 404 });
 
-  await prisma.business.update({
-    where: { id: params.businessId },
-    data: { deletedAt: new Date(), isPublished: false },
-  });
+  await prisma.$transaction([
+    prisma.business.update({
+      where: { id: params.businessId },
+      data: { deletedAt: new Date(), isPublished: false, claimToken: null },
+    }),
+    // Réinitialiser les leads de prospection liés à ce commerce
+    prisma.prospectLead.updateMany({
+      where: { businessId: params.businessId },
+      data: { businessId: null, status: "DISCOVERED" },
+    }),
+  ]);
 
   return NextResponse.json({ success: true });
 }

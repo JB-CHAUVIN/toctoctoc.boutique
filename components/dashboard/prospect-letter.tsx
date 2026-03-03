@@ -110,7 +110,7 @@ function buildLetterHtml(
     color: #1e293b;
     background: white;
     width: 210mm;
-    min-height: 297mm;
+    margin: 0;
   }
 
   @media print {
@@ -119,7 +119,7 @@ function buildLetterHtml(
 
   .page {
     width: 210mm;
-    min-height: 297mm;
+    height: 297mm;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -622,12 +622,25 @@ function buildLetterHtml(
         </div>
       </div>
 
-      <!-- PAGE BREAK -->
-      <div style="break-before:page;page-break-before:always;height:8mm;"></div>
+    </div>
 
-      <!-- BACKGROUND BUBBLES (page 2) -->
-      <div class="bubble" style="width:90mm;height:90mm;background:rgba(${primaryRgb},0.04);top:0;right:-20mm;"></div>
-      <div class="bubble" style="width:55mm;height:55mm;background:rgba(${primaryRgb},0.03);bottom:40mm;left:-15mm;"></div>
+    <!-- FOOTER (page 1) -->
+    <div class="footer" style="margin-top:auto;">
+      <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
+      <span>Document personnalisé pour ${business.name} — page 1/2</span>
+    </div>
+
+  </div><!-- /inner -->
+</div><!-- /page 1 -->
+
+<!-- ═══════════════ PAGE 2 ═══════════════ -->
+<div class="page">
+
+  <!-- BACKGROUND BUBBLES (page 2) -->
+  <div class="bubble" style="width:90mm;height:90mm;background:rgba(${primaryRgb},0.04);top:0;right:-20mm;"></div>
+  <div class="bubble" style="width:55mm;height:55mm;background:rgba(${primaryRgb},0.03);bottom:40mm;left:-15mm;"></div>
+
+  <div class="inner">
 
       <!-- PRICE BLOCK -->
       <div class="price-block">
@@ -694,7 +707,6 @@ function buildLetterHtml(
         N'hésitez pas à me contacter pour toute question ou pour activer votre abonnement en quelques clics.
         Je reste à votre disposition.
       </p>
-    </div>
 
     <!-- SIGNATURE -->
     <div class="signature">
@@ -705,14 +717,14 @@ function buildLetterHtml(
       <div style="font-size:8pt;color:#94a3b8;margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- FOOTER (page 2) -->
     <div class="footer">
       <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
-      <span>Document personnalisé pour ${business.name}</span>
+      <span>Document personnalisé pour ${business.name} — page 2/2</span>
     </div>
 
   </div><!-- /inner -->
-</div><!-- /page -->
+</div><!-- /page 2 -->
 </body>
 </html>`;
 }
