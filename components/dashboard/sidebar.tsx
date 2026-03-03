@@ -24,6 +24,7 @@ import {
   Activity,
   Wallet,
   X,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -38,6 +39,8 @@ interface BusinessNav {
   name: string;
   slug: string;
   primaryColor: string;
+  logoUrl: string | null;
+  logoBackground: string | null;
   modules: BusinessModule[];
   user: { name: string | null; email: string };
 }
@@ -64,7 +67,7 @@ interface ModuleNavDef {
   overviewLabel: string;
   overviewIcon: React.ComponentType<{ className?: string }>;
   overviewHref: (id: string) => string;
-  settingsHref: (id: string) => string;
+  settingsHref?: (id: string) => string;
   extraLinks?: SubLink[];
 }
 
@@ -75,7 +78,7 @@ const MODULE_NAV: Record<string, ModuleNavDef> = {
     overviewLabel: "Blocs & contenu",
     overviewIcon: Layers,
     overviewHref: (id) => `/dashboard/${id}/showcase`,
-    settingsHref: (id) => `/dashboard/${id}/settings`,
+    // settingsHref absent : géré via "Informations" dans la nav principale
   },
   BOOKING: {
     emoji: "📅",
@@ -212,12 +215,21 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                     isCurrent ? "text-white" : "text-slate-400 hover:text-white"
                   )}
                 >
-                  <div
-                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-xs font-bold text-white"
-                    style={{ backgroundColor: business.primaryColor }}
-                  >
-                    {business.name[0].toUpperCase()}
-                  </div>
+                  {business.logoUrl ? (
+                    <img
+                      src={business.logoUrl}
+                      alt={business.name}
+                      className="h-6 w-6 flex-shrink-0 rounded object-contain p-0.5"
+                      style={business.logoBackground ? { backgroundColor: business.logoBackground } : { backgroundColor: business.primaryColor }}
+                    />
+                  ) : (
+                    <div
+                      className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-xs font-bold text-white"
+                      style={{ backgroundColor: business.primaryColor }}
+                    >
+                      {business.name[0].toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <span className="block truncate text-sm font-semibold">{business.name}</span>
                     {isAdmin && (
@@ -248,6 +260,20 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                     >
                       <LayoutDashboard className="h-3.5 w-3.5" />
                       {"Vue d'ensemble"}
+                    </Link>
+
+                    {/* Informations */}
+                    <Link
+                      href={`/dashboard/${business.id}/info`}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                        pathname === `/dashboard/${business.id}/info`
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                      )}
+                    >
+                      <Info className="h-3.5 w-3.5" />
+                      Informations
                     </Link>
 
                     {/* Modules */}
@@ -290,10 +316,10 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                           if (!nav) return null;
 
                           const overviewHref = nav.overviewHref(business.id);
-                          const settingsHref = nav.settingsHref(business.id);
+                          const settingsHref = nav.settingsHref?.(business.id);
                           const extraHrefs = nav.extraLinks?.map((e) => e.href(business.id)) ?? [];
 
-                          const onSettings = pathname.startsWith(settingsHref);
+                          const onSettings = settingsHref ? pathname.startsWith(settingsHref) : false;
                           const onExtra = extraHrefs.some((h) => pathname.startsWith(h));
                           const onOverview = pathname.startsWith(overviewHref) && !onSettings && !onExtra;
                           const onAny = onOverview || onSettings || onExtra;
@@ -361,19 +387,21 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                                     );
                                   })}
 
-                                  {/* Configurer — toujours en dernier */}
-                                  <Link
-                                    href={settingsHref}
-                                    className={cn(
-                                      "flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
-                                      onSettings
-                                        ? "font-semibold text-indigo-400"
-                                        : "text-slate-500 hover:text-slate-300"
-                                    )}
-                                  >
-                                    <Settings className="h-3 w-3 flex-shrink-0" />
-                                    Configurer
-                                  </Link>
+                                  {/* Configurer — uniquement si settingsHref défini */}
+                                  {settingsHref && (
+                                    <Link
+                                      href={settingsHref}
+                                      className={cn(
+                                        "flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
+                                        onSettings
+                                          ? "font-semibold text-indigo-400"
+                                          : "text-slate-500 hover:text-slate-300"
+                                      )}
+                                    >
+                                      <Settings className="h-3 w-3 flex-shrink-0" />
+                                      Configurer
+                                    </Link>
+                                  )}
                                 </div>
                               )}
                             </div>

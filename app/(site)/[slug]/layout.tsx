@@ -4,6 +4,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { SiteNav } from "@/components/site/site-nav";
 import { FreeDemoBadge } from "@/components/site/free-demo-badge";
+import { GOOGLE_FONTS } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -54,9 +55,21 @@ export default async function SiteLayout({
   }
 
   const isFree = !business.user.subscription || business.user.subscription.plan === "FREE";
+  const fontFamily = business.fontFamily || "Plus Jakarta Sans";
+  const googleFontParam = GOOGLE_FONTS[fontFamily];
 
   return (
-    <div style={{ fontFamily: business.fontFamily }}>
+    <div style={{ fontFamily: `"${fontFamily}", system-ui, sans-serif` }}>
+      {googleFontParam && (
+        <>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link
+            href={`https://fonts.googleapis.com/css2?family=${googleFontParam}&display=swap`}
+            rel="stylesheet"
+          />
+        </>
+      )}
       <SiteNav business={business} />
       {isFree && <FreeDemoBadge />}
       <main>{children}</main>

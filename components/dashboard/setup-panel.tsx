@@ -15,6 +15,8 @@ interface BusinessInfo {
   email: string | null;
   primaryColor: string;
   accentColor: string;
+  logoUrl?: string | null;
+  logoBackground?: string | null;
 }
 
 interface Props {

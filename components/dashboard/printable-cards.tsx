@@ -4,6 +4,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
 import { Download, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { contrastColor, safeGradientEnd } from "@/lib/utils";
 
 interface Props {
   businessName: string;
@@ -11,6 +12,8 @@ interface Props {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  logoUrl?: string | null;
+  logoBackground?: string | null;
   appUrl: string;
   hasReviews: boolean;
   hasLoyalty: boolean;
@@ -180,6 +183,9 @@ function PrintCard({
   accentColor,
   qrDataUrl,
   logoB64,
+  businessLogoB64,
+  businessLogoUrl,
+  logoBackground,
   style,
   cardW = 220,
   cardH = 330,
@@ -191,6 +197,9 @@ function PrintCard({
   accentColor: string;
   qrDataUrl: string;
   logoB64?: string;
+  businessLogoB64?: string;
+  businessLogoUrl?: string;
+  logoBackground?: string;
   style?: React.CSSProperties;
   cardW?: number;
   cardH?: number;
@@ -198,7 +207,8 @@ function PrintCard({
   const isReviews = card.type === "reviews";
   const isSquare = cardH <= cardW;
   const initial = businessName[0]?.toUpperCase() ?? "?";
-  const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+  const gradientEnd = safeGradientEnd(primaryColor, secondaryColor);
+  const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${gradientEnd} 100%)`;
   // s  : structural/vertical scale (height-limited in square format)
   const s = Math.min(cardW / 220, cardH / 330);
   // sF : font & horizontal scale (width-limited only — prevents text overflow)
@@ -268,23 +278,39 @@ function PrintCard({
           zIndex: 1,
         }}
       >
-        <div
-          style={{
-            width: pf(28),
-            height: pf(28),
-            borderRadius: pf(7),
-            background: accentColor,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: pf(13),
-            fontWeight: 800,
-            color: "#fff",
-            flexShrink: 0,
-          }}
-        >
-          {initial}
-        </div>
+        {(businessLogoB64 || businessLogoUrl) ? (
+          <img
+            src={businessLogoB64 || businessLogoUrl}
+            alt=""
+            style={{
+              width: pf(28),
+              height: pf(28),
+              borderRadius: pf(7),
+              objectFit: "contain",
+              background: logoBackground || accentColor,
+              padding: pf(2),
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: pf(28),
+              height: pf(28),
+              borderRadius: pf(7),
+              background: accentColor,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: pf(13),
+              fontWeight: 800,
+              color: contrastColor(accentColor),
+              flexShrink: 0,
+            }}
+          >
+            {initial}
+          </div>
+        )}
         <span
           style={{
             fontSize: pf(10),
@@ -352,11 +378,11 @@ function PrintCard({
               padding: `${px(5)}px ${pf(11)}px`,
               fontSize: pf(9.5),
               fontWeight: 700,
-              color: "#fff",
+              color: contrastColor(accentColor),
               boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
             }}
           >
-            <IconGift size={pf(11)} color="#fff" />
+            <IconGift size={pf(11)} color={contrastColor(accentColor)} />
             {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
           </div>
         )}
@@ -510,6 +536,9 @@ function CardStack({
   reviewsUrl,
   loyaltyUrl,
   logoB64,
+  businessLogoB64,
+  businessLogoUrl,
+  logoBackground,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -519,6 +548,9 @@ function CardStack({
   reviewsUrl: string;
   loyaltyUrl: string;
   logoB64?: string;
+  businessLogoB64?: string;
+  businessLogoUrl?: string;
+  logoBackground?: string;
 }) {
   const [index, setIndex] = useState(0);
   const [sizeId, setSizeId] = useState<SizeId>("10x10");
@@ -574,6 +606,9 @@ function CardStack({
     secondaryColor,
     accentColor,
     logoB64,
+    businessLogoB64,
+    businessLogoUrl,
+    logoBackground,
     cardW,
     cardH,
   };
@@ -763,13 +798,16 @@ export function PrintableCards({
   primaryColor,
   secondaryColor,
   accentColor,
+  logoUrl,
+  logoBackground,
   appUrl,
   hasReviews,
   hasLoyalty,
 }: Props) {
   const [logoB64, setLogoB64] = useState<string | undefined>();
+  const [businessLogoB64, setBusinessLogoB64] = useState<string | undefined>();
 
-  // Load logo as base64 so html-to-image can embed it
+  // Load TocTocToc logo as base64 so html-to-image can embed it
   useEffect(() => {
     fetch("/logo.png")
       .then((r) => r.blob())
@@ -785,6 +823,23 @@ export function PrintableCards({
       .catch(() => {});
   }, []);
 
+  // Load business logo as base64 for card header
+  useEffect(() => {
+    if (!logoUrl) return;
+    fetch(logoUrl)
+      .then((r) => r.blob())
+      .then(
+        (blob) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          }),
+      )
+      .then(setBusinessLogoB64)
+      .catch(() => {});
+  }, [logoUrl]);
+
   if (!hasReviews && !hasLoyalty) return null;
 
   const reviewsUrl = `${appUrl}/${businessId}/avis`;
@@ -797,6 +852,9 @@ export function PrintableCards({
     reviewsUrl,
     loyaltyUrl,
     logoB64,
+    businessLogoB64,
+    businessLogoUrl: logoUrl ?? undefined,
+    logoBackground: logoBackground ?? undefined,
     appUrl,
   };
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Phone } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, contrastColor } from "@/lib/utils";
 import type { Business, BusinessModule } from "@prisma/client";
 import type { ModuleType } from "@prisma/client";
 
@@ -40,7 +40,16 @@ export function SiteNav({ business }: SiteNavProps) {
         {/* Logo / Nom */}
         <Link href={`/${business.slug}`} className="flex items-center gap-3">
           {business.logoUrl ? (
-            <img src={business.logoUrl} alt={business.name} className="h-10 w-10 rounded-xl object-cover" />
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-xl p-1"
+              style={{ backgroundColor: business.logoBackground || business.primaryColor }}
+            >
+              <img
+                src={business.logoUrl}
+                alt={business.name}
+                className="h-full w-full rounded-lg object-contain"
+              />
+            </div>
           ) : (
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white"
@@ -62,9 +71,9 @@ export function SiteNav({ business }: SiteNavProps) {
               href={link.href}
               className={cn(
                 "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                pathname === link.href ? "text-white" : "text-slate-600 hover:text-slate-900"
+                pathname !== link.href && "text-slate-600 hover:text-slate-900"
               )}
-              style={pathname === link.href ? { backgroundColor: business.primaryColor } : undefined}
+              style={pathname === link.href ? { backgroundColor: business.primaryColor, color: contrastColor(business.primaryColor) } : undefined}
             >
               {link.label}
             </Link>
@@ -103,9 +112,9 @@ export function SiteNav({ business }: SiteNavProps) {
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "rounded-xl px-4 py-3 text-sm font-medium",
-                  pathname === link.href ? "text-white" : "text-slate-700 hover:bg-slate-50"
+                  pathname !== link.href && "text-slate-700 hover:bg-slate-50"
                 )}
-                style={pathname === link.href ? { backgroundColor: business.primaryColor } : undefined}
+                style={pathname === link.href ? { backgroundColor: business.primaryColor, color: contrastColor(business.primaryColor) } : undefined}
               >
                 {link.label}
               </Link>

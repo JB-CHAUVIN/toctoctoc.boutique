@@ -23,6 +23,8 @@ const updateSchema = z.object({
   instagramUrl: z.string().optional(),
   googleMapsUrl: z.string().optional(),
   isPublished: z.boolean().optional(),
+  logoUrl: z.string().optional(),
+  logoBackground: z.string().optional(),
 });
 
 async function getOwnedBusiness(businessId: string, userId: string) {

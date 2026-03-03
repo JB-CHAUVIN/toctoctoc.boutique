@@ -99,3 +99,58 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + "...";
 }
+
+// ── Color helpers ────────────────────────────────────────────────────────────
+
+/** Hex → { r, g, b } */
+export function parseHex(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  };
+}
+
+/** Luminance relative (0 = noir, 1 = blanc) */
+export function luminance(hex: string): number {
+  const { r, g, b } = parseHex(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/** Retourne "#ffffff" ou "#1e293b" selon le contraste optimal sur un fond donné */
+export function contrastColor(bgHex: string): string {
+  try {
+    return luminance(bgHex) > 0.55 ? "#1e293b" : "#ffffff";
+  } catch {
+    return "#ffffff";
+  }
+}
+
+/** Hex → "r, g, b" pour usage dans rgba() */
+export function hexToRgb(hex: string): string {
+  const { r, g, b } = parseHex(hex);
+  return `${r}, ${g}, ${b}`;
+}
+
+/** Couleur de fond opposée pour un logo (fond sombre si logo clair, fond clair si logo sombre) */
+export function logoBackgroundColor(dominantHex: string): string {
+  return luminance(dominantHex) > 0.55 ? "#1e293b" : "#f8fafc";
+}
+
+/** Assombrit une couleur hex d'un facteur (0-1, ex: 0.6 = 60% de la luminosité) */
+export function darken(hex: string, factor: number): string {
+  const { r, g, b } = parseHex(hex);
+  const f = Math.max(0, Math.min(1, factor));
+  return (
+    "#" +
+    [Math.round(r * f), Math.round(g * f), Math.round(b * f)]
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+/** Retourne une secondaryColor garantie sombre pour les gradients (cards, etc.) */
+export function safeGradientEnd(primaryHex: string, secondaryHex: string): string {
+  return luminance(secondaryHex) > 0.45 ? darken(primaryHex, 0.55) : secondaryHex;
+}

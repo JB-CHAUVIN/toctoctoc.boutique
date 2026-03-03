@@ -28,6 +28,7 @@ export default async function DashboardLayout({
     where: isAdmin ? { deletedAt: null } : { userId: session.user.id, deletedAt: null },
     select: {
       id: true, name: true, slug: true, primaryColor: true,
+      logoUrl: true, logoBackground: true,
       modules: { select: { module: true, isActive: true } },
       user: { select: { name: true, email: true } },
     },

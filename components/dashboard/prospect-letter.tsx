@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import QRCode from "qrcode";
+import { hexToRgb } from "@/lib/utils";
 
 interface BusinessInfo {
   name: string;
@@ -15,6 +16,8 @@ interface BusinessInfo {
   email: string | null;
   primaryColor: string;
   accentColor: string;
+  logoUrl?: string | null;
+  logoBackground?: string | null;
 }
 
 interface Props {
@@ -22,13 +25,6 @@ interface Props {
   businessId: string;
   claimToken: string | null;
   appUrl: string;
-}
-
-function hexToRgb(hex: string): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `${r}, ${g}, ${b}`;
 }
 
 function buildLetterHtml(
@@ -44,13 +40,21 @@ function buildLetterHtml(
     year: "numeric",
   });
 
-  const reviewUrl = `${appUrl}/${businessId}/avis`;
-  const loyaltyUrl = `${appUrl}/${businessId}/fidelite`;
-  const siteUrl = `${appUrl}/${business.slug}`;
 
-  const primary = business.primaryColor;
-  const accent = business.accentColor;
+  const primary    = business.primaryColor;
+  const accent     = business.accentColor;
   const primaryRgb = hexToRgb(primary);
+
+  // Logo absolute URL (new window needs absolute paths)
+  const logoAbsUrl = business.logoUrl
+    ? (business.logoUrl.startsWith("http") ? business.logoUrl : `${appUrl}${business.logoUrl}`)
+    : null;
+  const logoBg = business.logoBackground || "transparent";
+
+  // Business avatar in header (logo img or letter initial)
+  const businessAvatar = logoAbsUrl
+    ? `<img src="${logoAbsUrl}" alt="${business.name}" style="width:52px;height:52px;object-fit:contain;border-radius:10px;background:${logoBg};padding:4px;flex-shrink:0;display:block;" />`
+    : `<div style="width:52px;height:52px;border-radius:10px;background:${accent};display:flex;align-items:center;justify-content:center;font-size:22pt;font-weight:800;color:#fff;flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;">${business.name[0]?.toUpperCase() ?? "?"}</div>`;
 
   const addressLines = [
     business.address,
@@ -63,7 +67,6 @@ function buildLetterHtml(
   const claimSection =
     claimUrl && claimQrDataUrl
       ? `
-  <!-- CLAIM QR CODE -->
   <div class="claim-section">
     <div class="claim-title">📲 Presque rien à faire : prenez possession de votre espace en 2 minutes !</div>
     <div class="claim-body">
@@ -117,54 +120,91 @@ function buildLetterHtml(
   .page {
     width: 210mm;
     min-height: 297mm;
-    padding: 18mm 20mm 16mm 20mm;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
   }
 
-  /* ── HEADER ── */
-  .header {
+  /* ── DECORATIVE BUBBLES (background) ── */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HERO BANNER ── */
+  .hero {
+    background: linear-gradient(135deg, ${primary} 0%, ${accent} 100%);
+    padding: 8mm 20mm 7mm 20mm;
+    position: relative;
+    overflow: hidden;
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 7mm;
-    border-bottom: 3px solid ${primary};
-    margin-bottom: 5mm;
+    gap: 5mm;
   }
 
-  .header-brand {
+  .hero-left {
     display: flex;
-    flex-direction: column;
-    gap: 3px;
+    align-items: center;
+    gap: 4mm;
+    z-index: 1;
   }
 
-  .brand-name {
-    font-size: 17pt;
-    font-weight: 700;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: #4f46e5;
+  .hero-business-name {
+    font-size: 18pt;
+    font-weight: 800;
+    color: #fff;
     letter-spacing: -0.3px;
+    line-height: 1.15;
   }
 
-  .brand-tagline {
-    font-size: 8.5pt;
-    color: #64748b;
-    font-style: italic;
+  .hero-type {
+    font-size: 9.5pt;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    margin-top: 1mm;
   }
 
-  .header-contact {
+  .hero-right {
+    z-index: 1;
     text-align: right;
-    font-size: 8.5pt;
-    color: #475569;
-    line-height: 1.6;
+    flex-shrink: 0;
   }
 
-  /* ── RECIPIENT BLOCK ── */
-  .recipient-block {
+  .hero-brand {
+    font-size: 9pt;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.2px;
+  }
+
+  .hero-tagline {
+    font-size: 7.5pt;
+    color: rgba(255,255,255,0.6);
+    margin-top: 0.5mm;
+  }
+
+  /* ── INNER CONTENT ── */
+  .inner {
+    padding: 6mm 20mm 16mm 20mm;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER (from / to) ── */
+  .meta-bar {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 6mm;
+    padding-bottom: 5mm;
+    border-bottom: 2px solid ${primary};
+    margin-bottom: 5mm;
   }
 
   .recipient-address {
@@ -183,7 +223,15 @@ function buildLetterHtml(
     font-size: 9.5pt;
     color: #64748b;
     text-align: right;
-    padding-top: 2mm;
+    padding-top: 1mm;
+  }
+
+  .sender-info {
+    font-size: 8pt;
+    color: #64748b;
+    text-align: right;
+    margin-top: 2mm;
+    line-height: 1.6;
   }
 
   /* ── SUBJECT ── */
@@ -192,7 +240,6 @@ function buildLetterHtml(
     border-left: 4px solid ${primary};
     padding: 3mm 5mm;
     margin-bottom: 5mm;
-    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 12pt;
     font-weight: 600;
     color: ${primary};
@@ -216,15 +263,13 @@ function buildLetterHtml(
     margin: 4mm 0;
     background: rgba(${primaryRgb}, 0.04);
     border: 1px solid rgba(${primaryRgb}, 0.18);
-    border-radius: 6px;
-    padding: 3mm 6mm;
+    border-radius: 8px;
+    padding: 4mm 6mm;
   }
 
   .features-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 10pt;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 700;
     color: ${primary};
     margin-bottom: 3mm;
   }
@@ -268,15 +313,13 @@ function buildLetterHtml(
   .cards-section {
     margin: 5mm 0;
     border: 1.5px dashed rgba(${primaryRgb}, 0.35);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 4mm 6mm;
   }
 
   .cards-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: 11pt;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 700;
     color: ${primary};
     margin-bottom: 2.5mm;
   }
@@ -296,66 +339,96 @@ function buildLetterHtml(
   /* ── PRICE BLOCK ── */
   .price-block {
     margin: 5mm 0;
-    background: ${primary};
-    border-radius: 8px;
-    padding: 5mm 7mm;
+    background: linear-gradient(135deg, ${primary} 0%, ${accent} 100%);
+    border-radius: 12px;
+    padding: 6mm 7mm 5mm;
     color: white;
+    position: relative;
+    overflow: hidden;
   }
 
   .price-block-label {
     font-size: 8pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     opacity: 0.85;
-    margin-bottom: 2mm;
+    margin-bottom: 4mm;
+    position: relative;
+    z-index: 1;
   }
 
-  .price-block-main {
-    display: flex;
-    align-items: baseline;
-    gap: 2mm;
+  .price-plans {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3mm;
+    margin-bottom: 4mm;
+    position: relative;
+    z-index: 1;
   }
 
-  .price-amount {
-    font-size: 28pt;
+  .plan-card {
+    background: rgba(255,255,255,0.10);
+    border-radius: 8px;
+    padding: 3.5mm 3mm;
+    text-align: center;
+  }
+
+  .plan-card.featured {
+    background: rgba(255,255,255,0.22);
+    border: 1.5px solid rgba(255,255,255,0.5);
+  }
+
+  .plan-name {
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.3px;
+  }
+
+  .plan-subtitle {
+    font-size: 7pt;
+    opacity: 0.7;
+    color: #fff;
+    margin-top: 0.5mm;
+  }
+
+  .plan-price {
+    font-size: 18pt;
     font-weight: 900;
+    color: #fff;
     line-height: 1;
-    color: white;
+    margin: 2mm 0 0.5mm;
   }
 
-  .price-period {
-    font-size: 13pt;
-    font-weight: 700;
-    opacity: 0.9;
-  }
-
-  .price-vs {
-    font-size: 9pt;
-    opacity: 0.8;
-    margin-left: 3mm;
-    font-style: italic;
+  .plan-features {
+    font-size: 7pt;
+    opacity: 0.75;
+    color: #fff;
+    line-height: 1.5;
   }
 
   .price-trial {
-    margin-top: 2mm;
     font-size: 8.5pt;
-    opacity: 0.85;
+    opacity: 0.88;
+    position: relative;
+    z-index: 1;
+    text-align: center;
   }
 
   /* ── CLAIM SECTION ── */
   .claim-section {
     margin: 5mm 0;
-    border: 2px solid ${primary};
-    border-radius: 8px;
+    border: 2.5px solid #4f46e5;
+    border-radius: 10px;
     padding: 4mm 6mm;
-    background: rgba(${primaryRgb}, 0.03);
+    background: rgba(79,70,229,0.04);
   }
 
   .claim-title {
     font-size: 13pt;
     font-weight: 700;
-    color: ${primary};
+    color: #4f46e5;
     margin-bottom: 3mm;
   }
 
@@ -365,10 +438,7 @@ function buildLetterHtml(
     align-items: flex-start;
   }
 
-  .claim-qr {
-    flex-shrink: 0;
-    text-align: center;
-  }
+  .claim-qr { flex-shrink: 0; text-align: center; }
 
   .claim-qr-label {
     font-size: 7.5pt;
@@ -387,7 +457,7 @@ function buildLetterHtml(
     margin: 4mm 0;
     padding: 3.5mm 5mm;
     background: #f8fafc;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 8.5pt;
     color: #475569;
     font-style: italic;
@@ -400,11 +470,7 @@ function buildLetterHtml(
     border-top: 1px solid #e2e8f0;
   }
 
-  .signature-text {
-    font-size: 10pt;
-    color: #334155;
-    margin-bottom: 3mm;
-  }
+  .signature-text { font-size: 10pt; color: #334155; margin-bottom: 3mm; }
 
   .signature-handwriting {
     font-family: 'Great Vibes', cursive;
@@ -413,22 +479,12 @@ function buildLetterHtml(
     line-height: 1;
     display: inline-block;
     transform: rotate(-1.5deg);
-    margin: 3mm 0 1mm;
+    margin: 3mm 0 1mm 2mm;
     letter-spacing: 1px;
-    margin-left: 2mm;
   }
 
-  .signature-name {
-    font-size: 10pt;
-    font-weight: 600;
-    color: #334155;
-    letter-spacing: 0.3px;
-  }
-
-  .signature-role {
-    font-size: 8.5pt;
-    color: #94a3b8;
-  }
+  .signature-name { font-size: 10pt; font-weight: 600; color: #334155; letter-spacing: 0.3px; }
+  .signature-role { font-size: 8.5pt; color: #94a3b8; }
 
   /* ── FOOTER ── */
   .footer {
@@ -445,155 +501,202 @@ function buildLetterHtml(
 <body>
 <div class="page">
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-brand">
-      <div class="brand-name">
-        <img src="${appUrl}/logo.png" alt="" style="height:25px;width:25px;vertical-align:middle;margin-right:5px;border-radius:5px;display:inline-block;" />TocTocToc.boutique
+  <!-- BACKGROUND BUBBLES (page 1 atmosphere) -->
+  <div class="bubble" style="width:100mm;height:100mm;background:rgba(${primaryRgb},0.04);top:-20mm;right:-25mm;"></div>
+  <div class="bubble" style="width:65mm;height:65mm;background:rgba(${primaryRgb},0.03);bottom:50mm;left:-20mm;"></div>
+  <div class="bubble" style="width:40mm;height:40mm;background:rgba(${primaryRgb},0.025);top:90mm;left:-10mm;"></div>
+
+  <!-- HERO BANNER -->
+  <div class="hero">
+    <!-- Decorative circles inside hero -->
+    <div style="position:absolute;width:70mm;height:70mm;border-radius:50%;background:rgba(255,255,255,0.08);top:-25mm;right:20mm;"></div>
+    <div style="position:absolute;width:45mm;height:45mm;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-18mm;right:-10mm;"></div>
+    <div style="position:absolute;width:30mm;height:30mm;border-radius:50%;background:rgba(255,255,255,0.06);top:-5mm;left:40%;"></div>
+
+    <div class="hero-left">
+      ${businessAvatar}
+      <div>
+        <div class="hero-business-name">${business.name}</div>
+        ${business.businessType ? `<div class="hero-type">${business.businessType}</div>` : ""}
       </div>
-      <div class="brand-tagline">Digitalisation abordable pour les commerces locaux (avis, fidélité, site...)</div>
     </div>
-    <div class="header-contact">
-      <div style="font-weight:700; color:#0f172a; font-size:9pt; font-family:'Plus Jakarta Sans', sans-serif;">TocTocToc.boutique</div>
-      <div>contact@toctoctoc.boutique</div>
-      <div>www.toctoctoc.boutique</div>
-    </div>
-  </div>
-
-  <!-- RECIPIENT + DATE -->
-  <div class="recipient-block">
-    <div class="recipient-address">
-      <div style="font-size:8.5pt; color:#94a3b8; margin-bottom:2mm; font-style:italic;">À l'attention du/de la responsable</div>
-      <div class="recipient-name">${business.name}</div>
-      ${addressLines || `<div style="color:#94a3b8; font-size:9pt;">Adresse non renseignée</div>`}
-    </div>
-    <div class="date-place">
-      Le ${today}
+    <div class="hero-right">
+      <div style="display:flex;align-items:center;gap:3mm;justify-content:flex-end;margin-bottom:1mm;">
+        <img src="${appUrl}/logo.png" alt="" style="height:18px;width:18px;vertical-align:middle;border-radius:4px;display:inline-block;" />
+        <span class="hero-brand">TocTocToc.boutique</span>
+      </div>
+      <div class="hero-tagline">Digitalisation abordable pour les commerces locaux</div>
     </div>
   </div>
 
-  <!-- SUBJECT -->
-  <div class="subject-line">
-    Objet : Outils digitaux pour ${business.name} (carte de <b>fidélité</b>, <b>boost avis</b> Google, ...)
-  </div>
+  <!-- INNER CONTENT -->
+  <div class="inner">
 
-  <!-- BODY -->
-  <div class="body">
-    <p>Madame, Monsieur,</p>
-
-    <p>
-      Je me permets de vous contacter au sujet de <span class="highlight">${business.name}</span>${business.businessType ? `, votre ${business.businessType.toLowerCase()}` : ""}.
-      J'ai eu l'occasion de préparer pour vous un espace digital complet sur notre plateforme
-      <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et opérationnel.
-    </p>
-
-    <p>
-      Notre conviction est simple : la vraie valeur d'une présence digitale se joue <strong>en magasin</strong>.
-      Deux outils suffisent à transformer l'expérience client au quotidien : une invitation à laisser un
-      <span class="highlight">avis Google</span> — pour booster votre visibilité locale —
-      et une <span class="highlight">carte de fidélité numérique</span> — pour fidéliser sans carton ni impression.
-      Vos clients scannent un QR code depuis leur téléphone, en quelques secondes, sans rien télécharger.
-    </p>
-
-    <!-- FEATURES -->
-    <div class="features">
-      <div class="features-title">Ce que vous obtenez</div>
-      <div class="features-grid">
-        <div class="feature-item">
-          <div class="feature-text">
-            <strong>⭐ Avis Google automatisés</strong>
-            <span>Un système gamifié incite vos clients à laisser des avis — votre visibilité locale s'envole</span>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-text">
-            <strong>🎯 Carte de fidélité digitale</strong>
-            <span>Remplacez les cartons tamponnés par une carte numérique QR — zéro perte, zéro impression</span>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-text">
-            <strong>🌐 Site vitrine inclus</strong>
-            <span>Une page professionnelle aux couleurs de votre commerce, visible immédiatement sur Google</span>
-          </div>
-        </div>
-        <div class="feature-item">
-          <div class="feature-text">
-            <strong>📅 Réservations en ligne</strong>
-            <span>Vos clients réservent 24h/24 sans vous déranger — vous gérez tout depuis votre tableau de bord</span>
-          </div>
+    <!-- META BAR (from / to / date) -->
+    <div class="meta-bar">
+      <div class="recipient-address">
+        <div style="font-size:8.5pt;color:#94a3b8;margin-bottom:2mm;font-style:italic;">À l'attention du/de la responsable</div>
+        <div class="recipient-name">${business.name}</div>
+        ${addressLines}
+      </div>
+      <div>
+        <div class="date-place">Le ${today}</div>
+        <div class="sender-info">
+          contact@toctoctoc.boutique<br/>
+          www.toctoctoc.boutique
         </div>
       </div>
     </div>
 
-    <!-- CARDS -->
-    <div class="cards-section">
-      <div class="cards-title">📎 Inclus dans ce courrier</div>
-      <div class="cards-desc">
-        J'ai joint à ce courrier des <strong>fiches imprimées</strong> (QR codes) que vous pouvez coller
-        directement dans votre commerce dès aujourd'hui — aucune manipulation technique requise :
-        <br/>
-        <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis, et tentent de gagner un cadeau<br/>
-        <strong>• Carte de fidélité</strong> — vos clients scannent à chaque visite pour accumuler des tampons
+    <!-- SUBJECT -->
+    <div class="subject-line">
+      Objet : Outils digitaux pour ${business.name} (carte de <b>fidélité</b>, <b>boost avis</b> Google, ...)
+    </div>
+
+    <!-- BODY -->
+    <div class="body">
+      <p>Madame, Monsieur,</p>
+
+      <p>
+        Je me permets de vous contacter au sujet de <span class="highlight">${business.name}</span>${business.businessType ? `, votre ${business.businessType.toLowerCase()}` : ""}.
+        J'ai eu l'occasion de préparer pour vous un espace digital complet sur notre plateforme
+        <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et opérationnel.
+      </p>
+
+      <p>
+        Notre conviction est simple : la vraie valeur d'une présence digitale se joue <strong>en magasin</strong>.
+        Deux outils suffisent à transformer l'expérience client au quotidien : une invitation à laisser un
+        <span class="highlight">avis Google</span> — pour booster votre visibilité locale —
+        et une <span class="highlight">carte de fidélité numérique</span> — pour fidéliser sans carton ni impression.
+        Vos clients scannent un QR code depuis leur téléphone, en quelques secondes, sans rien télécharger.
+      </p>
+
+      <!-- FEATURES -->
+      <div class="features">
+        <div class="features-title">Ce que vous obtenez</div>
+        <div class="features-grid">
+          <div class="feature-item">
+            <div class="feature-text">
+              <strong>⭐ Avis Google automatisés</strong>
+              <span>Un système gamifié incite vos clients à laisser des avis — votre visibilité locale s'envole</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-text">
+              <strong>🎯 Carte de fidélité digitale</strong>
+              <span>Remplacez les cartons tamponnés par une carte numérique QR — zéro perte, zéro impression</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-text">
+              <strong>🌐 Site vitrine inclus</strong>
+              <span>Une page professionnelle aux couleurs de votre commerce, visible immédiatement sur Google</span>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-text">
+              <strong>📅 Réservations en ligne</strong>
+              <span>Vos clients réservent 24h/24 sans vous déranger — vous gérez tout depuis votre tableau de bord</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="cards-urls">
-        Avis Google : ${reviewUrl}<br/>
-        Fidélité : ${loyaltyUrl}<br/>
-        Votre site : ${siteUrl}
+
+      <!-- CARDS -->
+      <div class="cards-section">
+        <div class="cards-title">📎 Inclus dans ce courrier</div>
+        <div class="cards-desc">
+          J'ai joint à ce courrier des <strong>fiches imprimées</strong> (QR codes) que vous pouvez coller
+          directement dans votre commerce dès aujourd'hui — aucune manipulation technique requise :
+          <br/>
+          <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis, et tentent de gagner un cadeau<br/>
+          <strong>• Carte de fidélité</strong> — vos clients scannent à chaque visite pour accumuler des tampons
+        </div>
       </div>
-    </div>
 
-    <!-- PAGE BREAK + marge haute page 2 -->
-    <div style="break-before:page;page-break-before:always;height:18mm;"></div>
+      <!-- PAGE BREAK -->
+      <div style="break-before:page;page-break-before:always;height:8mm;"></div>
 
-    <!-- PRICE -->
-    <div class="price-block">
-      <div class="price-block-label">Le tarif le plus compétitif du marché</div>
-      <div class="price-block-main">
-        <span class="price-amount">9€</span>
-        <span class="price-period">/mois</span>
-        <span class="price-vs">soit 3 à 8× moins cher que la concurrence</span>
+      <!-- BACKGROUND BUBBLES (page 2) -->
+      <div class="bubble" style="width:90mm;height:90mm;background:rgba(${primaryRgb},0.04);top:0;right:-20mm;"></div>
+      <div class="bubble" style="width:55mm;height:55mm;background:rgba(${primaryRgb},0.03);bottom:40mm;left:-15mm;"></div>
+
+      <!-- PRICE BLOCK -->
+      <div class="price-block">
+        <!-- Bubbles inside price block -->
+        <div style="position:absolute;width:55mm;height:55mm;border-radius:50%;background:rgba(255,255,255,0.07);top:-15mm;right:-10mm;pointer-events:none;"></div>
+        <div style="position:absolute;width:35mm;height:35mm;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-10mm;left:20mm;pointer-events:none;"></div>
+        <div style="position:absolute;width:22mm;height:22mm;border-radius:50%;background:rgba(255,255,255,0.04);top:5mm;left:-5mm;pointer-events:none;"></div>
+
+        <div class="price-block-label">Le tarif le plus compétitif du marché</div>
+
+        <div class="price-plans">
+          <!-- FREE -->
+          <div class="plan-card">
+            <div class="plan-name">GRATUIT</div>
+            <div class="plan-subtitle">Pour découvrir</div>
+            <div class="plan-price">0€</div>
+            <div class="plan-features">Avis + Fidélité<br/>(limité à 3)</div>
+          </div>
+          <!-- STARTER (featured) -->
+          <div class="plan-card featured">
+            <div class="plan-name">STARTER ⭐</div>
+            <div class="plan-subtitle">Le plus populaire</div>
+            <div class="plan-price">9€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
+            <div class="plan-features">Tout inclus<br/>Sans engagement</div>
+          </div>
+          <!-- PRO -->
+          <div class="plan-card">
+            <div class="plan-name">PRO</div>
+            <div class="plan-subtitle">Multi-commerces</div>
+            <div class="plan-price">19€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
+            <div class="plan-features">Jusqu'à 3 commerces<br/>+ Réseaux sociaux</div>
+          </div>
+        </div>
+
+        <div class="price-trial">
+          ✓ 14 jours d'essai gratuit &nbsp;·&nbsp; ✓ Sans engagement &nbsp;·&nbsp; ✓ 3 à 8× moins cher que la concurrence
+        </div>
       </div>
-      <div class="price-trial">✓ 14 jours d'essai gratuit &nbsp;·&nbsp; ✓ Sans engagement &nbsp;·&nbsp; ✓ Résiliable à tout moment</div>
+
+      <p style="margin-top:3mm;">
+        Les solutions concurrentes dépassent généralement <strong>30 à 80€/mois</strong> pour des fonctionnalités équivalentes.
+        Chez TocTocToc.boutique, nous avons fait le choix d'être accessibles — parce que chaque commerce local mérite une présence digitale professionnelle.
+      </p>
+
+      ${claimSection}
+
+      <!-- SOFT CLOSE -->
+      <div class="soft-close">
+        Si cette proposition ne correspond pas à vos besoins actuels, pas d'inquiétude —
+        gardons simplement contact. Des nouvelles fonctionnalités arrivent régulièrement (e-commerce, standard téléphonique IA, gestion du personnel…)
+        et nous serions ravis de vous en informer le moment venu.
+        Votre espace reste disponible et vous attend.
+      </div>
+
+      <p>
+        N'hésitez pas à me contacter pour toute question ou pour activer votre abonnement en quelques clics.
+        Je reste à votre disposition.
+      </p>
     </div>
-    <p style="margin-top:3mm;">
-      Les solutions concurrentes dépassent généralement <strong>30 à 80€/mois</strong> pour des fonctionnalités équivalentes.
-      Chez TocTocToc.boutique, nous avons fait le choix d'être accessibles — parce que chaque commerce local mérite une présence digitale professionnelle.
-    </p>
 
-    ${claimSection}
-
-    <!-- SOFT CLOSE -->
-    <div class="soft-close">
-      Si cette proposition ne correspond pas à vos besoins actuels, pas d'inquiétude —
-      gardons simplement contact. Des nouvelles fonctionnalités arrivent régulièrement (e-commerce, standard téléphonique IA, gestion du personnel…)
-      et nous serions ravis de vous en informer le moment venu.
-      Votre espace reste disponible et vous attend.
+    <!-- SIGNATURE -->
+    <div class="signature">
+      <div class="signature-text">Cordialement,</div>
+      <div class="signature-handwriting">jbc</div>
+      <div class="signature-name">Jean-Baptiste CHAUVIN</div>
+      <div class="signature-role">Fondateur · TocTocToc.boutique</div>
+      <div style="font-size:8pt;color:#94a3b8;margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
     </div>
 
-    <p>
-      N'hésitez pas à me contacter pour toute question ou pour activer votre abonnement en quelques clics.
-      Je reste à votre disposition.
-    </p>
-  </div>
-
-  <!-- SIGNATURE -->
-  <div class="signature">
-    <div class="signature-text">Cordialement,</div>
-    <div class="signature-handwriting">jbc</div>
-    <div class="signature-name">Jean-Baptiste CHAUVIN
+    <!-- FOOTER -->
+    <div class="footer">
+      <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
+      <span>Document personnalisé pour ${business.name}</span>
     </div>
-    <div class="signature-role">Fondateur · TocTocToc.boutique</div>
-    <div style="font-size:8pt; color:#94a3b8; margin-top:1mm;">contact@toctoctoc.boutique · www.toctoctoc.boutique</div>
-  </div>
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
-    <span>Document personnalisé pour ${business.name}</span>
-  </div>
-
-</div>
+  </div><!-- /inner -->
+</div><!-- /page -->
 </body>
 </html>`;
 }
@@ -613,14 +716,8 @@ export function ProspectLetterButton({
       let claimUrl: string | null = null;
       let claimQrDataUrl: string | null = null;
 
-      // Generate token if none exists
       if (!token) {
-        const res = await fetch(
-          `/api/admin/businesses/${businessId}/claim-token`,
-          {
-            method: "POST",
-          },
-        );
+        const res = await fetch(`/api/admin/businesses/${businessId}/claim-token`, { method: "POST" });
         const data = await res.json();
         if (data.success) token = data.token;
       }
@@ -640,7 +737,6 @@ export function ProspectLetterButton({
       win.document.write(html);
       win.document.close();
       win.focus();
-      // Attendre que les fonts Google soient chargées avant d'imprimer
       win.document.fonts.ready.then(() => setTimeout(() => win.print(), 200));
     } finally {
       setLoading(false);

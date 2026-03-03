@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { contrastColor } from "@/lib/utils";
 import type { HeroContent } from "./types";
 
 interface HeroBlockProps {
@@ -65,6 +66,8 @@ export function HeroBlock({ content, business, hasBooking }: HeroBlockProps) {
   }
 
   // No cover: typographic hero
+  const heroTextColor = contrastColor(business.primaryColor);
+
   return (
     <section
       className="relative isolate min-h-[70vh] flex items-center"
@@ -83,16 +86,16 @@ export function HeroBlock({ content, business, hasBooking }: HeroBlockProps) {
         {content.tagline && (
           <p
             className="mb-5 inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest"
-            style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
+            style={{ backgroundColor: heroTextColor === "#ffffff" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.08)", color: heroTextColor, opacity: 0.9 }}
           >
             {content.tagline}
           </p>
         )}
-        <h1 className="text-5xl font-black leading-[1.05] tracking-tight text-white md:text-7xl lg:text-8xl">
+        <h1 className="text-5xl font-black leading-[1.05] tracking-tight md:text-7xl lg:text-8xl" style={{ color: heroTextColor }}>
           {title}
         </h1>
         {subtitle && (
-          <p className={`mt-6 text-lg text-white/65 md:text-xl ${isLeft ? "max-w-xl" : "mx-auto max-w-2xl"}`}>
+          <p className={`mt-6 text-lg md:text-xl ${isLeft ? "max-w-xl" : "mx-auto max-w-2xl"}`} style={{ color: heroTextColor, opacity: 0.65 }}>
             {subtitle}
           </p>
         )}

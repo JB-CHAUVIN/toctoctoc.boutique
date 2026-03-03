@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Plus, Building2, ExternalLink, ChevronRight, Loader2, Upload, ChevronDown, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+import {
+  Plus, Building2, ExternalLink, ChevronRight, Loader2,
+  ChevronDown, ShieldCheck, Sparkles, X, ImageIcon, Crop, MapPin, Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +20,36 @@ import type { BusinessWithModules } from "@/types";
 
 type BusinessWithCount = BusinessWithModules & {
   _count: { bookings: number; loyaltyCards: number };
+  logoUrl?: string | null;
 };
+
+function BusinessLogo({
+  logoUrl, logoBackground, name, primaryColor,
+  size = 10, rounded = "xl", textSize = "lg",
+}: {
+  logoUrl?: string | null; logoBackground?: string | null; name: string;
+  primaryColor: string; size?: number; rounded?: string; textSize?: string;
+}) {
+  const [errored, setErrored] = useState(false);
+  const cls = `flex h-${size} w-${size} flex-shrink-0 items-center justify-center rounded-${rounded}`;
+  if (logoUrl && !errored) {
+    return (
+      <div className={`${cls} overflow-hidden border border-slate-100`} style={{ backgroundColor: logoBackground ?? "white" }}>
+        <Image
+          src={logoUrl} alt={name}
+          width={size * 4} height={size * 4}
+          className={`h-${size} w-${size} object-contain p-0.5`}
+          onError={() => setErrored(true)}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className={`${cls} text-${textSize} font-bold text-white`} style={{ backgroundColor: primaryColor }}>
+      {name[0].toUpperCase()}
+    </div>
+  );
+}
 
 interface PlanMeta {
   plan: string;
@@ -31,16 +64,76 @@ const DEFAULT_FORM: Record<string, string> = {
   primaryColor: "#4f46e5",
   secondaryColor: "#312e81",
   accentColor: "#f59e0b",
+  logoUrl: "",
 };
 
 type AdminBusiness = {
   id: string; name: string; slug: string; primaryColor: string; businessType: string | null;
-  isPublished: boolean; city: string | null;
+  isPublished: boolean; city: string | null; logoUrl: string | null;
   user: { name: string | null; email: string };
   modules: { module: string; isActive: boolean }[];
   _count: { bookings: number; loyaltyCards: number };
 };
 
+// ── Zone image générique ──────────────────────────────────────────────────────
+function ImageDropZone({
+  label, hint, loading, loadingLabel, preview, icon: Icon,
+  onFile,
+}: {
+  label: string;
+  hint: string;
+  loading: boolean;
+  loadingLabel: string;
+  preview: string | null;
+  icon: React.ElementType;
+  onFile: (file: File) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-medium text-slate-600">{label}</p>
+      <div
+        onClick={() => !loading && ref.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-4 transition ${
+          loading
+            ? "cursor-not-allowed border-violet-200 bg-violet-50"
+            : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+        }`}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+            <p className="text-xs font-medium text-violet-600">{loadingLabel}</p>
+          </>
+        ) : preview ? (
+          <>
+            <Image src={preview} alt="preview" width={64} height={64} className="h-16 w-16 rounded-lg object-cover" />
+            <p className="text-xs text-slate-400">Cliquer pour changer</p>
+          </>
+        ) : (
+          <>
+            <Icon className="h-5 w-5 text-slate-400" />
+            <p className="text-xs font-medium text-slate-600">Cliquer pour sélectionner</p>
+            <p className="text-xs text-slate-400">{hint}</p>
+          </>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Composant principal ───────────────────────────────────────────────────────
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,9 +146,16 @@ function DashboardContent() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(DEFAULT_FORM);
-  const [showJsonImport, setShowJsonImport] = useState(false);
-  const [jsonText, setJsonText] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mode avancé
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [ambiancePreview, setAmbiancePreview] = useState<string | null>(null);
+  const [analyzingAmbiance, setAnalyzingAmbiance] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [analyzingLogo, setAnalyzingLogo] = useState(false);
+  const [googleUrl, setGoogleUrl] = useState("");
+  const [analyzingGoogle, setAnalyzingGoogle] = useState(false);
+  const [googleResult, setGoogleResult] = useState<Record<string, string | null> | null>(null);
 
   useEffect(() => {
     fetchBusinesses();
@@ -73,7 +173,6 @@ function DashboardContent() {
       .finally(() => setAdminLoading(false));
   }, [isAdmin]);
 
-  // Auto-ouvrir la dialog si ?new=1
   useEffect(() => {
     if (searchParams.get("new") === "1") {
       setShowCreate(true);
@@ -96,77 +195,146 @@ function DashboardContent() {
     e.preventDefault();
     if (!form.name.trim()) return;
     setCreating(true);
-
     const res = await fetch("/api/business", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-
     const data = await res.json();
     if (!res.ok) {
       toast.error(data.error || "Erreur lors de la création");
     } else {
       toast.success("Commerce créé avec succès !");
       setShowCreate(false);
-      setForm(DEFAULT_FORM);
-      setJsonText("");
-      setShowJsonImport(false);
+      resetDialog();
       fetchBusinesses();
-      router.refresh(); // rafraîchit le layout server (sidebar)
+      router.refresh();
     }
     setCreating(false);
   }
 
-  function handleJsonImport() {
+  function resetDialog() {
+    setForm(DEFAULT_FORM);
+    setShowAdvanced(false);
+    setAmbiancePreview(null);
+    setLogoPreview(null);
+    setGoogleUrl("");
+    setGoogleResult(null);
+  }
+
+  async function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
+    const buffer = await file.arrayBuffer();
+    return {
+      base64: Buffer.from(buffer).toString("base64"),
+      mimeType: file.type,
+    };
+  }
+
+  async function handleAmbianceImage(file: File) {
+    setAmbiancePreview(URL.createObjectURL(file));
+    setAnalyzingAmbiance(true);
     try {
-      const p = JSON.parse(jsonText);
-      const pick = <T,>(v: T | undefined, fallback: T) => v ?? fallback;
+      const { base64, mimeType } = await fileToBase64(file);
+      const res = await fetch("/api/admin/analyze-business-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType, mode: "ambiance" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur analyse"); return; }
+      const d = data.data;
       setForm((f) => ({
-        name: pick(p.name, f.name),
-        businessType: pick(p.businessType ?? p.type, f.businessType),
-        primaryColor: pick(p.primaryColor, f.primaryColor),
-        secondaryColor: pick(p.secondaryColor, f.secondaryColor),
-        accentColor: pick(p.accentColor, f.accentColor),
-        // champs supplémentaires transmis tels quels à l'API
-        ...(p.description !== undefined && { description: p.description }),
-        ...(p.shortDesc !== undefined && { shortDesc: p.shortDesc }),
-        ...(p.address !== undefined && { address: p.address }),
-        ...(p.city !== undefined && { city: p.city }),
-        ...(p.zipCode !== undefined && { zipCode: p.zipCode }),
-        ...(p.country !== undefined && { country: p.country }),
-        ...(p.phone !== undefined && { phone: p.phone }),
-        ...(p.email !== undefined && { email: p.email }),
-        ...(p.website !== undefined && { website: p.website }),
-        ...(p.fontFamily !== undefined && { fontFamily: p.fontFamily }),
-        ...(p.facebookUrl !== undefined && { facebookUrl: p.facebookUrl }),
-        ...(p.instagramUrl !== undefined && { instagramUrl: p.instagramUrl }),
-        ...(p.googleMapsUrl !== undefined && { googleMapsUrl: p.googleMapsUrl }),
+        ...f,
+        ...(d.name && !f.name && { name: d.name }),
+        ...(d.businessType && { businessType: d.businessType }),
+        ...(d.primaryColor && { primaryColor: d.primaryColor }),
+        ...(d.secondaryColor && { secondaryColor: d.secondaryColor }),
+        ...(d.accentColor && { accentColor: d.accentColor }),
       }));
-      setShowJsonImport(false);
-      setJsonText("");
-      toast.success("Données importées");
+      toast.success("Nom, type et couleurs extraits !");
     } catch {
-      toast.error("JSON invalide");
+      toast.error("Erreur lors de l'analyse");
+    } finally {
+      setAnalyzingAmbiance(false);
     }
   }
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setJsonText((ev.target?.result as string) ?? "");
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+  async function handleLogoImage(file: File) {
+    setLogoPreview(URL.createObjectURL(file));
+    setAnalyzingLogo(true);
+    try {
+      const { base64, mimeType } = await fileToBase64(file);
+      const res = await fetch("/api/admin/analyze-business-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType, mode: "logo" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur génération logo"); return; }
+      setLogoPreview(data.data.logoUrl);
+      setForm((f) => ({
+        ...f,
+        logoUrl: data.data.logoUrl,
+        ...(data.data.logoBackground && { logoBackground: data.data.logoBackground }),
+      }));
+      toast.success("Logo HD généré !");
+    } catch {
+      toast.error("Erreur lors de la génération du logo");
+    } finally {
+      setAnalyzingLogo(false);
+    }
+  }
+
+  async function handleGoogleAnalyze() {
+    if (!googleUrl.trim()) return;
+    setAnalyzingGoogle(true);
+    try {
+      const res = await fetch("/api/admin/analyze-google-business", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: googleUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur analyse Google"); return; }
+      const d = data.data;
+      const filled: string[] = [];
+      setForm((f) => {
+        const next = { ...f };
+        const apply = (key: string, val: string | null | undefined, label: string) => {
+          if (val && !f[key]) { next[key] = val; filled.push(label); }
+        };
+        apply("name", d.name, "Nom");
+        apply("businessType", d.businessType, "Type");
+        apply("description", d.description, "Description");
+        apply("address", d.address, "Adresse");
+        apply("city", d.city, "Ville");
+        apply("zipCode", d.zipCode, "Code postal");
+        apply("phone", d.phone, "Téléphone");
+        apply("website", d.website, "Site web");
+        apply("googleMapsUrl", d.googleMapsUrl, "Lien Maps");
+        return next;
+      });
+      const hasData = Object.values(d).some(Boolean);
+      if (hasData) {
+        setGoogleResult(d);
+        toast.success(
+          filled.length > 0
+            ? `${filled.length} info(s) récupérée(s) !`
+            : "Données récupérées (champs déjà remplis conservés)"
+        );
+      } else {
+        toast("Aucune information trouvée (page JS-only ?)", { icon: "⚠️" });
+      }
+    } catch {
+      toast.error("Erreur lors de l'analyse Google");
+    } finally {
+      setAnalyzingGoogle(false);
+    }
   }
 
   const canCreate = !meta || meta.maxBusinesses === -1 || meta.businessCount < meta.maxBusinesses;
   const upgradePlan = meta?.plan === "FREE" || meta?.plan === "STARTER" ? "Pro" : null;
-
-  const activeModulesCount = (b: BusinessWithCount) =>
-    b.modules.filter((m) => m.isActive).length;
+  const activeModulesCount = (b: BusinessWithCount) => b.modules.filter((m) => m.isActive).length;
 
   return (
     <div className="p-4 sm:p-8">
@@ -181,9 +349,7 @@ function DashboardContent() {
               </span>
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Gérez vos établissements et configurez vos modules
-          </p>
+          <p className="mt-1 text-sm text-slate-500">Gérez vos établissements et configurez vos modules</p>
         </div>
 
         <div className="relative group/btn">
@@ -220,9 +386,7 @@ function DashboardContent() {
           <p className="mt-2 max-w-sm text-sm text-slate-400">
             Créez votre premier commerce pour commencer à configurer vos modules.
           </p>
-          <Button className="mt-6" onClick={() => setShowCreate(true)}>
-            Créer mon premier commerce
-          </Button>
+          <Button className="mt-6" onClick={() => setShowCreate(true)}>Créer mon premier commerce</Button>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -232,45 +396,28 @@ function DashboardContent() {
               href={`/dashboard/${business.id}`}
               className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md"
             >
-              {/* Color stripe */}
-              <div
-                className="mb-4 h-2 w-full rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, ${business.primaryColor}, ${business.accentColor})`,
-                }}
-              />
-
+              <div className="mb-4 h-2 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${business.primaryColor}, ${business.accentColor})` }} />
               <div className="mb-3 flex items-start justify-between">
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-lg font-bold text-white"
-                  style={{ backgroundColor: business.primaryColor }}
-                >
-                  {business.name[0].toUpperCase()}
-                </div>
+                <BusinessLogo
+                  logoUrl={business.logoUrl}
+                  logoBackground={(business as Record<string, unknown>).logoBackground as string}
+                  name={business.name}
+                  primaryColor={business.primaryColor}
+                />
                 <Badge variant={business.isPublished ? "success" : "outline"}>
                   {business.isPublished ? "En ligne" : "Brouillon"}
                 </Badge>
               </div>
-
               <h2 className="text-base font-semibold text-slate-900">{business.name}</h2>
-              {business.businessType && (
-                <p className="mt-0.5 text-sm text-slate-400">{business.businessType}</p>
-              )}
-
+              {business.businessType && <p className="mt-0.5 text-sm text-slate-400">{business.businessType}</p>}
               <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
                 <span>{activeModulesCount(business)} module(s) actif(s)</span>
                 <span>·</span>
                 <span>{business._count.bookings} réservation(s)</span>
               </div>
-
               <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4">
                 <span className="flex-1 text-xs text-slate-400">/{business.slug}</span>
-                <Link
-                  href={`/${business.slug}`}
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                >
+                <Link href={`/${business.slug}`} target="_blank" onClick={(e) => e.stopPropagation()} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Link>
                 <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:text-indigo-500" />
@@ -283,7 +430,7 @@ function DashboardContent() {
       {/* Modal création */}
       <Dialog
         open={showCreate}
-        onClose={() => { setShowCreate(false); setShowJsonImport(false); setJsonText(""); }}
+        onClose={() => { setShowCreate(false); resetDialog(); }}
         title="Nouveau commerce"
         description="Renseignez les informations de base de votre établissement"
       >
@@ -321,46 +468,133 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* JSON Import — discreet collapsible */}
-          <div className="border-t border-slate-100 pt-3">
-            <button
-              type="button"
-              onClick={() => setShowJsonImport((v) => !v)}
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
-            >
-              <Upload className="h-3 w-3" />
-              Importer depuis un JSON
-              <ChevronDown className={`h-3 w-3 transition-transform ${showJsonImport ? "rotate-180" : ""}`} />
-            </button>
-
-            {showJsonImport && (
-              <div className="mt-2 space-y-2">
-                <textarea
-                  rows={4}
-                  placeholder='{"name": "Mon Commerce", "businessType": "Café", "primaryColor": "#4f46e5"}'
-                  value={jsonText}
-                  onChange={(e) => setJsonText(e.target.value)}
-                  className="w-full rounded-lg border border-slate-200 p-2 font-mono text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-slate-500 underline hover:text-slate-700"
-                  >
-                    Charger un fichier
-                  </button>
-                  <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
-                  <Button type="button" size="sm" variant="outline" onClick={handleJsonImport} disabled={!jsonText.trim()}>
-                    Appliquer
-                  </Button>
-                </div>
+          {/* Logo preview */}
+          {form.logoUrl && (
+            <div className="flex items-center gap-3 rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+              <Image src={form.logoUrl} alt="Logo HD" width={48} height={48} className="h-12 w-12 rounded-lg object-contain" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-indigo-700">Logo HD prêt</p>
+                <p className="truncate text-xs text-indigo-400">{form.logoUrl}</p>
               </div>
-            )}
-          </div>
+              <button type="button" onClick={() => setForm((f) => ({ ...f, logoUrl: "" }))} className="rounded p-1 text-indigo-400 hover:bg-indigo-100">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Mode Avancé (admin only) */}
+          {isAdmin && (
+            <div className="border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-800"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Avancé — Analyse IA
+                <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-5 rounded-xl border border-violet-100 bg-violet-50 p-4">
+
+                  {/* Zone 1 : Devanture */}
+                  <ImageDropZone
+                    label="📷  Photo devanture / ambiance"
+                    hint="Extrait : nom, type, couleurs"
+                    loading={analyzingAmbiance}
+                    loadingLabel="Analyse via gpt-4o…"
+                    preview={ambiancePreview}
+                    icon={ImageIcon}
+                    onFile={handleAmbianceImage}
+                  />
+
+                  {/* Zone 2 : Logo croppé */}
+                  <ImageDropZone
+                    label="✂️  Logo déjà croppé"
+                    hint="Retourné en HD fond transparent via gpt-image-1"
+                    loading={analyzingLogo}
+                    loadingLabel="Génération HD via gpt-image-1…"
+                    preview={logoPreview && !form.logoUrl ? logoPreview : form.logoUrl || null}
+                    icon={Crop}
+                    onFile={handleLogoImage}
+                  />
+
+                  {/* Zone 3 : Google Business */}
+                  <div>
+                    <p className="mb-1.5 text-xs font-medium text-slate-600">
+                      <MapPin className="mr-1 inline h-3 w-3" />
+                      Lien Google Business
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://maps.google.com/maps?..."
+                        value={googleUrl}
+                        onChange={(e) => setGoogleUrl(e.target.value)}
+                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleGoogleAnalyze(); } }}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        loading={analyzingGoogle}
+                        onClick={handleGoogleAnalyze}
+                        disabled={!googleUrl.trim()}
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Extrait : adresse, téléphone, site web, etc.
+                    </p>
+
+                    {/* Résultat Google Business */}
+                    {googleResult && (() => {
+                      const LABELS: Record<string, string> = {
+                        name: "Nom",
+                        businessType: "Type",
+                        address: "Adresse",
+                        city: "Ville",
+                        zipCode: "Code postal",
+                        phone: "Téléphone",
+                        website: "Site web",
+                        googleMapsUrl: "Lien Maps",
+                        description: "Description",
+                      };
+                      const entries = Object.entries(LABELS)
+                        .map(([key, label]) => ({ label, value: googleResult[key] }))
+                        .filter((e) => e.value);
+                      if (!entries.length) return null;
+                      return (
+                        <div className="mt-2 rounded-lg border border-green-200 bg-green-50 p-3">
+                          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                            <svg className="h-3.5 w-3.5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                            </svg>
+                            {entries.length} champ(s) récupéré(s)
+                          </div>
+                          <div className="space-y-0.5">
+                            {entries.map(({ label, value }) => (
+                              <div key={label} className="flex gap-1.5 text-xs">
+                                <span className="w-20 flex-shrink-0 text-slate-400">{label}</span>
+                                <span className="truncate font-medium text-slate-700">{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => setShowCreate(false)}>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => { setShowCreate(false); resetDialog(); }}>
               Annuler
             </Button>
             <Button type="submit" className="flex-1" loading={creating}>
@@ -370,7 +604,7 @@ function DashboardContent() {
         </form>
       </Dialog>
 
-      {/* ── Vue Admin : tous les commerces ── */}
+      {/* ── Vue Admin ── */}
       {isAdmin && (
         <div className="mt-12">
           <div className="mb-4 flex items-center gap-2">
@@ -394,12 +628,13 @@ function DashboardContent() {
                   className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-violet-300 hover:shadow-md"
                 >
                   <div className="mb-3 flex items-start gap-3">
-                    <div
-                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white"
-                      style={{ backgroundColor: b.primaryColor }}
-                    >
-                      {b.name[0].toUpperCase()}
-                    </div>
+                    <BusinessLogo
+                      logoUrl={b.logoUrl}
+                      logoBackground={(b as Record<string, unknown>).logoBackground as string}
+                      name={b.name}
+                      primaryColor={b.primaryColor}
+                      size={9} rounded="lg" textSize="sm"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-semibold text-slate-900">{b.name}</div>
                       <div className="text-xs text-slate-400">

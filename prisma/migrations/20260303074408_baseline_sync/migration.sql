@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Reward` MODIFY `emoji` VARCHAR(191) NOT NULL DEFAULT '🎁';

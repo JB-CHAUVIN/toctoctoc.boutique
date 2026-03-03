@@ -1,16 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { MessageCircle, X, Loader2, CheckCircle, Send } from "lucide-react";
 import toast from "react-hot-toast";
+
+/** Top-level app routes — anything else is a business slug, so we hide the button */
+const APP_ROUTES = ["/", "/login", "/register", "/forgot-password", "/reset-password", "/dashboard", "/contact", "/claim"];
 
 type FormState = { name: string; email: string; subject: string; message: string };
 
 export function ContactButton() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState<FormState>({ name: "", email: "", subject: "", message: "" });
+
+  // Hide on public business pages (any path not matching a known app route)
+  const isAppRoute = APP_ROUTES.some((r) => pathname === r || (r !== "/" && pathname.startsWith(r + "/")));
+  if (!isAppRoute) return null;
 
   function update(field: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>

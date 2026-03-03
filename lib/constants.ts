@@ -140,21 +140,44 @@ export const WEEK_DAYS = [
 // ─────────────────────────────────────────
 
 export const BUSINESS_TYPES = [
+  // Restauration & boissons
   "Restaurant",
-  "Salon de coiffure",
-  "Boulangerie / Pâtisserie",
-  "Salon de beauté",
-  "Barbier",
   "Café",
-  "Épicerie",
-  "Pressing",
-  "Pharmacie",
-  "Cabinet médical",
-  "Cabinet dentaire",
-  "Kinésithérapeute",
-  "Ostéopathe",
-  "Coach sportif",
+  "Bar",
+  "Bar à jeux",
+  "Glacier",
+  // Boulangerie & artisanat alimentaire
+  "Boulangerie",
+  "Pâtisserie",
+  "Boulangerie / Pâtisserie",
+  "Chocolaterie",
+  "Traiteur",
+  "Fromagerie",
+  "Boucherie",
+  "Charcuterie",
+  "Poissonnerie",
+  "Épicerie fine",
+  // Beauté & bien-être
+  "Salon de coiffure",
+  "Barbier",
+  "Salon de beauté",
+  "Institut d'esthétique",
+  "Nail art",
+  "Spa",
   "Studio de yoga",
+  "Coach sportif",
+  "Salle de sport",
+  // Commerce de détail
+  "Épicerie",
+  "Superette",
+  "Fleuriste",
+  "Librairie",
+  "Boutique de vêtements",
+  "Boutique cadeaux",
+  "Bijouterie",
+  "Pressing",
+  // Services
+  "Garage / Auto",
   "Autre",
 ] as const;
 
@@ -163,11 +186,20 @@ export const BUSINESS_TYPES = [
 // ─────────────────────────────────────────
 
 export const FONT_FAMILIES = [
+  { value: "Plus Jakarta Sans", label: "Plus Jakarta Sans (défaut)" },
   { value: "Inter", label: "Inter (moderne)" },
   { value: "Georgia", label: "Georgia (classique)" },
   { value: "Playfair Display", label: "Playfair Display (élégant)" },
   { value: "Montserrat", label: "Montserrat (corporate)" },
 ] as const;
+
+/** Polices Google à charger dynamiquement (Georgia est une police système, pas besoin) */
+export const GOOGLE_FONTS: Record<string, string> = {
+  "Plus Jakarta Sans": "Plus+Jakarta+Sans:wght@400;500;600;700",
+  "Inter": "Inter:wght@400;500;600;700",
+  "Playfair Display": "Playfair+Display:wght@400;500;600;700",
+  "Montserrat": "Montserrat:wght@400;500;600;700",
+};
 
 // ─────────────────────────────────────────
 // RAISONS DE DÉSABONNEMENT

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatsCard } from "@/components/dashboard/stats-card";
@@ -65,6 +66,8 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
     email: business.email,
     primaryColor: business.primaryColor,
     accentColor: business.accentColor,
+    logoUrl: business.logoUrl,
+    logoBackground: business.logoBackground,
   };
 
   return (
@@ -73,12 +76,21 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-3">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white"
-              style={{ backgroundColor: business.primaryColor }}
-            >
-              {business.name[0].toUpperCase()}
-            </div>
+            {business.logoUrl ? (
+              <div
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100"
+                style={{ backgroundColor: business.logoBackground ?? "white" }}
+              >
+                <Image src={business.logoUrl} alt={business.name} width={40} height={40} className="h-10 w-10 object-contain p-1" />
+              </div>
+            ) : (
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white"
+                style={{ backgroundColor: business.primaryColor }}
+              >
+                {business.name[0].toUpperCase()}
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{business.name}</h1>
               <p className="text-sm text-slate-400">/{business.slug}</p>
@@ -185,6 +197,8 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
         primaryColor={business.primaryColor}
         secondaryColor={business.secondaryColor}
         accentColor={business.accentColor}
+        logoUrl={business.logoUrl}
+        logoBackground={business.logoBackground}
         appUrl={APP_URL}
         hasReviews={hasReviews}
         hasLoyalty={hasLoyalty}

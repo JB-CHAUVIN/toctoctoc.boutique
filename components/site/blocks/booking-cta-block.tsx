@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { contrastColor } from "@/lib/utils";
 import type { BookingCtaContent } from "./types";
 
 interface BookingCtaBlockProps {
@@ -15,6 +16,8 @@ export function BookingCtaBlock({ content, business }: BookingCtaBlockProps) {
   const subtitle = content.subtitle || "Réservez en ligne en quelques secondes, 24h/24.";
   const ctaText = content.ctaText || "Choisir un créneau";
 
+  const textColor = contrastColor(business.primaryColor);
+
   return (
     <section
       className="relative overflow-hidden"
@@ -28,10 +31,10 @@ export function BookingCtaBlock({ content, business }: BookingCtaBlockProps) {
       />
       <div className="relative mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center md:py-20">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
+          <h2 className="text-3xl font-black tracking-tight md:text-4xl" style={{ color: textColor }}>
             {title}
           </h2>
-          <p className="mt-3 text-white/60">{subtitle}</p>
+          <p className="mt-3" style={{ color: textColor, opacity: 0.6 }}>{subtitle}</p>
         </div>
         <Link
           href={`/${business.slug}/booking`}

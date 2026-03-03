@@ -24,6 +24,8 @@ const createBusinessSchema = z.object({
   facebookUrl: z.string().optional(),
   instagramUrl: z.string().optional(),
   googleMapsUrl: z.string().optional(),
+  logoUrl: z.string().optional(),
+  logoBackground: z.string().optional(),
 });
 
 export async function GET() {
@@ -35,6 +37,7 @@ export async function GET() {
     include: { subscription: true },
   });
 
+  const isAdmin = user?.role === "ADMIN";
   const plan = user?.subscription?.plan ?? "FREE";
   const limits = PLAN_LIMITS[plan];
 
@@ -50,7 +53,7 @@ export async function GET() {
     meta: {
       plan,
       planLabel: limits.label,
-      maxBusinesses: limits.maxBusinesses,
+      maxBusinesses: isAdmin ? -1 : limits.maxBusinesses,
       businessCount: businesses.length,
     },
   });
@@ -73,13 +76,14 @@ export async function POST(req: Request) {
       include: { subscription: true },
     });
 
+    const isAdmin = user?.role === "ADMIN";
     const plan = user?.subscription?.plan ?? "FREE";
     const limits = PLAN_LIMITS[plan];
     const businessCount = await prisma.business.count({
       where: { userId: session.user.id, deletedAt: null },
     });
 
-    if (limits.maxBusinesses !== -1 && businessCount >= limits.maxBusinesses) {
+    if (!isAdmin && limits.maxBusinesses !== -1 && businessCount >= limits.maxBusinesses) {
       return NextResponse.json(
         { error: `Votre plan ${plan} est limité à ${limits.maxBusinesses} commerce(s). Passez à un plan supérieur.` },
         { status: 403 }

@@ -144,6 +144,7 @@ model Business {
 
   // Branding
   logoUrl        String?
+  logoBackground String? // Couleur de fond derrière le logo (hex), auto-détectée ou manuelle
   coverUrl       String?
   primaryColor   String  @default("#4f46e5")
   secondaryColor String  @default("#312e81")
