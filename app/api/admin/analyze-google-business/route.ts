@@ -50,6 +50,7 @@ function extractSearchQuery(url: string): string {
 }
 
 // ── Méthode 1 : Google Places API (fiable) ───────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fetchViaPlacesAPI(query: string, originalUrl: string) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY!;
   console.log(`[Google/Places] Recherche : "${query}"`);

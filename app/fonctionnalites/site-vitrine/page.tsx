@@ -354,7 +354,7 @@ export default function SiteVitrinePage() {
       <section className="bg-indigo-600 py-20 text-center">
         <div className="mx-auto max-w-3xl px-6">
           <h2 className="mb-4 text-3xl font-bold text-white">
-            Votre site vitrine en 5 minutes, c'est maintenant
+            Votre site vitrine en 5 minutes, c&apos;est maintenant
           </h2>
           <p className="mb-8 text-indigo-200">
             Gratuit pour démarrer. Sans engagement. En ligne en moins de 5 minutes.

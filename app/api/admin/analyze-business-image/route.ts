@@ -90,6 +90,7 @@ async function handleAmbianceMode(imageBase64: string) {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function handleLogoMode(imageBase64: string, mimeType: string) {
   const rawBuffer = Buffer.from(imageBase64, "base64");
 

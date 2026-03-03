@@ -26,6 +26,7 @@ import {
   X,
   Info,
   Printer,
+  Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -463,6 +464,27 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
           );
         })()}
       </nav>
+
+      {/* Admin section */}
+      {isAdmin && (
+        <div className="border-t border-slate-800 px-4 py-2">
+          <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-slate-600">
+            Administration
+          </p>
+          <Link
+            href="/prospection"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
+              pathname.startsWith("/prospection")
+                ? "bg-indigo-600 text-white"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+            )}
+          >
+            <Map className="h-4 w-4" />
+            Prospection Paris
+          </Link>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-3 space-y-0.5">

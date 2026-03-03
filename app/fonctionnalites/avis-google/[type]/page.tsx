@@ -276,7 +276,7 @@ export default async function ReviewsTypePage({ params }: { params: Promise<Para
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-8 text-center text-2xl font-bold text-slate-900">
-            Avis Google pour d'autres types de commerces
+            Avis Google pour d&apos;autres types de commerces
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
             {otherTypes.map((t) => (

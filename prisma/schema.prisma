@@ -572,6 +572,53 @@ model Log {
 }
 
 // ─────────────────────────────────────────
+// PROSPECTION PARIS
+// ─────────────────────────────────────────
+
+enum ProspectLeadStatus {
+  DISCOVERED
+  CONTACTED
+  CONVERTED
+  DECLINED
+}
+
+model ProspectStreet {
+  id         String         @id @default(cuid())
+  name       String
+  city       String         @default("Paris")
+  geometry   Json?          // Array de {lat, lng} pour le tracé Leaflet
+  leads      ProspectLead[]
+  searchedAt DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([name, city])
+}
+
+model ProspectLead {
+  id            String             @id @default(cuid())
+  streetId      String
+  street        ProspectStreet     @relation(fields: [streetId], references: [id])
+  name          String
+  address       String?
+  osmId         String?
+  lat           Float?
+  lng           Float?
+  googleMapsUrl String?
+  phone         String?
+  website       String?
+  businessType  String?
+  status        ProspectLeadStatus @default(DISCOVERED)
+  businessId    String?
+  notes         String?            @db.Text
+  contactedAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([streetId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────
 // CONTACT
 // ─────────────────────────────────────────
 

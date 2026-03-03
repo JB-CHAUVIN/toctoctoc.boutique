@@ -151,7 +151,7 @@ export default function AvisGooglePage() {
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-500">
           QR code sur votre comptoir → votre client laisse un avis Google → il tente sa chance
-          à la roulette de récompenses. Plus d'avis 5 étoiles, plus de visibilité locale.
+          à la roulette de récompenses. Plus d&apos;avis 5 étoiles, plus de visibilité locale.
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
@@ -271,7 +271,7 @@ export default function AvisGooglePage() {
           <h2 className="mb-4 text-3xl font-bold text-slate-900">Inclus dans tous les plans</h2>
           <p className="mb-8 text-slate-500">
             Le module avis Google est disponible dès le plan gratuit.
-            Passez au Starter pour un nombre d'avis illimité.
+            Passez au Starter pour un nombre d&apos;avis illimité.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 p-6 text-left">
@@ -283,7 +283,7 @@ export default function AvisGooglePage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  Jusqu'à 3 avis collectés
+                  Jusqu&apos;à 3 avis collectés
                 </li>
               </ul>
             </div>
@@ -339,7 +339,7 @@ export default function AvisGooglePage() {
             Prêt à booster vos avis Google ?
           </h2>
           <p className="mb-8 text-indigo-200">
-            Votre QR code avis est prêt en 5 minutes. Vos premiers avis arrivent dès aujourd'hui.
+            Votre QR code avis est prêt en 5 minutes. Vos premiers avis arrivent dès aujourd&apos;hui.
           </p>
           <Link
             href="/register"

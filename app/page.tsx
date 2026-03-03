@@ -303,7 +303,7 @@ export default function HomePage() {
             Pour tous vos commerces
           </h2>
           <p className="mb-10 text-center text-slate-500">
-            Boulangerie, restaurant, salon, pharmacie… TocTocToc.boutique s'adapte à chaque type de commerce local.
+            Boulangerie, restaurant, salon, pharmacie… TocTocToc.boutique s&apos;adapte à chaque type de commerce local.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {commerceTypes.map((c) => {

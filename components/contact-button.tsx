@@ -19,7 +19,6 @@ export function ContactButton() {
 
   // Hide on public business pages (any path not matching a known app route)
   const isAppRoute = APP_ROUTES.some((r) => pathname === r || (r !== "/" && pathname.startsWith(r + "/")));
-  if (!isAppRoute) return null;
 
   function update(field: keyof FormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -42,6 +41,8 @@ export function ContactButton() {
     return () => window.removeEventListener("open-contact-form", handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!isAppRoute) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

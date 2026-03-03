@@ -55,7 +55,8 @@ export function PremiumPrintSection({
       const current = prev[product.id]?.quantity ?? 0;
       const next = Math.max(0, Math.min(10, current + delta));
       if (next === 0) {
-        const { [product.id]: _, ...rest } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [product.id]: _removed, ...rest } = prev;
         return rest;
       }
       return { ...prev, [product.id]: { product, quantity: next } };
@@ -100,6 +101,8 @@ export function PremiumPrintSection({
     }
   }
 
+  const comingSoon = true; // TODO: passer à false quand la commande sera activée
+
   return (
     <div>
       {/* Bandeau succès */}
@@ -120,6 +123,11 @@ export function PremiumPrintSection({
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-amber-500" />
           <h2 className="text-xl font-bold text-slate-900">Supports premium</h2>
+          {comingSoon && (
+            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+              Bientôt disponible
+            </span>
+          )}
         </div>
         <p className="mt-1 text-sm font-medium text-slate-600">
           Faites bonne impression avec des supports professionnels
@@ -131,7 +139,7 @@ export function PremiumPrintSection({
       </div>
 
       {/* Grille produits */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className={`grid gap-4 sm:grid-cols-2 ${comingSoon ? "pointer-events-none opacity-50 select-none" : ""}`}>
         {PRINT_PRODUCTS.map((product) => {
           const qty = cart[product.id]?.quantity ?? 0;
           return (
@@ -179,8 +187,8 @@ export function PremiumPrintSection({
         })}
       </div>
 
-      {/* Panier + formulaire */}
-      {cartItems.length > 0 && (
+      {/* Panier + formulaire (masqué en mode coming soon) */}
+      {!comingSoon && cartItems.length > 0 && (
         <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <ShoppingCart className="h-5 w-5 text-indigo-600" />

@@ -243,7 +243,7 @@ export default function CarteDeFidelitePage() {
             Pour quel type de commerce ?
           </h2>
           <p className="mb-10 text-center text-slate-500">
-            La carte de fidélité digitale s'adapte à tous les commerces locaux.
+            La carte de fidélité digitale s&apos;adapte à tous les commerces locaux.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {LOYALTY_TYPES.map((type) => (
@@ -283,7 +283,7 @@ export default function CarteDeFidelitePage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  Jusqu'à 3 cartes actives
+                  Jusqu&apos;à 3 cartes actives
                 </li>
               </ul>
             </div>

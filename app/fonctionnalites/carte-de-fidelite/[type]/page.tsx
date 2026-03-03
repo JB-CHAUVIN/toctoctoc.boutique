@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle, QrCode, Smartphone, Star } from "lucide-react";
+import { ArrowRight, QrCode, Smartphone, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LOYALTY_TYPES, getLoyaltyTypeBySlug } from "@/lib/seo-data";
@@ -279,7 +279,7 @@ export default async function LoyaltyTypePage({ params }: { params: Promise<Para
       <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-8 text-center text-2xl font-bold text-slate-900">
-            Carte de fidélité pour d'autres commerces
+            Carte de fidélité pour d&apos;autres commerces
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
             {otherTypes.map((t) => (
