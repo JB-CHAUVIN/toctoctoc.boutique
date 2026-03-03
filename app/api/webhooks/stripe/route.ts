@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe, PRICE_TO_PLAN, mapStripeStatus, downgradeModules } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { PrintOrderConfirmationEmail } from "@/emails/print-order-confirmation";
+import { PrintOrderNotificationEmail } from "@/emails/print-order-notification";
 
 // Résout userId : d'abord depuis metadata, sinon depuis le customerId en DB
 async function resolveUserId(metadata: Record<string, string> | null, customerId: string): Promise<string | null> {
@@ -41,6 +44,85 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // ── Print order (one-shot payment) ──
+        if (session.mode === "payment" && session.metadata?.type === "print_order") {
+          const printOrderId = session.metadata.printOrderId;
+          if (!printOrderId) break;
+
+          const paymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id ?? null;
+
+          const order = await prisma.printOrder.update({
+            where: { id: printOrderId },
+            data: {
+              status: "PAID",
+              stripePaymentIntentId: paymentIntentId,
+            },
+          });
+
+          // Reconstituer les items avec les noms produits
+          const items = order.items as Array<{ productId: string; name: string; quantity: number; unitPrice: number }>;
+
+          // Email confirmation client
+          try {
+            await sendEmail({
+              to: order.shippingEmail,
+              subject: "Commande confirmée — TocTocToc.boutique",
+              template: PrintOrderConfirmationEmail({
+                name: order.shippingName,
+                items,
+                totalAmount: order.totalAmount,
+                shipping: {
+                  name: order.shippingName,
+                  address: order.shippingAddress,
+                  city: order.shippingCity,
+                  zipCode: order.shippingZipCode,
+                  country: order.shippingCountry,
+                },
+              }),
+            });
+          } catch (e) {
+            console.error("[webhook] Erreur email confirmation print order", e);
+          }
+
+          // Email notification interne
+          try {
+            await sendEmail({
+              to: "contact@toctoctoc.boutique",
+              subject: `Nouvelle commande supports #${order.id.slice(-6)}`,
+              template: PrintOrderNotificationEmail({
+                orderId: order.id,
+                items,
+                totalAmount: order.totalAmount,
+                shipping: {
+                  name: order.shippingName,
+                  address: order.shippingAddress,
+                  city: order.shippingCity,
+                  zipCode: order.shippingZipCode,
+                  country: order.shippingCountry,
+                  phone: order.shippingPhone,
+                  email: order.shippingEmail,
+                },
+              }),
+            });
+          } catch (e) {
+            console.error("[webhook] Erreur email notification print order", e);
+          }
+
+          await prisma.log.create({
+            data: {
+              level: "INFO",
+              action: "print_order.paid",
+              userId: session.metadata.userId,
+              meta: { printOrderId, amount: order.totalAmount },
+            },
+          });
+          break;
+        }
+
+        // ── Subscription checkout ──
         if (session.mode !== "subscription") break;
 
         const userId = session.metadata?.userId;

@@ -4,18 +4,45 @@ import { ContactButton } from "@/components/contact-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://toctoctoc.boutique"),
   title: {
     default: "TocTocToc.boutique — Digitalisez votre commerce local",
     template: "%s | TocTocToc.boutique",
   },
   description:
-    "Plateforme SaaS tout-en-un pour les commerces locaux : réservations, avis, fidélité, site vitrine.",
-  keywords: ["commerce local", "réservation", "fidélité", "avis google", "site vitrine"],
+    "Plateforme SaaS tout-en-un pour les commerces locaux : réservations, avis, fidélité, site vitrine. Digitalisez votre commerce en 5 minutes sans compétences techniques.",
+  keywords: [
+    "commerce local",
+    "réservation en ligne",
+    "carte de fidélité digitale",
+    "avis google",
+    "site vitrine commerce",
+    "programme fidélité QR code",
+    "digitalisation commerce",
+  ],
   authors: [{ name: "TocTocToc.boutique" }],
+  robots: { index: true, follow: true },
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     siteName: "TocTocToc.boutique",
+    url: "https://toctoctoc.boutique",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "TocTocToc.boutique — Digitalisez votre commerce local",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TocTocToc.boutique — Digitalisez votre commerce local",
+    description:
+      "Site vitrine, réservations, avis Google gamifiés, carte de fidélité digitale — tout en un à partir de 0€.",
+    images: ["/og-image.png"],
   },
 };
 

@@ -183,6 +183,7 @@ model Business {
   loyaltyStatuses  LoyaltyStatus[]
   showcaseBlocks   ShowcaseBlock[]
   prospectInfo     ProspectInfo?
+  printOrders      PrintOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -501,6 +502,51 @@ model ProspectInfo {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────
+// COMMANDES SUPPORTS PREMIUM (print orders)
+// ─────────────────────────────────────────
+
+enum PrintOrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model PrintOrder {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  userId     String
+
+  items       Json // [{ productId, name, quantity, unitPrice }]
+  totalAmount Int  // en centimes
+
+  // Stripe
+  stripeSessionId        String? @unique
+  stripePaymentIntentId  String?
+
+  status PrintOrderStatus @default(PENDING)
+
+  // Livraison
+  shippingName    String
+  shippingAddress String
+  shippingCity    String
+  shippingZipCode String
+  shippingCountry String  @default("FR")
+  shippingPhone   String?
+  shippingEmail   String
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([userId])
 }
 
 // ─────────────────────────────────────────

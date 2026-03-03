@@ -237,3 +237,65 @@ export const BOOKING_STATUS_LABELS: Record<string, { label: string; color: strin
   COMPLETED: { label: "Terminé", color: "blue" },
   NO_SHOW: { label: "Absent", color: "gray" },
 };
+
+// ─────────────────────────────────────────
+// SUPPORTS PREMIUM (print orders)
+// ─────────────────────────────────────────
+
+export interface PrintProduct {
+  id: string;
+  name: string;
+  price: number; // en euros
+  priceCents: number; // en centimes
+  description: string;
+  emoji: string;
+  badge?: string;
+}
+
+export const PRINT_PRODUCTS: PrintProduct[] = [
+  {
+    id: "plexi-display",
+    name: "Chevalet Plexi QR Code",
+    price: 15,
+    priceCents: 1500,
+    description: "Support comptoir acrylique transparent, élégant et durable",
+    emoji: "💎",
+  },
+  {
+    id: "pvc-card",
+    name: "Carte PVC rigide",
+    price: 8,
+    priceCents: 800,
+    description: "Format CB, imperméable, pro",
+    emoji: "💳",
+  },
+  {
+    id: "pack-comptoir",
+    name: "Pack Comptoir",
+    price: 25,
+    priceCents: 2500,
+    description: "1 chevalet plexi + 2 cartes PVC (économie 6€)",
+    emoji: "📦",
+    badge: "Économisez 6€",
+  },
+  {
+    id: "nfc-card",
+    name: "Carte NFC + QR Code",
+    price: 12,
+    priceCents: 1200,
+    description: "PVC avec puce NFC intégrée",
+    emoji: "📡",
+  },
+];
+
+export const PRINT_PRODUCTS_MAP: Record<string, PrintProduct> = Object.fromEntries(
+  PRINT_PRODUCTS.map((p) => [p.id, p])
+);
+
+export const PRINT_ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  PENDING: { label: "En attente de paiement", color: "yellow" },
+  PAID: { label: "Payé", color: "green" },
+  SHIPPED: { label: "Expédié", color: "blue" },
+  DELIVERED: { label: "Livré", color: "green" },
+  CANCELLED: { label: "Annulé", color: "red" },
+};

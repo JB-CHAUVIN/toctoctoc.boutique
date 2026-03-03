@@ -1,0 +1,70 @@
+# TocTocToc.boutique
+
+TocTocToc.boutique est une plateforme SaaS B2B tout-en-un pour digitaliser les commerces locaux en 5 minutes, sans compétences techniques.
+
+## Ce que fait la plateforme
+
+TocTocToc.boutique permet aux commerçants et prestataires locaux de créer leur présence digitale complète depuis une seule interface :
+- Un site vitrine personnalisé avec URL dédiée (/{slug}) en moins de 5 minutes
+- Un système de réservation en ligne accessible 24h/24
+- Un programme de collecte d'avis Google avec gamification (roulette de récompenses)
+- Une carte de fidélité digitale avec QR code, sans application à installer pour les clients
+
+Les clients finaux interagissent via QR codes imprimés sur le comptoir ou des liens directs, sans créer de compte et sans télécharger d'application.
+
+## Modules disponibles
+
+### Carte de Fidélité digitale
+Programme de tampons numérique remplaçant les cartes papier. Le commerçant scanne le QR code de son client pour ajouter un tampon en temps réel. Système de statuts VIP configurables (Bronze, Silver, Gold) avec récompenses par palier. Carte retrouvable par email.
+
+### Avis Google + Roulette de récompenses
+Collecte d'avis via QR code ou lien unique. Le client est redirigé vers la page Google Maps du commerce pour laisser un avis. Après son avis, il tente sa chance à la roulette de récompenses (café offert, réduction, cadeau mystère). Chaque récompense génère un code unique à valider en caisse.
+
+### Site Vitrine
+Site web personnalisé avec blocs configurables : Hero, À propos, Services et tarifs, Horaires d'ouverture, Formulaire de contact, FAQ, Réseaux sociaux, CTA Réservation, CTA Fidélité, CTA Avis. Branding complet : logo, couleurs (primary/secondary/accent), police, image de couverture.
+
+### Réservations en ligne
+Prise de rendez-vous 24h/24. Trois modes : Rendez-vous (services individuels), Table (restaurant), Cours collectifs. Services avec tarif et durée personnalisés. Créneaux configurables avec buffer, limites d'avance, jours ouvrés.
+
+### Modules à venir
+- Publication automatique réseaux sociaux (SOCIAL)
+- Boutique en ligne (ECOMMERCE)
+- Standard téléphonique IA (PHONE_AI)
+- Gestion d'équipe et planning (STAFF)
+- Facturation électronique conforme France (INVOICING)
+
+## Pour quels commerces
+
+TocTocToc.boutique est conçu pour tous les commerces locaux :
+
+Restauration & boissons : Restaurant, Café, Bar, Bar à jeux, Glacier
+Boulangerie & artisanat alimentaire : Boulangerie, Pâtisserie, Boulangerie/Pâtisserie, Chocolaterie, Traiteur, Fromagerie, Boucherie, Charcuterie, Poissonnerie, Épicerie fine
+Beauté & bien-être : Salon de coiffure, Barbier, Salon de beauté, Institut d'esthétique, Nail art, Spa, Studio de yoga, Coach sportif, Salle de sport
+Commerce de détail : Épicerie, Superette, Fleuriste, Librairie, Boutique de vêtements, Boutique cadeaux, Bijouterie, Pressing
+Services : Garage/Auto, et tout autre commerce local
+
+## Tarifs
+
+- FREE (0€/mois) : 1 commerce, site vitrine, 3 avis Google maximum, 3 cartes fidélité maximum
+- STARTER (9€/mois) : 1 commerce, tous les modules actifs (vitrine, réservation, avis, fidélité), illimité
+- PRO (19€/mois) : 3 commerces, modules Starter + réseaux sociaux, support prioritaire
+- ENTERPRISE (99€/mois) : commerces illimités, les 9 modules, fonctionnalités sur mesure
+
+Essai gratuit de 14 jours (CB requise). Offre de lancement : -50% à vie pour les 1000 premiers inscrits.
+
+## Fonctionnement technique
+
+- Sans application mobile à installer pour les clients finaux
+- QR codes imprimables générés automatiquement pour chaque commerce
+- Compatible NFC pour les smartphones récents
+- Accessible depuis n'importe quel smartphone en scannant un QR code
+- Interface commerçant responsive (dashboard web)
+- Configuration complète en 5 minutes
+
+## Liens utiles
+
+- Site principal : https://toctoctoc.boutique
+- Inscription gratuite : https://toctoctoc.boutique/register
+- Carte de fidélité digitale : https://toctoctoc.boutique/fonctionnalites/carte-de-fidelite
+- Avis Google gamifiés : https://toctoctoc.boutique/fonctionnalites/avis-google
+- Site vitrine commerce : https://toctoctoc.boutique/fonctionnalites/site-vitrine

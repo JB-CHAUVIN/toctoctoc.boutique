@@ -2,27 +2,88 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { LandingDemoSection } from "@/components/landing/demo-section";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "https://toctoctoc.boutique" },
+};
 
 const features = [
   {
     emoji: "⭐",
     title: "Avis Google + Roulette",
-    desc: "Incitez vos clients à laisser des avis et récompensez-les.",
+    desc: "Incitez vos clients à laisser des avis et récompensez-les avec une roulette de cadeaux.",
+    href: "/fonctionnalites/avis-google",
   },
   {
     emoji: "🎯",
     title: "Carte de fidélité digitale",
-    desc: "Programme de tampons personnalisé, zéro papier.",
+    desc: "Programme de tampons personnalisé, zéro papier, zéro app à installer.",
+    href: "/fonctionnalites/carte-de-fidelite",
   },
   {
     emoji: "📅",
     title: "Réservations en ligne",
     desc: "Vos clients réservent directement depuis votre site, 24h/24.",
+    href: null,
   },
   {
     emoji: "🌐",
     title: "Site vitrine personnalisé",
-    desc: "Un site beau et rapide aux couleurs de votre enseigne.",
+    desc: "Un site beau et rapide aux couleurs de votre enseigne, prêt en 5 minutes.",
+    href: "/fonctionnalites/site-vitrine",
+  },
+];
+
+const stats = [
+  { value: "500+", label: "commerces digitalisés" },
+  { value: "5 min", label: "pour tout configurer" },
+  { value: "0 app", label: "requise pour vos clients" },
+];
+
+const commerceTypes = [
+  { label: "Boulangerie", emoji: "🥐", slug: "boulangerie" },
+  { label: "Restaurant", emoji: "🍽️", slug: "restaurant" },
+  { label: "Café", emoji: "☕", slug: "cafe" },
+  { label: "Salon de coiffure", emoji: "✂️", slug: "salon-de-coiffure" },
+  { label: "Salon de beauté", emoji: "💅", slug: "salon-de-beaute" },
+  { label: "Salle de sport", emoji: "💪", slug: "salle-de-sport" },
+  { label: "Fleuriste", emoji: "🌸", slug: "fleuriste" },
+  { label: "Barbier", emoji: "💈", slug: "barbier" },
+  { label: "Spa", emoji: "🧖", slug: "spa" },
+  { label: "Pharmacie", emoji: "💊", slug: "pharmacie" },
+  { label: "Traiteur", emoji: "🥗", slug: "traiteur" },
+  { label: "Épicerie", emoji: "🛒", slug: null },
+];
+
+const faqs = [
+  {
+    q: "Faut-il des compétences techniques pour utiliser TocTocToc.boutique ?",
+    a: "Non, aucune. L'interface est conçue pour les commerçants, pas les développeurs. Vous configurez votre commerce en quelques clics et votre site est en ligne en moins de 5 minutes.",
+  },
+  {
+    q: "Mes clients doivent-ils télécharger une application ?",
+    a: "Non. Vos clients utilisent la carte de fidélité ou laissent un avis en scannant simplement un QR code avec leur smartphone. Aucune application à installer.",
+  },
+  {
+    q: "Qu'est-ce que la roulette de récompenses pour les avis Google ?",
+    a: "Après avoir laissé un avis sur Google, vos clients tentent leur chance à une roulette personnalisée. Café offert, réduction, cadeau mystère… Vous configurez les récompenses et leurs probabilités. Résultat : plus d'avis, plus engageants.",
+  },
+  {
+    q: "Puis-je gérer plusieurs commerces ?",
+    a: "Oui. Le plan Starter inclut 1 commerce. Le plan Pro (19€/mois) permet de gérer jusqu'à 3 commerces depuis un seul compte. Le plan Enterprise offre un nombre illimité de commerces.",
+  },
+  {
+    q: "Comment fonctionne la carte de fidélité digitale ?",
+    a: "Chaque client obtient une carte avec un QR code unique. Pour tamponner, vous scannez son QR code depuis votre smartphone. Le tampon apparaît instantanément sur l'écran du client. Quand il atteint le seuil, la récompense est débloquée automatiquement.",
+  },
+  {
+    q: "Puis-je annuler à tout moment ?",
+    a: "Oui, sans engagement. Vous pouvez résilier en un clic depuis votre espace. Votre abonnement reste actif jusqu'à la fin de la période payée.",
+  },
+  {
+    q: "TocTocToc.boutique fonctionne-t-il pour les chaînes de commerces ?",
+    a: "Oui. Les franchiseurs et multi-sites utilisent le plan Pro ou Enterprise pour gérer l'ensemble de leurs points de vente depuis une seule interface, avec un branding cohérent.",
   },
 ];
 
@@ -47,7 +108,7 @@ const plans = [
       "Site vitrine",
       "Réservations",
       "Avis + Roulette",
-      "Fidélité",
+      "Fidélité illimitée",
     ],
     cta: "Essai gratuit 14 jours",
     highlight: true,
@@ -63,7 +124,7 @@ const plans = [
       "Site vitrine",
       "Réservations",
       "Avis + Roulette",
-      "Fidélité",
+      "Fidélité illimitée",
     ],
     cta: "Essai gratuit 14 jours",
     highlight: false,
@@ -71,9 +132,65 @@ const plans = [
   },
 ];
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "TocTocToc.boutique",
+  url: "https://toctoctoc.boutique",
+  logo: "https://toctoctoc.boutique/logo.png",
+  description:
+    "Plateforme SaaS pour digitaliser les commerces locaux : site vitrine, réservations, avis Google gamifiés, carte de fidélité digitale.",
+  foundingLocation: { "@type": "Place", addressCountry: "FR" },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    availableLanguage: "French",
+    url: "https://toctoctoc.boutique/contact",
+  },
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "TocTocToc.boutique",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "AggregateOffer",
+    lowPrice: "0",
+    highPrice: "99",
+    priceCurrency: "EUR",
+  },
+  description:
+    "Plateforme SaaS tout-en-un pour digitaliser les commerces locaux en 5 minutes : site vitrine, réservations en ligne, avis Google gamifiés, carte de fidélité digitale.",
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: { "@type": "Answer", text: faq.a },
+  })),
+};
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -90,10 +207,7 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm text-slate-600 hover:text-slate-900"
-            >
+            <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
               Connexion
             </Link>
             <Link
@@ -118,9 +232,8 @@ export default function HomePage() {
           <span className="text-indigo-600">en 5 minutes</span>
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-500">
-          Réservations en ligne, avis Google, carte de fidélité et site vitrine
-          — tout en un, personnalisé à votre image, sans aucune compétence
-          technique.
+          Carte de fidélité digitale, avis Google gamifiés, réservations en ligne et site vitrine
+          personnalisé — tout en un, sans aucune compétence technique, sans application à installer.
         </p>
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
@@ -129,26 +242,20 @@ export default function HomePage() {
           >
             Commencer gratuitement <ArrowRight className="h-4 w-4" />
           </Link>
-          {/*<Link*/}
-          {/*  href="/cafe-de-la-paix"*/}
-          {/*  className="rounded-xl border border-slate-200 px-8 py-4 font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50"*/}
-          {/*>*/}
-          {/*  Voir une démo*/}
-          {/*</Link>*/}
         </div>
       </section>
 
-      {/* Promo video */}
-      <section className="mx-auto max-w-4xl px-6 pb-20">
-        <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-slate-200">
-          <video
-            src="/promo.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="w-full"
-          />
+      {/* Chiffres clés */}
+      <section className="bg-indigo-600 py-14">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <div className="text-4xl font-black text-white md:text-5xl">{s.value}</div>
+                <div className="mt-1 text-sm font-medium text-indigo-200">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -159,24 +266,64 @@ export default function HomePage() {
             Tout ce dont votre commerce a besoin
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div className="mb-3 text-3xl">{f.emoji}</div>
-                <h3 className="mb-2 font-semibold text-slate-900">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-500">
-                  {f.desc}
-                </p>
-              </div>
-            ))}
+            {features.map((f) => {
+              const card = (
+                <div
+                  className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${f.href ? "cursor-pointer" : ""}`}
+                >
+                  <div className="mb-3 text-3xl">{f.emoji}</div>
+                  <h3 className="mb-2 font-semibold text-slate-900">{f.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-500">{f.desc}</p>
+                  {f.href && (
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-indigo-600">
+                      En savoir plus <ArrowRight className="h-3 w-3" />
+                    </span>
+                  )}
+                </div>
+              );
+              return f.href ? (
+                <Link key={f.title} href={f.href}>
+                  {card}
+                </Link>
+              ) : (
+                <div key={f.title}>{card}</div>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Demo interactive */}
       <LandingDemoSection />
+
+      {/* Pour tous vos commerces */}
+      <section className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
+            Pour tous vos commerces
+          </h2>
+          <p className="mb-10 text-center text-slate-500">
+            Boulangerie, restaurant, salon, pharmacie… TocTocToc.boutique s'adapte à chaque type de commerce local.
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {commerceTypes.map((c) => {
+              const content = (
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-center transition-shadow hover:shadow-md">
+                  <span className="text-3xl">{c.emoji}</span>
+                  <span className="text-xs font-medium text-slate-700">{c.label}</span>
+                </div>
+              );
+              return c.slug ? (
+                <Link key={c.label} href={`/fonctionnalites/carte-de-fidelite/${c.slug}`}>
+                  {content}
+                </Link>
+              ) : (
+                <div key={c.label}>{content}</div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Pricing */}
       <section className="py-20">
@@ -187,7 +334,7 @@ export default function HomePage() {
           <p className="mb-3 text-center text-slate-500">
             Sans engagement, résiliable à tout moment.
             <br />
-            Retour sur investissement garantit !
+            Retour sur investissement garanti !
           </p>
           <div className="mx-auto mb-10 w-fit animate-pulse rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-center text-sm font-bold text-white shadow-lg">
             Offre de lancement -50% à vie — pour les 1000 premiers inscrits !
@@ -213,9 +360,7 @@ export default function HomePage() {
                   </span>
                 )}
                 <div className="mb-4">
-                  <div
-                    className={`text-xl font-bold ${plan.highlight ? "" : "text-slate-900"}`}
-                  >
+                  <div className={`text-xl font-bold ${plan.highlight ? "" : "text-slate-900"}`}>
                     {plan.name}
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
@@ -225,9 +370,7 @@ export default function HomePage() {
                       </span>
                     )}
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    <span
-                      className={`text-sm ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}
-                    >
+                    <span className={`text-sm ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>
                       {plan.desc}
                     </span>
                   </div>
@@ -243,11 +386,7 @@ export default function HomePage() {
                       <CheckCircle
                         className={`h-4 w-4 flex-shrink-0 ${plan.highlight ? "text-indigo-200" : "text-green-500"}`}
                       />
-                      <span
-                        className={
-                          plan.highlight ? "text-indigo-100" : "text-slate-600"
-                        }
-                      >
+                      <span className={plan.highlight ? "text-indigo-100" : "text-slate-600"}>
                         {f}
                       </span>
                     </li>
@@ -269,12 +408,102 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-3xl px-6">
+          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">
+            Questions fréquentes
+          </h2>
+          <div className="space-y-4">
+            {faqs.map((faq, i) => (
+              <details
+                key={i}
+                className="group rounded-2xl border border-slate-200 bg-white px-6 py-4"
+              >
+                <summary className="cursor-pointer list-none font-semibold text-slate-900 group-open:text-indigo-600">
+                  {faq.q}
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-slate-500">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <p>
-          © {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en
-          France.
-        </p>
+      <footer className="border-t border-slate-100 py-12">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-8 grid gap-8 sm:grid-cols-3">
+            <div>
+              <div className="mb-3 font-semibold text-slate-900">Fonctionnalités</div>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li>
+                  <Link href="/fonctionnalites/carte-de-fidelite" className="hover:text-indigo-600">
+                    Carte de fidélité digitale
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/fonctionnalites/avis-google" className="hover:text-indigo-600">
+                    Avis Google gamifiés
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/fonctionnalites/site-vitrine" className="hover:text-indigo-600">
+                    Site vitrine commerce
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="mb-3 font-semibold text-slate-900">Par type de commerce</div>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li>
+                  <Link href="/fonctionnalites/carte-de-fidelite/boulangerie" className="hover:text-indigo-600">
+                    Boulangerie
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/fonctionnalites/carte-de-fidelite/restaurant" className="hover:text-indigo-600">
+                    Restaurant
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/fonctionnalites/avis-google/salon-de-coiffure" className="hover:text-indigo-600">
+                    Salon de coiffure
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/fonctionnalites/carte-de-fidelite/cafe" className="hover:text-indigo-600">
+                    Café
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div className="mb-3 font-semibold text-slate-900">TocTocToc.boutique</div>
+              <ul className="space-y-2 text-sm text-slate-500">
+                <li>
+                  <Link href="/register" className="hover:text-indigo-600">
+                    Créer un compte gratuit
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-indigo-600">
+                    Connexion
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-indigo-600">
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
+            © {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en France.
+          </div>
+        </div>
       </footer>
     </div>
   );
