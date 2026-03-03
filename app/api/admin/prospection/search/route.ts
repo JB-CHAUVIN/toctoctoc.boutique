@@ -3,69 +3,195 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const OSM_TYPE_MAP: Record<string, string> = {
+// Mapping Google Place types → businessType lisible
+const GOOGLE_TYPE_MAP: Record<string, string | null> = {
   bakery: "Boulangerie",
-  pastry: "Pâtisserie",
-  hairdresser: "Salon de coiffure",
-  beauty: "Salon de beauté",
-  clothes: "Boutique de vêtements",
-  butcher: "Boucherie",
-  seafood: "Poissonnerie",
-  florist: "Fleuriste",
-  books: "Librairie",
-  jewelry: "Bijouterie",
-  laundry: "Pressing",
-  supermarket: "Épicerie",
-  convenience: "Superette",
-  deli: "Épicerie fine",
-  chocolate: "Chocolaterie",
-  cheese: "Fromagerie",
   restaurant: "Restaurant",
   cafe: "Café",
   bar: "Bar",
-  fast_food: "Restaurant",
-  ice_cream: "Glacier",
+  night_club: "Bar",
+  liquor_store: "Cave à vins",
+  beauty_salon: "Salon de beauté",
+  hair_care: "Salon de coiffure",
+  barber_shop: "Barbier",
   pharmacy: "Pharmacie",
-  optician: "Opticien",
-  hardware: "Quincaillerie",
-  electronics: "Électronique",
-  mobile_phone: "Téléphonie",
-  sports: "Sport",
-  toys: "Jouets",
-  gift: "Cadeaux",
-  photo: "Photographie",
+  drugstore: "Pharmacie",
+  supermarket: "Épicerie",
+  grocery_or_supermarket: "Épicerie",
+  convenience_store: "Superette",
+  florist: "Fleuriste",
+  book_store: "Librairie",
+  jewelry_store: "Bijouterie",
+  clothing_store: "Boutique de vêtements",
+  shoe_store: "Boutique de chaussures",
+  laundry: "Pressing",
   dry_cleaning: "Pressing",
+  pet_store: "Animalerie",
+  hardware_store: "Quincaillerie",
+  electronics_store: "Électronique",
+  bicycle_store: "Vélo",
+  car_repair: "Garage",
+  gas_station: "Station service",
+  gym: "Salle de sport",
+  spa: "Spa",
+  dentist: "Dentiste",
+  doctor: "Médecin",
+  hospital: "Hôpital",
+  physiotherapist: "Kiné",
+  optician: "Opticien",
   travel_agency: "Agence de voyage",
-  massage: "Massage",
-  tattoo: "Tatouage",
-  locksmith: "Serrurerie",
-  copyshop: "Reprographie",
-  stationery: "Papeterie",
-  art: "Galerie d'art",
-  wine: "Cave à vins",
-  tobacco: "Tabac",
-  lottery: "FDJ",
-  greengrocer: "Primeur",
-  pet: "Animalerie",
+  bank: "Banque",
+  atm: "Banque",
+  insurance_agency: "Assurances",
+  real_estate_agency: "Immobilier",
+  lawyer: "Avocat",
+  accounting: "Comptable",
+  meal_takeaway: "Restaurant",
+  meal_delivery: "Restaurant",
+  food: "Alimentation",
+  establishment: null,
+  point_of_interest: null,
+  store: "Commerce",
 };
 
-function getBusinessType(tags: Record<string, string>): string | null {
-  const shopTag = tags["shop"];
-  const amenityTag = tags["amenity"];
-
-  if (shopTag && OSM_TYPE_MAP[shopTag]) return OSM_TYPE_MAP[shopTag];
-  if (amenityTag && OSM_TYPE_MAP[amenityTag]) return OSM_TYPE_MAP[amenityTag];
-
-  if (shopTag) return "Commerce";
-  if (amenityTag) return "Autre";
-  if (tags["office"]) return "Bureau";
-
+function mapGoogleTypes(types: string[]): string | null {
+  for (const t of types) {
+    const mapped = GOOGLE_TYPE_MAP[t];
+    if (mapped) return mapped;
+  }
   return null;
 }
 
 const schema = z.object({
   streetName: z.string().min(2).max(200),
 });
+
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
+
+/** Utilise Places Text Search (activée) à la place de Geocoding (désactivée) */
+async function geocodeStreet(query: string): Promise<{
+  canonicalName: string;
+  lat: number;
+  lng: number;
+  viewport: { sw: { lat: number; lng: number }; ne: { lat: number; lng: number } };
+} | null> {
+  // Nettoyer : supprimer codes postaux, arrondissements
+  const cleaned = query
+    .replace(/\b75\d{3}\b/g, "")
+    .replace(/\b\d+(e|er|ème|eme)?\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?${new URLSearchParams({
+    query: `${cleaned}, Paris, France`,
+    key: GOOGLE_API_KEY,
+    language: "fr",
+    region: "fr",
+    type: "route",
+  })}`;
+
+  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (data.status !== "OK" || !data.results?.length) return null;
+
+  // Préférer un résultat qui ressemble à une rue (name sans trop de mots)
+  const result = data.results.find(
+    (r: { name: string }) => r.name.toLowerCase().includes(cleaned.toLowerCase().split(" ").pop() ?? "")
+  ) ?? data.results[0];
+
+  const loc = result.geometry.location;
+  const vp = result.geometry.viewport;
+
+  // Nom canonique = premier segment de formatted_address (avant la première virgule)
+  const canonicalName = result.name ?? result.formatted_address?.split(",")[0]?.trim() ?? cleaned;
+
+  return {
+    canonicalName,
+    lat: loc.lat,
+    lng: loc.lng,
+    viewport: {
+      sw: { lat: vp.southwest.lat, lng: vp.southwest.lng },
+      ne: { lat: vp.northeast.lat, lng: vp.northeast.lng },
+    },
+  };
+}
+
+interface GooglePlace {
+  name: string;
+  place_id: string;
+  vicinity?: string;
+  formatted_address?: string;
+  geometry: { location: { lat: number; lng: number } };
+  types: string[];
+  rating?: number;
+}
+
+async function searchNearbyPlaces(lat: number, lng: number, radius: number): Promise<GooglePlace[]> {
+  const places: GooglePlace[] = [];
+  let pageToken: string | undefined;
+
+  // Jusqu'à 3 pages (60 résultats max)
+  for (let page = 0; page < 3; page++) {
+    const params: Record<string, string> = {
+      location: `${lat},${lng}`,
+      radius: String(Math.round(radius)),
+      key: GOOGLE_API_KEY,
+      language: "fr",
+    };
+    if (pageToken) {
+      params.pagetoken = pageToken;
+      // Google exige un délai entre les pages avec pagetoken
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${new URLSearchParams(params)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) break;
+
+    const data = await res.json();
+    if (data.status === "ZERO_RESULTS") break;
+    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+      console.warn("[PLACES_WARN]", data.status, data.error_message);
+      break;
+    }
+
+    places.push(...(data.results ?? []));
+    pageToken = data.next_page_token;
+    if (!pageToken) break;
+  }
+
+  return places;
+}
+
+async function runOverpassWay(streetName: string, bboxFilter: string): Promise<Array<{
+  type: string;
+  geometry?: Array<{ lat: number; lon: number }>;
+  tags?: Record<string, string>;
+}> | null> {
+  const query = `[out:json][timeout:15];way["name"="${streetName}"]${bboxFilter};out geom;`;
+  const ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+  ];
+  for (const endpoint of ENDPOINTS) {
+    try {
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: AbortSignal.timeout(15000),
+      });
+      if (resp.headers.get("content-type")?.includes("text/html")) continue;
+      if (!resp.ok) continue;
+      const json = await resp.json();
+      return json.elements ?? [];
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -81,101 +207,56 @@ export async function POST(req: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
 
-  const { streetName } = parsed.data;
+  const rawInput = parsed.data.streetName.trim();
 
-  // Requête Overpass
-  const overpassQuery = `
-[out:json][timeout:30];
-area["name"="Paris"]["admin_level"="8"]->.paris;
-(
-  way["name"="${streetName}"](area.paris);
-  node["shop"](area.paris)["addr:street"~"${streetName}",i];
-  node["amenity"](area.paris)["addr:street"~"${streetName}",i];
-  node["office"](area.paris)["addr:street"~"${streetName}",i];
-);
-out body;
->;
-out skel qt;
-`.trim();
-
-  let overpassData: {
-    elements: Array<{
-      type: string;
-      id: number;
-      lat?: number;
-      lon?: number;
-      nodes?: number[];
-      tags?: Record<string, string>;
-    }>;
-  };
-
-  try {
-    const resp = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `data=${encodeURIComponent(overpassQuery)}`,
-      signal: AbortSignal.timeout(35000),
-    });
-
-    if (!resp.ok) throw new Error(`Overpass error ${resp.status}`);
-    overpassData = await resp.json();
-  } catch (err) {
-    console.error("[OVERPASS_ERROR]", err);
-    return NextResponse.json({ error: "Erreur Overpass API. Réessayez." }, { status: 502 });
+  // ── 1. Google Geocoding → nom canonique + centre + viewport ──
+  const geo = await geocodeStreet(rawInput);
+  if (!geo) {
+    return NextResponse.json({ error: "Rue introuvable via Google Maps. Vérifiez le nom." }, { status: 404 });
   }
 
-  const elements = overpassData.elements ?? [];
+  const { canonicalName, lat, lng, viewport } = geo;
 
-  // Construire un index des nœuds par id pour récupérer les coords des ways
-  const nodeById = new Map<number, { lat: number; lon: number }>();
-  for (const el of elements) {
-    if (el.type === "node" && el.lat != null && el.lon != null) {
-      nodeById.set(el.id, { lat: el.lat, lon: el.lon });
-    }
-  }
+  // Rayon = demi-diagonale du viewport + 100m de marge
+  const dLat = (viewport.ne.lat - viewport.sw.lat) * 111000;
+  const dLng = (viewport.ne.lng - viewport.sw.lng) * 111000 * Math.cos((lat * Math.PI) / 180);
+  const radius = Math.max(150, Math.sqrt(dLat * dLat + dLng * dLng) / 2 + 100);
 
-  // Extraire la géométrie de la rue (premier way correspondant)
-  let geometry: Array<{ lat: number; lng: number }> | null = null;
-  for (const el of elements) {
-    if (el.type === "way" && el.tags?.["name"] === streetName && el.nodes) {
-      const coords = el.nodes
-        .map((nId) => nodeById.get(nId))
-        .filter((n): n is { lat: number; lon: number } => n != null)
-        .map((n) => ({ lat: n.lat, lng: n.lon }));
-      if (coords.length > 0) {
-        geometry = coords;
-        break;
+  // ── 2. Google Places Nearby Search → tous les commerces ──
+  const places = await searchNearbyPlaces(lat, lng, radius);
+
+  // Filtrer : garder seulement les établissements dont l'adresse mentionne la rue
+  const streetKeyword = canonicalName.toLowerCase().replace(/^(rue|avenue|boulevard|allée|impasse|villa|passage|square|place)\s+/i, "");
+  const relevantPlaces = places.filter((p) => {
+    const addr = (p.vicinity ?? p.formatted_address ?? "").toLowerCase();
+    return addr.includes(streetKeyword) || addr.includes(canonicalName.toLowerCase());
+  });
+
+  // ── 3. Overpass → géométrie de la rue (polyline Leaflet) ──
+  const PAD = 0.003;
+  const bboxFilter = `(${viewport.sw.lat - PAD},${viewport.sw.lng - PAD},${viewport.ne.lat + PAD},${viewport.ne.lng + PAD})`;
+  const wayElements = await runOverpassWay(canonicalName, bboxFilter) ?? [];
+
+  // Concaténer tous les points de géométrie
+  const allCoords: Array<{ lat: number; lng: number }> = [];
+  for (const el of wayElements) {
+    if (el.type === "way" && el.geometry) {
+      for (const pt of el.geometry) {
+        allCoords.push({ lat: pt.lat, lng: pt.lon });
       }
     }
   }
+  const geometry = allCoords.length > 1 ? allCoords : null;
 
-  // Upsert ProspectStreet
+  // ── 4. Upsert ProspectStreet ──
   const street = await prisma.prospectStreet.upsert({
-    where: { name_city: { name: streetName, city: "Paris" } },
-    update: {
-      geometry: geometry ?? undefined,
-      searchedAt: new Date(),
-    },
-    create: {
-      name: streetName,
-      city: "Paris",
-      geometry: geometry ?? undefined,
-    },
+    where: { name_city: { name: canonicalName, city: "Paris" } },
+    update: { geometry: geometry ?? undefined, searchedAt: new Date() },
+    create: { name: canonicalName, city: "Paris", geometry: geometry ?? undefined },
   });
 
-  // Extraire les POIs (nodes avec shop/amenity/office et addr:street)
-  const pois = elements.filter(
-    (el) =>
-      el.type === "node" &&
-      el.lat != null &&
-      el.lon != null &&
-      el.tags &&
-      (el.tags["shop"] || el.tags["amenity"] || el.tags["office"]) &&
-      el.tags["name"]
-  );
-
-  // Récupérer les osmIds déjà en DB pour éviter les doublons
-  const existingOsmIds = new Set(
+  // ── 5. Créer les ProspectLeads (éviter doublons par place_id) ──
+  const existingPlaceIds = new Set(
     (
       await prisma.prospectLead.findMany({
         where: { streetId: street.id, osmId: { not: null } },
@@ -184,38 +265,31 @@ out skel qt;
     ).map((l: { osmId: string | null }) => l.osmId)
   );
 
-  const leadsToCreate = pois
-    .filter((poi) => !existingOsmIds.has(String(poi.id)))
-    .map((poi) => {
-      const tags = poi.tags!;
-      const name = tags["name"] ?? "Commerce inconnu";
-      const houseNumber = tags["addr:housenumber"] ?? "";
-      const addressParts = [houseNumber, streetName, "Paris"].filter(Boolean);
-      const address = addressParts.join(", ");
-      const businessType = getBusinessType(tags);
-      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + " " + address)}`;
+  const leadsToCreate = relevantPlaces
+    .filter((p) => !existingPlaceIds.has(`g:${p.place_id}`))
+    .map((p) => {
+      const businessType = mapGoogleTypes(p.types);
+      const address = p.vicinity ?? p.formatted_address ?? null;
+      const googleMapsUrl = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
 
       return {
         streetId: street.id,
-        osmId: String(poi.id),
-        name,
+        osmId: `g:${p.place_id}`,
+        name: p.name,
         address,
-        lat: poi.lat!,
-        lng: poi.lon!,
+        lat: p.geometry.location.lat,
+        lng: p.geometry.location.lng,
         googleMapsUrl,
-        phone: tags["phone"] ?? tags["contact:phone"] ?? null,
-        website: tags["website"] ?? tags["contact:website"] ?? null,
         businessType,
+        phone: null,
+        website: null,
       };
     });
 
-  let newLeads: typeof leadsToCreate = [];
   if (leadsToCreate.length > 0) {
     await prisma.prospectLead.createMany({ data: leadsToCreate });
-    newLeads = leadsToCreate;
   }
 
-  // Retourner la rue avec tous ses leads
   const fullStreet = await prisma.prospectStreet.findUnique({
     where: { id: street.id },
     include: { leads: { orderBy: { createdAt: "asc" } } },
@@ -224,6 +298,6 @@ out skel qt;
   return NextResponse.json({
     success: true,
     data: fullStreet,
-    meta: { newLeadsCount: newLeads.length },
+    meta: { newLeadsCount: leadsToCreate.length },
   });
 }
