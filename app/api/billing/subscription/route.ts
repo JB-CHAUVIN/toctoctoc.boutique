@@ -12,5 +12,16 @@ export async function GET() {
   });
 
   const sub = user?.subscription ?? null;
-  return NextResponse.json({ success: true, data: sub });
+
+  // Fetch promo code from any business owned by this user
+  let promoCode: string | null = null;
+  if (sub?.plan === "FREE" || !sub) {
+    const biz = await prisma.business.findFirst({
+      where: { userId: session.user.id, promoCode: { not: null } },
+      select: { promoCode: true },
+    });
+    promoCode = biz?.promoCode ?? null;
+  }
+
+  return NextResponse.json({ success: true, data: sub, promoCode });
 }

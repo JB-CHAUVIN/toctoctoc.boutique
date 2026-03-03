@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X, ChevronLeft, ChevronRight, Sparkles, Star, Trophy,
-  TrendingUp, ExternalLink,
+  TrendingUp, ExternalLink, Copy, Check, Gift,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -18,6 +18,7 @@ interface WalkthroughProps {
   primaryColor?: string;
   accentColor?: string;
   logoUrl?: string | null;
+  promoCode?: string | null;
   loyaltyConfig?: {
     cardColor: string;
     cardTextColor: string;
@@ -835,10 +836,105 @@ function WalkthroughContent({
   );
 }
 
+// ─── Modal promo post-walkthrough ─────────────────────────────────────────────
+
+function PromoCodeModal({
+  promoCode,
+  businessName,
+  onClose,
+}: {
+  promoCode: string;
+  businessName: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(promoCode);
+    setCopied(true);
+    toast.success("Code copié !");
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(15,23,42,0.80)", backdropFilter: "blur(6px)" }}
+    >
+      <motion.div
+        className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl"
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+        transition={{ type: "spring", stiffness: 320, damping: 26 }}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/10 text-slate-400 transition hover:bg-black/20"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Header gradient */}
+        <div className="flex flex-col items-center bg-gradient-to-br from-violet-600 to-indigo-600 px-6 pb-8 pt-10">
+          <motion.div
+            animate={{ y: [0, -6, 0], rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Gift className="h-14 w-14 text-white drop-shadow-lg" />
+          </motion.div>
+          <h2 className="mt-4 text-xl font-black text-white">
+            Un cadeau rien que pour vous !
+          </h2>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 pb-6 pt-5">
+          <p className="text-center text-sm text-slate-500">
+            Ce code a été créé spécialement pour{" "}
+            <strong className="text-slate-700">{businessName}</strong>.
+            Il n&apos;est valable qu&apos;une seule fois.
+          </p>
+
+          {/* Code box */}
+          <button
+            onClick={handleCopy}
+            className="group mt-4 flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-violet-300 bg-violet-50 px-4 py-4 transition hover:border-violet-400 hover:bg-violet-100"
+          >
+            <span className="text-2xl font-black tracking-widest text-violet-700">
+              {promoCode}
+            </span>
+            {copied ? (
+              <Check className="h-5 w-5 text-emerald-500" />
+            ) : (
+              <Copy className="h-5 w-5 text-violet-400 transition group-hover:text-violet-600" />
+            )}
+          </button>
+
+          <p className="mt-3 text-center text-sm font-bold text-amber-600">
+            -40% sur votre premier abonnement
+          </p>
+
+          {/* CTA */}
+          <Link
+            href="/dashboard/billing"
+            onClick={onClose}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-700"
+          >
+            Découvrir les plans →
+          </Link>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ─── Auto-affichage (1ère visite) ─────────────────────────────────────────────
 
 export function WalkthroughAutoShow(props: WalkthroughProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showPromo, setShowPromo] = useState(false);
 
   useEffect(() => {
     const key = `ttt_wt_${props.businessId}`;
@@ -851,7 +947,9 @@ export function WalkthroughAutoShow(props: WalkthroughProps) {
   function handleClose(finished: boolean) {
     localStorage.setItem(`ttt_wt_${props.businessId}`, "1");
     setIsOpen(false);
-    if (!finished) {
+    if (props.promoCode) {
+      setTimeout(() => setShowPromo(true), 400);
+    } else if (!finished) {
       toast("Retrouvez ce guide avec le bouton « Revoir la démo »", {
         icon: "💡",
         duration: 5000,
@@ -860,9 +958,20 @@ export function WalkthroughAutoShow(props: WalkthroughProps) {
   }
 
   return (
-    <AnimatePresence>
-      {isOpen && <WalkthroughContent {...props} onClose={handleClose} />}
-    </AnimatePresence>
+    <>
+      <AnimatePresence>
+        {isOpen && <WalkthroughContent {...props} onClose={handleClose} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showPromo && props.promoCode && (
+          <PromoCodeModal
+            promoCode={props.promoCode}
+            businessName={props.businessName}
+            onClose={() => setShowPromo(false)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

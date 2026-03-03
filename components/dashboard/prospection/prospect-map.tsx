@@ -69,6 +69,8 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
 
   const [streets, setStreets] = useState<ProspectStreet[]>(initialStreets);
   const [selectedStreet, setSelectedStreet] = useState<ProspectStreet | null>(null);
+  // Objet pour que l'effet se re-déclenche même si on clique deux fois le même marker
+  const [highlightLead, setHighlightLead] = useState<{ id: string; tick: number } | null>(null);
   const [searchValue, setSearchValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -152,7 +154,7 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         fillOpacity: 0.9,
       }).addTo(mapRef.current!);
       marker.bindTooltip(`<strong>${lead.name}</strong><br/>${lead.businessType ?? ""}`, { direction: "top" });
-      marker.on("click", () => setSelectedStreet(street));
+      marker.on("click", () => { setSelectedStreet(street); setHighlightLead({ id: lead.id, tick: Date.now() }); });
       streetMarkers.push(marker);
     }
     markersRef.current.set(street.id, streetMarkers);
@@ -308,7 +310,8 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
 
         <StreetPanel
           street={selectedStreet}
-          onClose={() => setSelectedStreet(null)}
+          highlightLead={highlightLead}
+          onClose={() => { setSelectedStreet(null); setHighlightLead(null); }}
           onLeadUpdate={handleLeadUpdate}
           onStreetUpdate={(updated) => {
             setStreets((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));

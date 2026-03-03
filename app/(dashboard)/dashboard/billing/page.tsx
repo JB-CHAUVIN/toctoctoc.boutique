@@ -11,6 +11,9 @@ import {
   RefreshCcw,
   X,
   CheckCircle2,
+  Copy,
+  Check,
+  Gift,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { PlanType, Subscription } from "@prisma/client";
@@ -129,6 +132,8 @@ function BillingContent() {
   const [redirecting, setRedirecting] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoCopied, setPromoCopied] = useState(false);
 
   const returnPath = "/dashboard/billing";
 
@@ -139,6 +144,7 @@ function BillingContent() {
       const s = data.data as Subscription | null;
       setSub(s);
       setPlan(s?.plan ?? "FREE");
+      setPromoCode(data.promoCode ?? null);
     }
     setLoading(false);
   }, []);
@@ -269,6 +275,39 @@ function BillingContent() {
           <p className="mb-4 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-3 py-2 text-center text-xs font-semibold text-amber-800">
             Offre de lancement -50% à vie — pour les 1000 premiers inscrits !
           </p>
+
+          {/* Code promo prospect */}
+          {promoCode && (
+            <div className="mb-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="h-4 w-4" />
+                <p className="text-sm font-bold">Un code promo rien que pour vous !</p>
+              </div>
+              <p className="text-xs text-violet-200 mb-3">
+                Utilisez ce code lors du paiement pour bénéficier de <strong className="text-white">-40% sur votre premier mois</strong>.
+              </p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(promoCode);
+                  setPromoCopied(true);
+                  toast.success("Code copié !");
+                  setTimeout(() => setPromoCopied(false), 2000);
+                }}
+                className="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-dashed border-white/40 bg-white/10 px-4 py-2.5 transition hover:bg-white/20"
+              >
+                <span className="text-lg font-black tracking-widest">{promoCode}</span>
+                {promoCopied ? (
+                  <Check className="h-4 w-4 text-emerald-300" />
+                ) : (
+                  <Copy className="h-4 w-4 text-white/60" />
+                )}
+              </button>
+              <p className="mt-2 text-center text-[10px] text-violet-300">
+                Ce code est à usage unique — saisissez-le dans le champ &quot;Code promo&quot; au moment du paiement.
+              </p>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
               <div className="flex items-center justify-between mb-2">

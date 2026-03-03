@@ -213,6 +213,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           accentColor={business.accentColor}
           loyaltyConfig={business.loyaltyConfig}
           logoUrl={business.logoUrl}
+          promoCode={business.promoCode}
         />
       )}
 

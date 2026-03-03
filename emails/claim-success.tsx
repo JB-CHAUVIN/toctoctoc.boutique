@@ -6,6 +6,7 @@ interface ClaimSuccessEmailProps {
   email: string;
   dashboardUrl: string;
   upgradePlanUrl: string;
+  promoCode?: string | null;
 }
 
 export function ClaimSuccessEmail({
@@ -13,6 +14,7 @@ export function ClaimSuccessEmail({
   email,
   dashboardUrl,
   upgradePlanUrl,
+  promoCode,
 }: ClaimSuccessEmailProps) {
   return (
     <BaseEmail
@@ -65,6 +67,25 @@ export function ClaimSuccessEmail({
           les limites et activer la prise de rendez-vous en ligne.
         </Text>
       </Section>
+
+      {/* Bloc code promo */}
+      {promoCode && (
+        <Section style={styles.promoBox}>
+          <Text style={styles.promoIcon}>🎁</Text>
+          <Text style={styles.promoTitle}>Un cadeau rien que pour vous !</Text>
+          <Text style={styles.promoSubtitle}>
+            Ce code a été créé spécialement pour{" "}
+            <strong>{businessName}</strong>
+          </Text>
+          <Section style={styles.promoCodeBox}>
+            <Text style={styles.promoCode}>{promoCode}</Text>
+          </Section>
+          <Text style={styles.promoDiscount}>-40% sur votre premier abonnement</Text>
+          <Button href={upgradePlanUrl} style={styles.promoButton}>
+            Utiliser mon code →
+          </Button>
+        </Section>
+      )}
 
       {/* CTA principal */}
       <Section style={styles.ctaSection}>
@@ -191,6 +212,65 @@ const styles = {
     fontSize: "14px",
     lineHeight: "1.5",
     margin: "14px 0 0",
+  },
+  promoBox: {
+    background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+    borderRadius: "12px",
+    padding: "28px 24px",
+    marginBottom: "28px",
+    textAlign: "center" as const,
+  },
+  promoIcon: {
+    fontSize: "36px",
+    margin: "0 0 8px",
+    textAlign: "center" as const,
+  },
+  promoTitle: {
+    color: "#ffffff",
+    fontSize: "18px",
+    fontWeight: "700",
+    margin: "0 0 6px",
+    textAlign: "center" as const,
+  },
+  promoSubtitle: {
+    color: "#e0d4fc",
+    fontSize: "13px",
+    lineHeight: "1.5",
+    margin: "0 0 16px",
+    textAlign: "center" as const,
+  },
+  promoCodeBox: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    border: "2px dashed rgba(255,255,255,0.5)",
+    borderRadius: "8px",
+    padding: "12px 20px",
+    marginBottom: "12px",
+    textAlign: "center" as const,
+  },
+  promoCode: {
+    color: "#ffffff",
+    fontSize: "26px",
+    fontWeight: "800",
+    letterSpacing: "3px",
+    margin: "0",
+    textAlign: "center" as const,
+  },
+  promoDiscount: {
+    color: "#fde68a",
+    fontSize: "14px",
+    fontWeight: "700",
+    margin: "0 0 16px",
+    textAlign: "center" as const,
+  },
+  promoButton: {
+    backgroundColor: "#ffffff",
+    borderRadius: "8px",
+    color: "#4f46e5",
+    display: "inline-block",
+    fontSize: "14px",
+    fontWeight: "700",
+    padding: "12px 28px",
+    textDecoration: "none",
   },
   ctaSection: {
     textAlign: "center" as const,

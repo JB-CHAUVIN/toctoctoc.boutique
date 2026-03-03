@@ -33,41 +33,78 @@ const GOOGLE_TYPE_MAP: Record<string, string> = {
   butcher_shop: "Boucherie",
 };
 
-// ── Extraction du nom de commerce depuis n'importe quelle URL Google ──────────
-function extractSearchQuery(url: string): string {
+// ── Extraction du nom + coordonnées + place_id depuis n'importe quelle URL Google ──
+function extractSearchQuery(url: string): { query: string; lat?: number; lng?: number; placeId?: string } {
+  let query = "";
+  let lat: number | undefined;
+  let lng: number | undefined;
+  let placeId: string | undefined;
+
   try {
     const parsed = new URL(url);
     // google.com/search?q=... ou ?query=...
     const q = parsed.searchParams.get("q") ?? parsed.searchParams.get("query");
-    if (q) return q.replace(/\+/g, " ").trim();
-    // google.com/maps/place/Business+Name/...
+    if (q) {
+      // Cas : ?q=place_id:ChIJ... → extraire directement le place_id
+      const placeIdMatch = q.match(/^place_id:(.+)$/);
+      if (placeIdMatch) {
+        placeId = placeIdMatch[1].trim();
+      } else {
+        query = q.replace(/\+/g, " ").trim();
+      }
+    }
+    // google.com/maps/place/Business+Name/@lat,lng,...
     if (parsed.pathname.includes("/place/")) {
       const segment = parsed.pathname.split("/place/")[1]?.split("/")?.[0] ?? "";
-      if (segment) return decodeURIComponent(segment.replace(/\+/g, " ")).trim();
+      if (segment && !query && !placeId) query = decodeURIComponent(segment.replace(/\+/g, " ")).trim();
+    }
+    // Extraire coordonnées @lat,lng depuis le path
+    const coordMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (coordMatch) {
+      lat = parseFloat(coordMatch[1]);
+      lng = parseFloat(coordMatch[2]);
     }
   } catch { /* URL invalide */ }
-  return "";
+  return { query, lat, lng, placeId };
 }
 
 // ── Méthode 1 : Google Places API (fiable) ───────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function fetchViaPlacesAPI(query: string, originalUrl: string) {
+async function fetchViaPlacesAPI(query: string, originalUrl: string, coords?: { lat: number; lng: number }, directPlaceId?: string) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY!;
-  console.log(`[Google/Places] Recherche : "${query}"`);
 
-  // Text Search → place_id
-  const searchResp = await fetch(
-    `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}&language=fr`,
-  );
-  const searchData = await searchResp.json();
+  let placeId: string;
 
-  if (searchData.status !== "OK" || !searchData.results?.length) {
-    console.warn(`[Google/Places] Text Search → status: ${searchData.status}`);
-    return null;
+  if (directPlaceId) {
+    // Cas où l'URL contient directement ?q=place_id:ChIJ... → skip Text Search
+    placeId = directPlaceId;
+    console.log(`[Google/Places] place_id direct depuis URL : ${placeId}`);
+  } else {
+    console.log(`[Google/Places] Recherche : "${query}"${coords ? ` (location bias: ${coords.lat},${coords.lng})` : ""}`);
+
+    // Text Search → place_id (avec biais de localisation si coordonnées disponibles)
+    const searchParams: Record<string, string> = {
+      query,
+      key: apiKey,
+      language: "fr",
+    };
+    if (coords) {
+      searchParams.location = `${coords.lat},${coords.lng}`;
+      searchParams.radius = "500";
+    }
+    const searchResp = await fetch(
+      `https://maps.googleapis.com/maps/api/place/textsearch/json?${new URLSearchParams(searchParams)}`,
+    );
+    const searchData = await searchResp.json();
+
+    if (searchData.status !== "OK" || !searchData.results?.length) {
+      console.warn(`[Google/Places] Text Search → status: ${searchData.status}`);
+      return null;
+    }
+
+    placeId = searchData.results[0].place_id;
+    console.log(`[Google/Places] place_id trouvé : ${placeId}`);
   }
-
-  const placeId: string = searchData.results[0].place_id;
-  console.log(`[Google/Places] place_id : ${placeId}`);
 
   // Place Details → champs utiles
   const fields = "name,formatted_address,address_components,formatted_phone_number,website,url,types,place_id";
@@ -227,16 +264,21 @@ export async function POST(req: Request) {
   const { url } = body as { url: string };
   if (!url?.trim()) return NextResponse.json({ error: "URL requise" }, { status: 400 });
 
-  const businessName = extractSearchQuery(url);
+  const { query: businessName, lat, lng, placeId } = extractSearchQuery(url);
+  const coords = lat !== undefined && lng !== undefined ? { lat, lng } : undefined;
   console.log(`[Google] URL : ${url}`);
-  console.log(`[Google] Nom extrait de l'URL : "${businessName}"`);
+  if (placeId) {
+    console.log(`[Google] place_id extrait directement : ${placeId}`);
+  } else {
+    console.log(`[Google] Nom extrait de l'URL : "${businessName}"${coords ? ` — coords: ${coords.lat},${coords.lng}` : ""}`);
+  }
 
   try {
     let data: Record<string, string | null> | null = null;
 
     if (process.env.GOOGLE_PLACES_API_KEY) {
       const query = businessName || url;
-      data = await fetchViaPlacesAPI(query, url);
+      data = await fetchViaPlacesAPI(query, url, coords, placeId);
     } else {
       console.log(`[Google] Pas de GOOGLE_PLACES_API_KEY — fallback scraping HTML`);
     }
@@ -254,7 +296,10 @@ export async function POST(req: Request) {
     }
 
     // Pré-remplir le nom depuis l'URL si GPT n'a rien trouvé
-    if (!data.name && businessName) data.name = businessName;
+    // (ne pas utiliser une chaîne "place_id:..." comme nom)
+    if (!data.name && businessName && !businessName.startsWith("place_id:")) {
+      data.name = businessName;
+    }
 
     console.log(`[Google] ✓ Résultat final :`, data);
     return NextResponse.json({ success: true, data });

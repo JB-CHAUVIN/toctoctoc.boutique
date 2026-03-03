@@ -16,7 +16,7 @@ export async function POST(
 
   const business = await prisma.business.findUnique({
     where: { claimToken: params.token },
-    select: { id: true, name: true, claimedAt: true },
+    select: { id: true, name: true, claimedAt: true, promoCode: true },
   });
 
   if (!business) {
@@ -69,6 +69,7 @@ export async function POST(
       email,
       dashboardUrl: `${appUrl}/dashboard`,
       upgradePlanUrl: `${appUrl}/dashboard/billing`,
+      promoCode: business.promoCode,
     }),
   }).catch((err) => console.error("[EMAIL_CLAIM]", err));
 

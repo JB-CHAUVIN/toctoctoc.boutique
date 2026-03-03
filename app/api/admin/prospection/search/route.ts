@@ -127,31 +127,33 @@ interface GooglePlace {
   rating?: number;
 }
 
-async function searchNearbyPlaces(lat: number, lng: number, radius: number): Promise<GooglePlace[]> {
+/** Text Search sur le nom de la rue — retourne les établissements que Google associe à cette adresse */
+async function searchStreetEstablishments(canonicalName: string): Promise<GooglePlace[]> {
   const places: GooglePlace[] = [];
   let pageToken: string | undefined;
 
   // Jusqu'à 3 pages (60 résultats max)
   for (let page = 0; page < 3; page++) {
     const params: Record<string, string> = {
-      location: `${lat},${lng}`,
-      radius: String(Math.round(radius)),
+      // "commerces [rue] Paris" → Google retourne les établissements associés à la rue
+      // plutôt que la rue elle-même (qui apparaît avec "Rue X, Paris, France")
+      query: `commerces ${canonicalName} Paris`,
       key: GOOGLE_API_KEY,
       language: "fr",
+      region: "fr",
     };
     if (pageToken) {
       params.pagetoken = pageToken;
-      // Google exige un délai entre les pages avec pagetoken
       await new Promise((r) => setTimeout(r, 2000));
     }
 
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${new URLSearchParams(params)}`;
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?${new URLSearchParams(params)}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) break;
 
     const data = await res.json();
     if (data.status === "ZERO_RESULTS") break;
-    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    if (data.status !== "OK") {
       console.warn("[PLACES_WARN]", data.status, data.error_message);
       break;
     }
@@ -215,21 +217,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Rue introuvable via Google Maps. Vérifiez le nom." }, { status: 404 });
   }
 
-  const { canonicalName, lat, lng, viewport } = geo;
+  const { canonicalName, viewport } = geo;
 
-  // Rayon = demi-diagonale du viewport + 100m de marge
-  const dLat = (viewport.ne.lat - viewport.sw.lat) * 111000;
-  const dLng = (viewport.ne.lng - viewport.sw.lng) * 111000 * Math.cos((lat * Math.PI) / 180);
-  const radius = Math.max(150, Math.sqrt(dLat * dLat + dLng * dLng) / 2 + 100);
+  // ── 2. Google Places Text Search → commerces associés à la rue ──
+  // Text Search utilise le nom de la rue comme requête, ce qui retourne tous les
+  // établissements que Google associe à cette adresse (pas de tri par popularité).
+  const allPlaces = await searchStreetEstablishments(canonicalName);
 
-  // ── 2. Google Places Nearby Search → tous les commerces ──
-  const places = await searchNearbyPlaces(lat, lng, radius);
+  // Garder uniquement les établissements (pas les routes, zones admin, etc.)
+  const SKIP_TYPES = new Set([
+    "route", "street_address", "geocode", "political", "locality",
+    "sublocality", "sublocality_level_1", "sublocality_level_2",
+    "administrative_area_level_1", "administrative_area_level_2",
+    "administrative_area_level_3", "country", "neighborhood",
+    "postal_code", "natural_feature", "park",
+  ]);
 
-  // Filtrer : garder seulement les établissements dont l'adresse mentionne la rue
-  const streetKeyword = canonicalName.toLowerCase().replace(/^(rue|avenue|boulevard|allée|impasse|villa|passage|square|place)\s+/i, "");
-  const relevantPlaces = places.filter((p) => {
-    const addr = (p.vicinity ?? p.formatted_address ?? "").toLowerCase();
-    return addr.includes(streetKeyword) || addr.includes(canonicalName.toLowerCase());
+  // Mot(s) clé(s) du nom de rue (hors préfixe type + prépositions)
+  const streetWords = canonicalName
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => !["rue", "avenue", "boulevard", "allée", "impasse", "villa",
+      "passage", "square", "place", "de", "du", "des", "la", "le", "les"].includes(w) && w.length > 2);
+
+  const relevantPlaces = allPlaces.filter((p) => {
+    // Exclure non-établissements
+    if (!p.types.includes("establishment") && !p.types.includes("point_of_interest")) return false;
+    if (p.types.every((t) => SKIP_TYPES.has(t))) return false;
+    // Garder si l'adresse contient un mot-clé de la rue (filtre souple)
+    const addr = (p.formatted_address ?? p.vicinity ?? "").toLowerCase();
+    return streetWords.some((w) => addr.includes(w));
   });
 
   // ── 3. Overpass → géométrie de la rue (polyline Leaflet) ──
