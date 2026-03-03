@@ -69,7 +69,7 @@ async function fetchViaPlacesAPI(query: string, originalUrl: string) {
   console.log(`[Google/Places] place_id : ${placeId}`);
 
   // Place Details → champs utiles
-  const fields = "name,formatted_address,address_components,formatted_phone_number,website,url,types";
+  const fields = "name,formatted_address,address_components,formatted_phone_number,website,url,types,place_id";
   const detailResp = await fetch(
     `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}&language=fr`,
   );
@@ -108,7 +108,8 @@ async function fetchViaPlacesAPI(query: string, originalUrl: string) {
     zipCode,
     phone:         place.formatted_phone_number ?? null,
     website:       place.website ?? null,
-    googleMapsUrl: `https://search.google.com/local/writereview?placeid=${placeId}`,
+    googleMapsUrl: place.url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+    reviewUrl:     `https://search.google.com/local/writereview?placeid=${placeId}`,
   };
 }
 

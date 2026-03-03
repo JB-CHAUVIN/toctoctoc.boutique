@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { LandingDemoSection } from "@/components/landing/demo-section";
 
 const features = [
   {
@@ -29,14 +30,17 @@ const plans = [
   {
     name: "Gratuit",
     price: "0€",
+    originalPrice: null as string | null,
     desc: "Pour démarrer",
     features: ["1 commerce", "Site vitrine", "Avis Google (3 max)", "Fidélité (3 cartes)"],
     cta: "Commencer",
     highlight: false,
+    promoBadge: null as string | null,
   },
   {
     name: "Starter",
     price: "9€",
+    originalPrice: "18€",
     desc: "/ mois",
     features: [
       "1 commerce",
@@ -45,22 +49,25 @@ const plans = [
       "Avis + Roulette",
       "Fidélité",
     ],
-    cta: "S'abonner",
+    cta: "Essai gratuit 14 jours",
     highlight: true,
+    promoBadge: "-50% à vie",
   },
   {
     name: "Pro",
     price: "19€",
+    originalPrice: "38€",
     desc: "/ mois",
     features: [
-      "3 commerce",
+      "3 commerces",
       "Site vitrine",
       "Réservations",
       "Avis + Roulette",
       "Fidélité",
     ],
-    cta: "S'abonner",
+    cta: "Essai gratuit 14 jours",
     highlight: false,
+    promoBadge: "-50% à vie",
   },
 ];
 
@@ -168,17 +175,23 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Demo interactive */}
+      <LandingDemoSection />
+
       {/* Pricing */}
       <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
             Tarifs simples
           </h2>
-          <p className="mb-12 text-center text-slate-500">
+          <p className="mb-3 text-center text-slate-500">
             Sans engagement, résiliable à tout moment.
             <br />
             Retour sur investissement garantit !
           </p>
+          <div className="mx-auto mb-10 w-fit animate-pulse rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-center text-sm font-bold text-white shadow-lg">
+            Offre de lancement -50% à vie — pour les 1000 premiers inscrits !
+          </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {plans.map((plan) => (
               <div
@@ -194,13 +207,23 @@ export default function HomePage() {
                     Populaire
                   </span>
                 )}
+                {plan.promoBadge && !plan.highlight && (
+                  <span className="absolute -top-3 right-4 rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                    {plan.promoBadge}
+                  </span>
+                )}
                 <div className="mb-4">
                   <div
                     className={`text-xl font-bold ${plan.highlight ? "" : "text-slate-900"}`}
                   >
                     {plan.name}
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-baseline gap-2">
+                    {plan.originalPrice && (
+                      <span className={`text-lg line-through ${plan.highlight ? "text-indigo-300" : "text-slate-400"}`}>
+                        {plan.originalPrice}
+                      </span>
+                    )}
                     <span className="text-4xl font-bold">{plan.price}</span>
                     <span
                       className={`text-sm ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}
@@ -208,6 +231,11 @@ export default function HomePage() {
                       {plan.desc}
                     </span>
                   </div>
+                  {plan.promoBadge && plan.highlight && (
+                    <span className="mt-2 inline-block rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900">
+                      {plan.promoBadge}
+                    </span>
+                  )}
                 </div>
                 <ul className="mb-8 space-y-2">
                   {plan.features.map((f) => (

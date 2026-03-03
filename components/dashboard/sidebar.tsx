@@ -25,6 +25,7 @@ import {
   Wallet,
   X,
   Info,
+  Printer,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -274,6 +275,20 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                     >
                       <Info className="h-3.5 w-3.5" />
                       Informations
+                    </Link>
+
+                    {/* Supports terrain */}
+                    <Link
+                      href={`/dashboard/${business.id}/supports`}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
+                        pathname.startsWith(`/dashboard/${business.id}/supports`)
+                          ? "bg-indigo-600 text-white"
+                          : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                      )}
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Supports terrain
                     </Link>
 
                     {/* Modules */}

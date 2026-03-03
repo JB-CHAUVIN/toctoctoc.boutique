@@ -266,11 +266,20 @@ function BillingContent() {
               Passez à un plan payant pour débloquer plus de modules et de fonctionnalités.
             </p>
           </div>
+          <p className="mb-4 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 px-3 py-2 text-center text-xs font-semibold text-amber-800">
+            Offre de lancement -50% à vie — pour les 1000 premiers inscrits !
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-indigo-900">Starter</p>
-                <span className="text-lg font-bold text-indigo-700">9€<span className="text-xs font-normal">/mois</span></span>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-indigo-900">Starter</p>
+                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white">-50%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm line-through text-indigo-400">18€</span>
+                  <span className="ml-1 text-lg font-bold text-indigo-700">9€<span className="text-xs font-normal">/mois</span></span>
+                </div>
               </div>
               <ul className="text-xs text-indigo-700 space-y-1 mb-4">
                 <li>✓ Site vitrine</li>
@@ -290,8 +299,14 @@ function BillingContent() {
 
             <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-violet-900">Pro</p>
-                <span className="text-lg font-bold text-violet-700">19€<span className="text-xs font-normal">/mois</span></span>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-violet-900">Pro</p>
+                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white">-50%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm line-through text-violet-400">38€</span>
+                  <span className="ml-1 text-lg font-bold text-violet-700">19€<span className="text-xs font-normal">/mois</span></span>
+                </div>
               </div>
               <ul className="text-xs text-violet-700 space-y-1 mb-4">
                 <li>✓ Tout le Starter</li>
@@ -350,7 +365,12 @@ function BillingContent() {
                 Fin de l&apos;essai : <strong>{formatDate(sub?.trialEnd)}</strong>
               </p>
               <p className="text-xs text-slate-500 mt-0.5">
-                Puis {PLAN_LIMITS[plan].priceMonthly}€/mois — sans engagement
+                Puis {PLAN_LIMITS[plan].originalPriceMonthly && (
+                  <span className="line-through text-slate-400">{PLAN_LIMITS[plan].originalPriceMonthly}€</span>
+                )} {PLAN_LIMITS[plan].priceMonthly}€/mois — sans engagement
+                {PLAN_LIMITS[plan].originalPriceMonthly && (
+                  <span className="ml-1 text-orange-600 font-semibold">(-50% offre de lancement)</span>
+                )}
               </p>
             </div>
           </div>
@@ -406,8 +426,14 @@ function BillingContent() {
             <Badge variant="success">Actif</Badge>
           </div>
           <p className="text-xs text-slate-500 mb-1">
+            {PLAN_LIMITS[plan].originalPriceMonthly && (
+              <span className="line-through text-slate-400">{PLAN_LIMITS[plan].originalPriceMonthly}€</span>
+            )}{" "}
             {PLAN_LIMITS[plan].priceMonthly}€/mois — prochain renouvellement le{" "}
             <strong>{formatDate(sub?.currentPeriodEnd)}</strong>
+            {PLAN_LIMITS[plan].originalPriceMonthly && (
+              <span className="ml-1 text-orange-600 font-semibold">(-50% à vie)</span>
+            )}
           </p>
           <p className="text-xs text-slate-500 mb-5">
             {PLAN_LIMITS[plan].maxBusinesses === -1

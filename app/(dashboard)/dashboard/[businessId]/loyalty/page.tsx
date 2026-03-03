@@ -113,7 +113,7 @@ export default async function LoyaltyDashboardPage({ params }: { params: { busin
             <CardHeader>
               <CardTitle>Aperçu de la carte</CardTitle>
             </CardHeader>
-            <LoyaltyCardPreview config={business.loyaltyConfig} businessName={business.name} />
+            <LoyaltyCardPreview config={business.loyaltyConfig} businessName={business.name} logoUrl={business.logoUrl} logoBackground={business.logoBackground} />
           </Card>
         )}
 

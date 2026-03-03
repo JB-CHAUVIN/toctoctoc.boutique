@@ -11,6 +11,8 @@ export const PLAN_LIMITS: Record<
     modules: ModuleType[];
     label: string;
     priceMonthly: number;
+    /** Prix "original" avant promo (x2) — null pour FREE/ENTERPRISE */
+    originalPriceMonthly: number | null;
     /** -1 = illimité */
     maxReviews: number;
     /** -1 = illimité */
@@ -20,6 +22,7 @@ export const PLAN_LIMITS: Record<
   FREE: {
     label: "Gratuit",
     priceMonthly: 0,
+    originalPriceMonthly: null,
     maxBusinesses: 1,
     modules: ["SHOWCASE", "REVIEWS", "LOYALTY"],
     maxReviews: 3,
@@ -28,6 +31,7 @@ export const PLAN_LIMITS: Record<
   STARTER: {
     label: "Starter",
     priceMonthly: 9,
+    originalPriceMonthly: 18,
     maxBusinesses: 1,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"],
     maxReviews: -1,
@@ -36,6 +40,7 @@ export const PLAN_LIMITS: Record<
   PRO: {
     label: "Pro",
     priceMonthly: 19,
+    originalPriceMonthly: 38,
     maxBusinesses: 3,
     modules: ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY", "SOCIAL"],
     maxReviews: -1,
@@ -44,6 +49,7 @@ export const PLAN_LIMITS: Record<
   ENTERPRISE: {
     label: "Enterprise",
     priceMonthly: 99,
+    originalPriceMonthly: null,
     maxBusinesses: -1, // illimité
     modules: [
       "SHOWCASE",
@@ -60,6 +66,12 @@ export const PLAN_LIMITS: Record<
     maxLoyaltyCards: -1,
   },
 };
+
+export const LAUNCH_PROMO = {
+  discount: "-50%",
+  message: "Offre de lancement -50% à vie — pour les 1000 premiers inscrits !",
+  badge: "-50% à vie",
+} as const;
 
 // ─────────────────────────────────────────
 // INFOS MODULES

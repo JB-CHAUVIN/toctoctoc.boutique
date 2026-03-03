@@ -22,8 +22,14 @@ export async function GET(req: Request, { params }: { params: { businessId: stri
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  const isAdmin = dbUser?.role === "ADMIN";
+
   const config = await prisma.reviewConfig.findFirst({
-    where: { businessId: params.businessId, business: { userId: session.user.id } },
+    where: {
+      businessId: params.businessId,
+      ...(isAdmin ? {} : { business: { userId: session.user.id } }),
+    },
     include: { rewards: { orderBy: { probability: "desc" } } },
   });
 

@@ -9,6 +9,8 @@ interface Props {
   customerName?: string;
   totalStamps?: number;
   compact?: boolean;
+  logoUrl?: string | null;
+  logoBackground?: string | null;
 }
 
 export function LoyaltyCardPreview({
@@ -17,6 +19,8 @@ export function LoyaltyCardPreview({
   customerName = "Votre prénom",
   totalStamps = 0,
   compact = false,
+  logoUrl,
+  logoBackground,
 }: Props) {
   const stampsRequired = config.stampsRequired;
   const activeStamps = totalStamps % stampsRequired;
@@ -43,12 +47,22 @@ export function LoyaltyCardPreview({
 
       {/* Header */}
       <div className="relative z-10 mb-4 flex items-start justify-between">
-        <div>
-          <div className="text-xs font-medium uppercase tracking-wider opacity-70" style={{ color: config.cardTextColor }}>
-            Carte de fidélité
-          </div>
-          <div className="text-lg font-bold" style={{ color: config.cardTextColor }}>
-            {businessName}
+        <div className="flex items-center gap-3">
+          {logoUrl && (
+            <div
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl"
+              style={{ backgroundColor: logoBackground ?? "rgba(255,255,255,0.2)" }}
+            >
+              <img src={logoUrl} alt={businessName} className="h-10 w-10 object-contain p-1" />
+            </div>
+          )}
+          <div>
+            <div className="text-xs font-medium uppercase tracking-wider opacity-70" style={{ color: config.cardTextColor }}>
+              Carte de fidélité
+            </div>
+            <div className="text-lg font-bold" style={{ color: config.cardTextColor }}>
+              {businessName}
+            </div>
           </div>
         </div>
         <div className="text-2xl">{config.stampIcon}</div>

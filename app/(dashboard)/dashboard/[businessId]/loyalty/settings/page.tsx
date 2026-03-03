@@ -18,6 +18,8 @@ export default function LoyaltySettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [businessName, setBusinessName] = useState("Mon Commerce");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoBackground, setLogoBackground] = useState<string | null>(null);
   const [config, setConfig] = useState<Partial<LoyaltyConfig>>({
     cardColor: "#4f46e5",
     cardTextColor: "#ffffff",
@@ -49,8 +51,21 @@ export default function LoyaltySettingsPage() {
       const bizData = await bizRes.json();
       const statusData = await statusRes.json();
 
-      if (configData.success) setConfig(configData.data);
-      if (bizData.success) setBusinessName(bizData.data.name);
+      if (configData.success) {
+        setConfig(configData.data);
+      } else if (bizData.success) {
+        // Pas encore de config → utiliser les couleurs de la marque par défaut
+        setConfig((c) => ({
+          ...c,
+          cardColor: bizData.data.primaryColor ?? "#4f46e5",
+          stampColor: bizData.data.accentColor ?? "#f59e0b",
+        }));
+      }
+      if (bizData.success) {
+        setBusinessName(bizData.data.name);
+        setLogoUrl(bizData.data.logoUrl ?? null);
+        setLogoBackground(bizData.data.logoBackground ?? null);
+      }
       if (statusData.success) setStatuses(statusData.data);
       setLoading(false);
     }
@@ -254,6 +269,8 @@ export default function LoyaltySettingsPage() {
               businessName={businessName}
               customerName="Marie Martin"
               totalStamps={7}
+              logoUrl={logoUrl}
+              logoBackground={logoBackground}
             />
           </Card>
         </div>
@@ -289,7 +306,7 @@ export default function LoyaltySettingsPage() {
 
                 <div className="flex-1 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <div className="mb-1 flex gap-2">
+                    <div className="mb-1 flex flex-wrap gap-1.5">
                       {STATUS_EMOJIS.map((emoji) => (
                         <button
                           key={emoji}

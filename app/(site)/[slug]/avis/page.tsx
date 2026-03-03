@@ -19,7 +19,9 @@ export default async function AvisPage({ params }: { params: { slug: string } })
     },
   });
 
-  if (!business || !business.modules.length || !business.reviewConfig) notFound();
+  if (!business || !business.modules.length) notFound();
+
+  const reviewConfig = business.reviewConfig ?? { googleUrl: null, instructions: null, rewards: [] };
 
   return (
     <div className="mx-auto max-w-xl px-6 py-12">
@@ -28,9 +30,9 @@ export default async function AvisPage({ params }: { params: { slug: string } })
         businessName={business.name}
         primaryColor={business.primaryColor}
         accentColor={business.accentColor}
-        googleUrl={business.reviewConfig.googleUrl}
-        instructions={business.reviewConfig.instructions}
-        rewards={business.reviewConfig.rewards}
+        googleUrl={reviewConfig.googleUrl}
+        instructions={reviewConfig.instructions}
+        rewards={reviewConfig.rewards}
       />
     </div>
   );

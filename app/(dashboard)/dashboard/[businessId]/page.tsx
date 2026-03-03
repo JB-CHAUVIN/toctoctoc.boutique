@@ -10,8 +10,8 @@ import { MODULES_INFO } from "@/lib/constants";
 import { formatDateTime } from "@/lib/utils";
 import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import { PublishToggle } from "@/components/dashboard/publish-toggle";
-import { PrintableCards } from "@/components/dashboard/printable-cards";
 import { SetupPanel } from "@/components/dashboard/setup-panel";
+import { WalkthroughAutoShow, WalkthroughButton } from "@/components/dashboard/walkthrough-modal";
 import type { ModuleType } from "@prisma/client";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:2203";
@@ -39,6 +39,8 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
       bookings: { orderBy: { createdAt: "desc" }, take: 5, include: { service: true } },
       reviews: { orderBy: { createdAt: "desc" }, take: 5 },
       loyaltyCards: { orderBy: { updatedAt: "desc" }, take: 5 },
+      loyaltyConfig: true,
+      prospectInfo: true,
       _count: {
         select: {
           bookings: true,
@@ -109,6 +111,14 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           >
             Voir le site <ExternalLink className="h-3.5 w-3.5" />
           </Link>
+          <WalkthroughButton
+            businessId={params.businessId}
+            businessName={business.name}
+            primaryColor={business.primaryColor}
+            accentColor={business.accentColor}
+            loyaltyConfig={business.loyaltyConfig}
+            logoUrl={business.logoUrl}
+          />
         </div>
       </div>
 
@@ -120,6 +130,9 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           prospectedAt={business.prospectedAt}
           business={businessInfo}
           claimToken={business.claimToken}
+          prospectInfo={business.prospectInfo}
+          promoCode={business.promoCode}
+          stripePromoCodeId={business.stripePromoCodeId}
         />
       )}
 
@@ -190,19 +203,18 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
         </div>
       )}
 
-      {/* Impressions */}
-      <PrintableCards
-        businessName={business.name}
-        businessId={params.businessId}
-        primaryColor={business.primaryColor}
-        secondaryColor={business.secondaryColor}
-        accentColor={business.accentColor}
-        logoUrl={business.logoUrl}
-        logoBackground={business.logoBackground}
-        appUrl={APP_URL}
-        hasReviews={hasReviews}
-        hasLoyalty={hasLoyalty}
-      />
+
+      {/* Walkthrough — auto au 1er accès (non-admin uniquement) */}
+      {!isAdmin && (
+        <WalkthroughAutoShow
+          businessId={params.businessId}
+          businessName={business.name}
+          primaryColor={business.primaryColor}
+          accentColor={business.accentColor}
+          loyaltyConfig={business.loyaltyConfig}
+          logoUrl={business.logoUrl}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Modules actifs */}

@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
-import { Download, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ChevronDown, Printer } from "lucide-react";
 import { contrastColor, safeGradientEnd } from "@/lib/utils";
 
 interface Props {
@@ -46,6 +46,13 @@ type SizeId = (typeof SIZE_OPTIONS)[number]["id"];
 
 // 3× the display size → exported at pixelRatio 2 → ~300-340 DPI
 const DOWNLOAD_SCALE = 3;
+
+const PRINT_PRESETS = [
+  { id: "9.3x9.3", label: "9.3 × 9.3", w: "9.3", h: "9.3" },
+  { id: "10x10",   label: "10 × 10",   w: "10",  h: "10"  },
+  { id: "10x15",   label: "10 × 15",   w: "10",  h: "15"  },
+] as const;
+type PaperFormat = "A4" | "A5" | "Photo";
 
 // ── Inline SVG icons (no emoji, consistent across OS) ────────────────────────
 
@@ -807,6 +814,16 @@ export function PrintableCards({
   const [logoB64, setLogoB64] = useState<string | undefined>();
   const [businessLogoB64, setBusinessLogoB64] = useState<string | undefined>();
 
+  // ── Print at real size ──────────────────────────────────────────────────────
+  const [printW, setPrintW] = useState("9.3");
+  const [printH, setPrintH] = useState("9.3");
+  const [paperFormat, setPaperFormat] = useState<PaperFormat>("A4");
+  const [printing, setPrinting] = useState(false);
+  const [printQrReview, setPrintQrReview] = useState("");
+  const [printQrLoyalty, setPrintQrLoyalty] = useState("");
+  const printReviewRef = useRef<HTMLDivElement>(null);
+  const printLoyaltyRef = useRef<HTMLDivElement>(null);
+
   // Load TocTocToc logo as base64 so html-to-image can embed it
   useEffect(() => {
     fetch("/logo.png")
@@ -840,10 +857,68 @@ export function PrintableCards({
       .catch(() => {});
   }, [logoUrl]);
 
-  if (!hasReviews && !hasLoyalty) return null;
-
   const reviewsUrl = `${appUrl}/${businessId}/avis`;
   const loyaltyUrl = `${appUrl}/${businessId}/fidelite`;
+
+  // QR codes pour l'impression
+  useEffect(() => {
+    if (!hasReviews) return;
+    QRCode.toDataURL(reviewsUrl, { width: 600, margin: 1, color: { dark: "#1e293b", light: "#ffffff" } })
+      .then(setPrintQrReview).catch(() => {});
+  }, [reviewsUrl, hasReviews]);
+
+  useEffect(() => {
+    if (!hasLoyalty) return;
+    QRCode.toDataURL(loyaltyUrl, { width: 600, margin: 1, color: { dark: "#1e293b", light: "#ffffff" } })
+      .then(setPrintQrLoyalty).catch(() => {});
+  }, [loyaltyUrl, hasLoyalty]);
+
+  if (!hasReviews && !hasLoyalty) return null;
+
+  async function handlePrint() {
+    setPrinting(true);
+    try {
+      const w = Math.max(1, parseFloat(printW) || 9);
+      const h = Math.max(1, parseFloat(printH) || 9);
+      const captures: { src: string; label: string }[] = [];
+
+      if (hasReviews && printReviewRef.current) {
+        const src = await toPng(printReviewRef.current, { pixelRatio: 2 });
+        captures.push({ src, label: "Avis Google" });
+      }
+      if (hasLoyalty && printLoyaltyRef.current) {
+        const src = await toPng(printLoyaltyRef.current, { pixelRatio: 2 });
+        captures.push({ src, label: "Fidélité" });
+      }
+      if (!captures.length) return;
+
+      const paperSize = paperFormat === "A4" ? "210mm 297mm" : paperFormat === "A5" ? "148mm 210mm" : "100mm 150mm";
+      const pageMargin = paperFormat === "Photo" ? "3mm" : "12mm";
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Impression ${businessName}</title><style>
+  @page { size: ${paperSize}; margin: ${pageMargin}; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 8mm; align-items: flex-start; align-content: flex-start; }
+  .card { display: flex; flex-direction: column; align-items: center; gap: 2mm; }
+  .card img { width: ${w}cm; height: ${h}cm; display: block; border-radius: 3mm; }
+  .card-label { font-size: 7pt; color: #94a3b8; text-align: center; }
+  @media print { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style></head><body>
+${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-label">${c.label} · ${w}×${h} cm — ${businessName}</span></div>`).join("\n")}
+</body></html>`;
+
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => { win.focus(); win.print(); }, 800);
+      }
+    } catch (e) {
+      console.error("[PRINT]", e);
+    } finally {
+      setPrinting(false);
+    }
+  }
   const shared = {
     businessName,
     primaryColor,
@@ -859,15 +934,7 @@ export function PrintableCards({
   };
 
   return (
-    <div className="mb-8">
-      <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-slate-400">
-        Impressions
-      </h2>
-      <p className="mb-5 text-xs text-slate-400">
-        Cartes à imprimer et poser en caisse. Choisissez le format puis
-        téléchargez en PNG haute résolution.
-      </p>
-
+    <div>
       <div className="flex flex-wrap gap-12">
         {hasReviews && (
           <div>
@@ -907,6 +974,124 @@ export function PrintableCards({
           </div>
         )}
       </div>
+
+      {/* ── Impression à taille réelle ─────────────────────────────────────── */}
+      {(hasReviews || hasLoyalty) && (() => {
+        const w = Math.max(1, parseFloat(printW) || 9);
+        const h = Math.max(1, parseFloat(printH) || 9);
+        const renderW = Math.round(600 * w / Math.max(w, h));
+        const renderH = Math.round(600 * h / Math.max(w, h));
+        const printShared = {
+          businessName, primaryColor, secondaryColor, accentColor,
+          logoB64, businessLogoB64,
+          businessLogoUrl: logoUrl ?? undefined,
+          logoBackground: logoBackground ?? undefined,
+          cardW: renderW, cardH: renderH,
+        };
+        return (
+          <>
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+              <div className="mb-4 flex items-center gap-2">
+                <Printer className="h-4 w-4 text-slate-500" />
+                <span className="text-sm font-semibold text-slate-700">Impression à taille réelle</span>
+                <span className="text-xs text-slate-400">— les deux cartes positionnées sur la feuille</span>
+              </div>
+
+              <div className="flex flex-wrap items-end gap-5">
+                {/* Format papier */}
+                <div>
+                  <p className="mb-1.5 text-xs font-medium text-slate-500">Format papier</p>
+                  <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+                    {([
+                      { id: "A4" as PaperFormat, label: "A4" },
+                      { id: "A5" as PaperFormat, label: "A5" },
+                      { id: "Photo" as PaperFormat, label: "Photo 10×15" },
+                    ]).map((f) => (
+                      <button
+                        key={f.id}
+                        onClick={() => {
+                          setPaperFormat(f.id);
+                          if (f.id === "Photo") { setPrintW("9.4"); setPrintH("14.4"); }
+                        }}
+                        className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
+                          paperFormat === f.id ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Taille */}
+                <div>
+                  <p className="mb-1.5 text-xs font-medium text-slate-500">Taille de la carte</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min="1" max="30" step="0.1"
+                      value={printW}
+                      onChange={(e) => setPrintW(e.target.value)}
+                      className="w-16 rounded-lg border border-slate-200 px-2.5 py-1.5 text-center text-sm font-medium text-slate-800 focus:border-indigo-400 focus:outline-none"
+                    />
+                    <span className="text-xs text-slate-400">cm ×</span>
+                    <input
+                      type="number" min="1" max="30" step="0.1"
+                      value={printH}
+                      onChange={(e) => setPrintH(e.target.value)}
+                      className="w-16 rounded-lg border border-slate-200 px-2.5 py-1.5 text-center text-sm font-medium text-slate-800 focus:border-indigo-400 focus:outline-none"
+                    />
+                    <span className="text-xs text-slate-400">cm</span>
+                  </div>
+                </div>
+
+                {/* Presets */}
+                <div>
+                  <p className="mb-1.5 text-xs font-medium text-slate-500">Formats prédéfinis</p>
+                  <div className="flex gap-1">
+                    {PRINT_PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setPrintW(p.w); setPrintH(p.h); }}
+                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition ${
+                          printW === p.w && printH === p.h
+                            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bouton */}
+                <button
+                  onClick={handlePrint}
+                  disabled={printing}
+                  className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 disabled:opacity-50"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  {printing ? "Préparation…" : "Lancer l'impression"}
+                </button>
+              </div>
+            </div>
+
+            {/* Refs cachées pour la capture */}
+            <div style={{ position: "fixed", left: -99999, top: -99999, pointerEvents: "none", opacity: 0 }} aria-hidden>
+              {hasReviews && (
+                <div ref={printReviewRef}>
+                  <PrintCard card={REVIEW_CARDS[1]} qrDataUrl={printQrReview} {...printShared} />
+                </div>
+              )}
+              {hasLoyalty && (
+                <div ref={printLoyaltyRef}>
+                  <PrintCard card={LOYALTY_CARDS[1]} qrDataUrl={printQrLoyalty} {...printShared} />
+                </div>
+              )}
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

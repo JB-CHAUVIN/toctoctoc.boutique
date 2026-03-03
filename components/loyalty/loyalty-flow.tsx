@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { LoyaltyCardPreview } from "./loyalty-card-preview";
 import { Loader2, Share2, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { LoyaltyConfig } from "@prisma/client";
+import type { LoyaltyConfig, LoyaltyStatus } from "@prisma/client";
 
 interface CardStatus {
   name: string;
@@ -36,9 +36,12 @@ interface Props {
   primaryColor: string;
   accentColor: string;
   config: LoyaltyConfig;
+  statuses?: LoyaltyStatus[];
+  logoUrl?: string | null;
+  logoBackground?: string | null;
 }
 
-export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: Props) {
+export function LoyaltyFlow({ businessId, businessName, primaryColor, config, statuses = [], logoUrl, logoBackground }: Props) {
   const { load: loadCustomer, save: saveCustomer } = useCustomerInfo();
   const [step, setStep] = useState<"form" | "card">("form");
   const [card, setCard] = useState<Card | null>(null);
@@ -203,6 +206,21 @@ export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: 
           <p className="mt-2 text-slate-500">{businessName}</p>
         </div>
 
+        {/* Comment ça marche */}
+        <div className="flex items-start gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: primaryColor + "10" }}>
+          <span className="text-2xl leading-none mt-0.5">{config.stampIcon}</span>
+          <div>
+            <p className="font-semibold text-slate-800">
+              {config.stampsRequired} tampon{config.stampsRequired > 1 ? "s" : ""} = {config.rewardName}
+            </p>
+            <p className="mt-0.5 text-sm text-slate-500">
+              {config.rewardDescription
+                ? config.rewardDescription
+                : "Présentez votre QR code à chaque visite pour cumuler des tampons."}
+            </p>
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 font-semibold text-slate-800">Obtenir ma carte</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -232,6 +250,50 @@ export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: 
             </Button>
           </form>
         </div>
+
+        {/* Parcours de niveaux */}
+        {statuses.length > 0 && (
+          <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+            <div
+              className="px-4 py-3 flex items-center gap-2"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}cc 100%)` }}
+            >
+              <Trophy className="h-4 w-4 text-white opacity-90" />
+              <p className="text-sm font-bold text-white">Votre parcours fidélité</p>
+              <span className="ml-auto text-xs text-white opacity-70">Plus vous revenez, plus vous gagnez</span>
+            </div>
+            <div className="bg-white divide-y divide-slate-50">
+              {statuses.map((s, i) => (
+                <div key={s.id} className="flex items-center gap-3 px-4 py-3">
+                  <div
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                    style={{ backgroundColor: s.color }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-2xl"
+                    style={{ backgroundColor: s.color + "18" }}
+                  >
+                    {s.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800">{s.name}</p>
+                    {s.extraReward && (
+                      <p className="text-xs text-slate-500 truncate">🎁 {s.extraReward}</p>
+                    )}
+                  </div>
+                  <div
+                    className="flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style={{ backgroundColor: s.color + "18", color: s.color }}
+                  >
+                    {s.minRewards} récomp.
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -263,6 +325,8 @@ export function LoyaltyFlow({ businessId, businessName, primaryColor, config }: 
             businessName={businessName}
             customerName={card.customerName}
             totalStamps={card.currentStamps}
+            logoUrl={logoUrl}
+            logoBackground={logoBackground}
           />
         </div>
 

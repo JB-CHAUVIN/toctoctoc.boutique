@@ -330,7 +330,6 @@ export function BusinessInfoEdit({ businessId, initialData }: Props) {
         <div className="space-y-4">
           <Input label="Page Facebook" type="url" value={form.facebookUrl} onChange={update("facebookUrl")} placeholder="https://facebook.com/..." />
           <Input label="Compte Instagram" type="url" value={form.instagramUrl} onChange={update("instagramUrl")} placeholder="https://instagram.com/..." />
-          <Input label="Fiche Google Maps" type="url" value={form.googleMapsUrl} onChange={update("googleMapsUrl")} placeholder="https://maps.google.com/..." hint="Utilisé pour le module avis" />
         </div>
       </Card>
 

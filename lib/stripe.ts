@@ -54,6 +54,51 @@ export function mapStripeStatus(status: Stripe.Subscription.Status): SubStatus {
   }
 }
 
+// ─── Promo code prospect ───────────────────────────────────────────────────
+
+export async function getOrCreateProspectCoupon(): Promise<string> {
+  const existing = await stripe.coupons.list({ limit: 100 });
+  const found = existing.data.find((c) => c.metadata?.type === "prospect_40");
+  if (found) return found.id;
+
+  const coupon = await stripe.coupons.create({
+    percent_off: 40,
+    duration: "once",
+    name: "Prospect -40%",
+    metadata: { type: "prospect_40" },
+  });
+  return coupon.id;
+}
+
+export async function createBusinessPromoCode(
+  businessName: string,
+  couponId: string
+): Promise<{ code: string; stripePromoCodeId: string }> {
+  const slug = businessName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, 8);
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const code = `${slug}-${rand}`;
+
+  const promo = await stripe.promotionCodes.create({
+    coupon: couponId,
+    code,
+    max_redemptions: 1,
+    metadata: { businessName },
+  });
+
+  return { code, stripePromoCodeId: promo.id };
+}
+
+export async function togglePromoCode(stripePromoCodeId: string, active: boolean) {
+  await stripe.promotionCodes.update(stripePromoCodeId, { active });
+}
+
+// ─── Downgrade ─────────────────────────────────────────────────────────────
+
 export async function downgradeModules(userId: string): Promise<void> {
   const freeModules = PLAN_LIMITS.FREE.modules as string[];
 

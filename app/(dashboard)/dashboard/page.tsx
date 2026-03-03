@@ -65,6 +65,7 @@ const DEFAULT_FORM: Record<string, string> = {
   secondaryColor: "#312e81",
   accentColor: "#f59e0b",
   logoUrl: "",
+  reviewUrl: "",
 };
 
 type AdminBusiness = {
@@ -312,6 +313,7 @@ function DashboardContent() {
         apply("phone", d.phone, "Téléphone");
         apply("website", d.website, "Site web");
         apply("googleMapsUrl", d.googleMapsUrl, "Lien Maps");
+        apply("reviewUrl", d.reviewUrl, "Lien avis");
         return next;
       });
       const hasData = Object.values(d).some(Boolean);

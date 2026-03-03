@@ -630,6 +630,12 @@ function buildLetterHtml(
 
         <div class="price-block-label">Le tarif le plus compétitif du marché</div>
 
+        <div style="text-align:center;margin-bottom:3mm;">
+          <span style="display:inline-block;background:linear-gradient(90deg,#f59e0b,#f97316);color:white;font-size:8pt;font-weight:800;padding:1.5mm 4mm;border-radius:20px;">
+            OFFRE DE LANCEMENT -50% À VIE
+          </span>
+        </div>
+
         <div class="price-plans">
           <!-- FREE -->
           <div class="plan-card">
@@ -642,15 +648,17 @@ function buildLetterHtml(
           <div class="plan-card featured">
             <div class="plan-name">STARTER ⭐</div>
             <div class="plan-subtitle">Le plus populaire</div>
-            <div class="plan-price">9€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
+            <div class="plan-price"><span style="text-decoration:line-through;font-size:11pt;opacity:0.6;">18€</span> 9€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
             <div class="plan-features">Tout inclus<br/>Sans engagement</div>
+            <div style="margin-top:1mm;font-size:7pt;font-weight:700;color:#f59e0b;">-50% à vie</div>
           </div>
           <!-- PRO -->
           <div class="plan-card">
             <div class="plan-name">PRO</div>
             <div class="plan-subtitle">Multi-commerces</div>
-            <div class="plan-price">19€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
+            <div class="plan-price"><span style="text-decoration:line-through;font-size:11pt;opacity:0.5;">38€</span> 19€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
             <div class="plan-features">Jusqu'à 3 commerces<br/>+ Réseaux sociaux</div>
+            <div style="margin-top:1mm;font-size:7pt;font-weight:700;color:#f59e0b;">-50% à vie</div>
           </div>
         </div>
 

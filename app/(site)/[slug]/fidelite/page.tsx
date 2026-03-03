@@ -14,10 +14,26 @@ export default async function FidelitePage({ params }: { params: { slug: string 
     include: {
       modules: { where: { module: "LOYALTY", isActive: true } },
       loyaltyConfig: true,
+      loyaltyStatuses: { orderBy: { minRewards: "asc" } },
     },
   });
 
-  if (!business || !business.modules.length || !business.loyaltyConfig) notFound();
+  if (!business || !business.modules.length) notFound();
+
+  const config = business.loyaltyConfig ?? {
+    id: "",
+    businessId: business.id,
+    cardColor: business.primaryColor,
+    cardTextColor: "#ffffff",
+    stampColor: business.accentColor,
+    stampIcon: "⭐",
+    stampsRequired: 10,
+    rewardName: "Un produit offert",
+    rewardDescription: null,
+    stampExpiryDays: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   return (
     <div className="mx-auto max-w-md px-6 py-12">
@@ -26,7 +42,10 @@ export default async function FidelitePage({ params }: { params: { slug: string 
         businessName={business.name}
         primaryColor={business.primaryColor}
         accentColor={business.accentColor}
-        config={business.loyaltyConfig}
+        config={config}
+        statuses={business.loyaltyStatuses}
+        logoUrl={business.logoUrl}
+        logoBackground={business.logoBackground}
       />
     </div>
   );
