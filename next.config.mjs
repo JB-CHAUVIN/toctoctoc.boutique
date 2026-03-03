@@ -12,6 +12,14 @@ const nextConfig = {
       allowedOrigins: ["localhost:2203"],
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: "/api/uploads/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
