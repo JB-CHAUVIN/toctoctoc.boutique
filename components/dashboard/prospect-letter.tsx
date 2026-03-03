@@ -265,6 +265,8 @@ function buildLetterHtml(
     border: 1px solid rgba(${primaryRgb}, 0.18);
     border-radius: 8px;
     padding: 4mm 6mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .features-title {
@@ -315,6 +317,8 @@ function buildLetterHtml(
     border: 1.5px dashed rgba(${primaryRgb}, 0.35);
     border-radius: 8px;
     padding: 4mm 6mm;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .cards-title {
@@ -345,6 +349,8 @@ function buildLetterHtml(
     color: white;
     position: relative;
     overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .price-block-label {
@@ -423,6 +429,8 @@ function buildLetterHtml(
     border-radius: 10px;
     padding: 4mm 6mm;
     background: rgba(79,70,229,0.04);
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .claim-title {
