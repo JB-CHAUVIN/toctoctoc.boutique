@@ -8,7 +8,7 @@ const configSchema = z.object({
   cardTextColor: z.string().optional(),
   stampColor: z.string().optional(),
   stampIcon: z.string().max(4).optional(),
-  stampsRequired: z.number().min(2).max(50).optional(),
+  stampsRequired: z.number().min(2).max(10).optional(),
   rewardName: z.string().min(1).optional(),
   rewardDescription: z.string().optional(),
   stampExpiryDays: z.number().min(1).optional().nullable(),

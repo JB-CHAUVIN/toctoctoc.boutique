@@ -165,13 +165,13 @@ export default function LoyaltySettingsPage() {
                 <input
                   type="range"
                   min={2}
-                  max={20}
+                  max={10}
                   value={config.stampsRequired ?? 10}
                   onChange={(e) => update("stampsRequired", parseInt(e.target.value))}
                   className="w-full"
                 />
                 <div className="flex justify-between text-xs text-slate-400">
-                  <span>2</span><span>20</span>
+                  <span>2</span><span>10</span>
                 </div>
               </div>
               <Input
