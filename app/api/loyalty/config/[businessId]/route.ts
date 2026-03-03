@@ -14,12 +14,20 @@ const configSchema = z.object({
   stampExpiryDays: z.number().min(1).optional().nullable(),
 });
 
+async function getAdminFlag(userId: string) {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  return dbUser?.role === "ADMIN";
+}
+
 export async function GET(req: Request, { params }: { params: { businessId: string } }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const isAdmin = await getAdminFlag(session.user.id);
   const config = await prisma.loyaltyConfig.findFirst({
-    where: { businessId: params.businessId, business: { userId: session.user.id } },
+    where: isAdmin
+      ? { businessId: params.businessId }
+      : { businessId: params.businessId, business: { userId: session.user.id } },
   });
 
   if (!config) return NextResponse.json({ error: "Configuration introuvable" }, { status: 404 });
@@ -31,8 +39,9 @@ export async function PATCH(req: Request, { params }: { params: { businessId: st
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+  const isAdmin = await getAdminFlag(session.user.id);
   const business = await prisma.business.findFirst({
-    where: { id: params.businessId, userId: session.user.id },
+    where: isAdmin ? { id: params.businessId } : { id: params.businessId, userId: session.user.id },
   });
   if (!business) return NextResponse.json({ error: "Commerce introuvable" }, { status: 404 });
 

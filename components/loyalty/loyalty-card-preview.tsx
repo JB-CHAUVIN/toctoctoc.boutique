@@ -25,6 +25,13 @@ export function LoyaltyCardPreview({
   const stampsRequired = config.stampsRequired;
   const activeStamps = totalStamps % stampsRequired;
 
+  // Calcul dynamique des colonnes pour que les tampons tiennent dans la carte
+  const cols =
+    stampsRequired <= 5 ? stampsRequired
+    : stampsRequired <= 10 ? 5
+    : stampsRequired <= 18 ? Math.ceil(stampsRequired / 3)
+    : Math.ceil(stampsRequired / 4);
+
   return (
     <div
       className={cn(
@@ -71,8 +78,8 @@ export function LoyaltyCardPreview({
       {/* Grille de tampons */}
       <div className="relative z-10 mb-4">
         <div
-          className="grid gap-2"
-          style={{ gridTemplateColumns: `repeat(${Math.min(stampsRequired, 5)}, 1fr)` }}
+          className={cn("grid", stampsRequired > 15 ? "gap-1" : stampsRequired > 10 ? "gap-1.5" : "gap-2")}
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
         >
           {Array.from({ length: stampsRequired }).map((_, i) => {
             const isStamped = i < activeStamps;
@@ -80,7 +87,7 @@ export function LoyaltyCardPreview({
               <div
                 key={i}
                 className={cn(
-                  "flex aspect-square items-center justify-center rounded-lg text-sm transition-all",
+                  "flex aspect-square items-center justify-center rounded-lg transition-all",
                   isStamped ? "opacity-100" : "opacity-30"
                 )}
                 style={{
@@ -88,7 +95,11 @@ export function LoyaltyCardPreview({
                   border: `2px solid ${isStamped ? config.stampColor : config.cardTextColor}`,
                 }}
               >
-                {isStamped && <span className="text-white text-xs">{config.stampIcon}</span>}
+                {isStamped && (
+                  <span className={cn("text-white", stampsRequired > 15 ? "text-[8px]" : stampsRequired > 10 ? "text-[10px]" : "text-xs")}>
+                    {config.stampIcon}
+                  </span>
+                )}
               </div>
             );
           })}

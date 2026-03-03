@@ -227,7 +227,7 @@ export function StampScanner({ businessId }: { businessId: string }) {
           <p className="mb-2 text-xs font-medium text-slate-500">
             Progression : {card.progress}/{card.stampsRequired}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className={cn("flex flex-wrap", card.stampsRequired > 15 ? "gap-1" : "gap-2")}>
             {Array.from({ length: card.stampsRequired }, (_, i) => {
               const filled = i < card.progress;
               const adding = i >= card.progress && i < card.progress + stampCount;
@@ -235,7 +235,8 @@ export function StampScanner({ businessId }: { businessId: string }) {
                 <span
                   key={i}
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full text-lg transition-all duration-150",
+                    "flex items-center justify-center rounded-full transition-all duration-150",
+                    card.stampsRequired > 15 ? "h-6 w-6 text-sm" : "h-8 w-8 text-lg",
                     filled
                       ? "bg-indigo-600 text-white shadow-sm"
                       : adding

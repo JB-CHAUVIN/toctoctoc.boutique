@@ -14,8 +14,11 @@ export default async function BookingDashboardPage({ params }: { params: { busin
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  const isAdmin = dbUser?.role === "ADMIN";
+
   const business = await prisma.business.findFirst({
-    where: { id: params.businessId, userId: session.user.id },
+    where: isAdmin ? { id: params.businessId } : { id: params.businessId, userId: session.user.id },
     include: {
       bookingConfig: { include: { services: true } },
       bookings: {
