@@ -560,6 +560,7 @@ function PrintCard({
   cardH = 330,
   themeStyles,
   brandStyle,
+  showAvatar = true,
 }: {
   card: CardDef;
   businessName: string;
@@ -576,6 +577,7 @@ function PrintCard({
   cardH?: number;
   themeStyles?: ThemeStyles;
   brandStyle?: BrandStyleData | null;
+  showAvatar?: boolean;
 }) {
   const isReviews = card.type === "reviews";
   const isSquare = cardH <= cardW;
@@ -680,7 +682,7 @@ function PrintCard({
           zIndex: 1,
         }}
       >
-        {(businessLogoB64 || businessLogoUrl) ? (
+        {showAvatar && ((businessLogoB64 || businessLogoUrl) ? (
           <img
             src={businessLogoB64 || businessLogoUrl}
             alt=""
@@ -712,7 +714,7 @@ function PrintCard({
           >
             {initial}
           </div>
-        )}
+        ))}
         <span
           style={{
             fontSize: pf(10),
@@ -945,6 +947,7 @@ function CardStack({
   logoBackground,
   themeStyles,
   brandStyle,
+  showAvatar = true,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -959,6 +962,7 @@ function CardStack({
   logoBackground?: string;
   themeStyles?: ThemeStyles;
   brandStyle?: BrandStyleData | null;
+  showAvatar?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [sizeId, setSizeId] = useState<SizeId>("10x10");
@@ -1021,6 +1025,7 @@ function CardStack({
     cardH,
     themeStyles,
     brandStyle,
+    showAvatar,
   };
 
   return (
@@ -1212,7 +1217,7 @@ function ThemeSelector({
   hasBrandStyle: boolean;
 }) {
   return (
-    <div className="mb-6 flex items-center gap-3">
+    <div className="flex items-center gap-3">
       <Palette className="h-4 w-4 text-slate-400" />
       <span className="text-xs font-medium text-slate-500">Thème :</span>
       <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
@@ -1259,6 +1264,7 @@ export function PrintableCards({
   const [logoB64, setLogoB64] = useState<string | undefined>();
   const [businessLogoB64, setBusinessLogoB64] = useState<string | undefined>();
   const [theme, setTheme] = useState<PrintThemeId>("gradient");
+  const [showAvatar, setShowAvatar] = useState(true);
 
   // ── Print at real size ──────────────────────────────────────────────────────
   const [printW, setPrintW] = useState("9.3");
@@ -1396,11 +1402,24 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
     appUrl,
     themeStyles,
     brandStyle: normalizedBrandStyle,
+    showAvatar,
   };
 
   return (
     <div>
-      <ThemeSelector theme={theme} setTheme={setTheme} hasBrandStyle={hasBrandStyle} />
+      <div className="mb-6 flex flex-wrap items-center gap-6">
+        <ThemeSelector theme={theme} setTheme={setTheme} hasBrandStyle={hasBrandStyle} />
+        <label className="flex items-center gap-2 text-xs text-slate-500">
+          <button
+            type="button"
+            onClick={() => setShowAvatar((v) => !v)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showAvatar ? "bg-indigo-600" : "bg-slate-200"}`}
+          >
+            <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${showAvatar ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+          </button>
+          Avatar du commerce
+        </label>
+      </div>
       <div className="flex flex-wrap gap-12">
         {hasReviews && (
           <div>
@@ -1455,6 +1474,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
           cardW: renderW, cardH: renderH,
           themeStyles,
           brandStyle: normalizedBrandStyle,
+          showAvatar,
         };
         return (
           <>

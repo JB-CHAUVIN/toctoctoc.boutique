@@ -188,6 +188,8 @@ export const BUSINESS_TYPES = [
   "Boutique cadeaux",
   "Bijouterie",
   "Pressing",
+  // Santé
+  "Centre auditif",
   // Services
   "Garage / Auto",
   "Autre",
