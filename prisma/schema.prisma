@@ -151,6 +151,9 @@ model Business {
   accentColor    String  @default("#f59e0b")
   fontFamily     String  @default("Plus Jakarta Sans")
 
+  // Brand style (extracted from website)
+  brandStyle Json?
+
   // Réseaux sociaux
   facebookUrl  String?
   instagramUrl String?

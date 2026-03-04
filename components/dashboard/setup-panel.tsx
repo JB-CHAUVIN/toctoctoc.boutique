@@ -39,6 +39,7 @@ interface Props {
   promoCode?: string | null;
   stripePromoCodeId?: string | null;
   prospectStep?: number;
+  brandStyle?: Record<string, string> | null;
 }
 
 function CopyButton({ url, label }: { url: string; label: string }) {
@@ -75,6 +76,7 @@ export function SetupPanel({
   promoCode,
   stripePromoCodeId,
   prospectStep,
+  brandStyle,
 }: Props) {
   const [prospectedAt, setProspectedAt] = useState<Date | null>(
     initialProspectedAt,
@@ -164,6 +166,7 @@ export function SetupPanel({
           businessId={businessId}
           claimToken={claimToken}
           appUrl={appUrl}
+          brandStyle={brandStyle}
         />
 
         <CopyButton url={reviewsUrl} label="Copier lien avis" />

@@ -153,6 +153,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           promoCode={business.promoCode}
           stripePromoCodeId={business.stripePromoCodeId}
           prospectStep={prospectStep}
+          brandStyle={business.brandStyle as Record<string, string> | null}
         />
       )}
 

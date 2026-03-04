@@ -4,6 +4,16 @@ import { useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import QRCode from "qrcode";
 import { hexToRgb } from "@/lib/utils";
+import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
+
+interface BrandStyleData {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  fontFamily?: string | null;
+  mood?: string;
+  [key: string]: unknown;
+}
 
 interface BusinessInfo {
   name: string;
@@ -25,6 +35,7 @@ interface Props {
   businessId: string;
   claimToken: string | null;
   appUrl: string;
+  brandStyle?: BrandStyleData | null;
 }
 
 function buildLetterHtml(
@@ -33,6 +44,8 @@ function buildLetterHtml(
   appUrl: string,
   claimUrl: string | null,
   claimQrDataUrl: string | null,
+  theme: PrintThemeId = "gradient",
+  brandStyle?: BrandStyleData | null,
 ): string {
   const today = new Date().toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -40,10 +53,16 @@ function buildLetterHtml(
     year: "numeric",
   });
 
-
-  const primary    = business.primaryColor;
-  const accent     = business.accentColor;
+  // Apply theme-based color overrides
+  const useCustom = theme === "custom" && brandStyle?.primaryColor;
+  const primary    = useCustom ? brandStyle!.primaryColor! : business.primaryColor;
+  const accent     = useCustom ? (brandStyle!.accentColor || business.accentColor) : business.accentColor;
   const primaryRgb = hexToRgb(primary);
+  const fontFamily = useCustom && brandStyle?.fontFamily ? brandStyle.fontFamily : "Plus Jakarta Sans";
+
+  // Theme-specific CSS overrides
+  const isMinimal = theme === "minimal";
+  const isBold = theme === "bold";
 
   // Logo absolute URL (new window needs absolute paths)
   const logoAbsUrl = business.logoUrl
@@ -99,12 +118,12 @@ function buildLetterHtml(
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: '${fontFamily}', 'Plus Jakarta Sans', sans-serif; }
 
   @page { size: A4; margin: 0; }
 
   body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: '${fontFamily}', 'Plus Jakarta Sans', sans-serif;
     font-size: 10.5pt;
     line-height: 1.55;
     color: #1e293b;
@@ -136,7 +155,8 @@ function buildLetterHtml(
 
   /* ── HERO BANNER ── */
   .hero {
-    background: linear-gradient(135deg, ${primary} 0%, ${accent} 100%);
+    background: ${isMinimal ? `#fff` : isBold ? primary : `linear-gradient(135deg, ${primary} 0%, ${accent} 100%)`};
+    ${isMinimal ? `border-bottom: 4px solid ${primary};` : ""}
     padding: 8mm 20mm 7mm 20mm;
     position: relative;
     overflow: hidden;
@@ -156,14 +176,14 @@ function buildLetterHtml(
   .hero-business-name {
     font-size: 18pt;
     font-weight: 800;
-    color: #fff;
+    color: ${isMinimal ? primary : "#fff"};
     letter-spacing: -0.3px;
     line-height: 1.15;
   }
 
   .hero-type {
     font-size: 9.5pt;
-    color: rgba(255,255,255,0.75);
+    color: ${isMinimal ? "#64748b" : "rgba(255,255,255,0.75)"};
     font-weight: 500;
     margin-top: 1mm;
   }
@@ -177,13 +197,13 @@ function buildLetterHtml(
   .hero-brand {
     font-size: 9pt;
     font-weight: 700;
-    color: rgba(255,255,255,0.9);
+    color: ${isMinimal ? "#334155" : "rgba(255,255,255,0.9)"};
     letter-spacing: 0.2px;
   }
 
   .hero-tagline {
     font-size: 7.5pt;
-    color: rgba(255,255,255,0.6);
+    color: ${isMinimal ? "#94a3b8" : "rgba(255,255,255,0.6)"};
     margin-top: 0.5mm;
   }
 
@@ -734,8 +754,11 @@ export function ProspectLetterButton({
   businessId,
   claimToken,
   appUrl,
+  brandStyle,
 }: Props) {
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<PrintThemeId>("gradient");
+  const hasBrandStyle = !!brandStyle?.primaryColor;
 
   async function handlePrint() {
     setLoading(true);
@@ -759,7 +782,7 @@ export function ProspectLetterButton({
         });
       }
 
-      const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl);
+      const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl, theme, brandStyle);
       const win = window.open("", "_blank", "width=900,height=1100");
       if (!win) return;
       win.document.write(html);
@@ -772,17 +795,41 @@ export function ProspectLetterButton({
   }
 
   return (
-    <button
-      onClick={handlePrint}
-      disabled={loading}
-      className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-100 disabled:opacity-60"
-    >
-      {loading ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : (
-        <FileText className="h-3.5 w-3.5" />
-      )}
-      Imprimer le tract
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={handlePrint}
+        disabled={loading}
+        className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-100 disabled:opacity-60"
+      >
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <FileText className="h-3.5 w-3.5" />
+        )}
+        Imprimer le tract
+      </button>
+      <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5">
+        {PRINT_THEMES.map((t) => {
+          const disabled = t.requiresBrandStyle && !hasBrandStyle;
+          return (
+            <button
+              key={t.id}
+              onClick={() => !disabled && setTheme(t.id)}
+              disabled={disabled}
+              title={disabled ? "Nécessite l'extraction des couleurs du site web" : t.description}
+              className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
+                theme === t.id
+                  ? "bg-white text-violet-700 shadow-sm"
+                  : disabled
+                    ? "cursor-not-allowed text-slate-300"
+                    : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -4,13 +4,38 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
-  X, Loader2, ChevronDown, Sparkles, ImageIcon, Crop, MapPin, Search,
+  X, Loader2, ChevronDown, Sparkles, ImageIcon, Crop, MapPin, Search, CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { BUSINESS_TYPES } from "@/lib/constants";
+
+export interface BrandStyleData {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textOnPrimary?: string;
+  fontFamily?: string | null;
+  fontWeight?: string;
+  letterSpacing?: number;
+  textTransform?: string;
+  bgStyle?: string;
+  gradientAngle?: number;
+  decorativeElement?: string;
+  decorativeOpacity?: number;
+  decorativePosition?: string;
+  borderRadius?: number;
+  borderStyle?: string;
+  borderWidth?: number;
+  borderColor?: string;
+  badgeStyle?: string;
+  badgeBorderRadius?: number;
+  mood?: string;
+  brandStyle?: string;
+}
 
 export interface BusinessFormValues {
   name: string;
@@ -28,6 +53,7 @@ export interface BusinessFormValues {
   accentColor: string;
   logoUrl: string;
   logoBackground: string;
+  brandStyle: BrandStyleData | null;
 }
 
 const DEFAULT_VALUES: BusinessFormValues = {
@@ -46,6 +72,7 @@ const DEFAULT_VALUES: BusinessFormValues = {
   accentColor: "#f59e0b",
   logoUrl: "",
   logoBackground: "",
+  brandStyle: null,
 };
 
 interface Props {
@@ -91,7 +118,7 @@ function ImageDropZone({
 export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, isAdmin, title = "Nouveau commerce" }: Props) {
   const [form, setForm] = useState<BusinessFormValues>({ ...DEFAULT_VALUES, ...initialValues });
   const [creating, setCreating] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(!!isAdmin);
   const [ambiancePreview, setAmbiancePreview] = useState<string | null>(null);
   const [analyzingAmbiance, setAnalyzingAmbiance] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -99,6 +126,8 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
   const [googleUrl, setGoogleUrl] = useState(initialValues?.googleMapsUrl ?? "");
   const [analyzingGoogle, setAnalyzingGoogle] = useState(false);
   const [googleResult, setGoogleResult] = useState<Record<string, string | null> | null>(null);
+  const [analyzingWebsite, setAnalyzingWebsite] = useState(false);
+  const [websiteAnalyzed, setWebsiteAnalyzed] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -111,7 +140,8 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       setAmbiancePreview(null);
       setLogoPreview(null);
       setGoogleResult(null);
-      setShowAdvanced(false);
+      setWebsiteAnalyzed(false);
+      setShowAdvanced(!!isAdmin);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -131,6 +161,32 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
     return { base64: Buffer.from(buffer).toString("base64"), mimeType: file.type };
   }
 
+  async function handleWebsiteAnalyze(websiteUrl: string) {
+    if (!websiteUrl.trim()) return;
+    setAnalyzingWebsite(true);
+    try {
+      const res = await fetch("/api/admin/analyze-website", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: websiteUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur analyse site web"); return; }
+      const d = data.data;
+      console.log("[WEBSITE_ANALYZE] Response data:", d);
+      console.log("[WEBSITE_ANALYZE] Colors:", { primary: d.primaryColor, secondary: d.secondaryColor, accent: d.accentColor });
+      setForm((f) => ({
+        ...f,
+        ...(d.primaryColor && { primaryColor: d.primaryColor }),
+        ...(d.secondaryColor && { secondaryColor: d.secondaryColor }),
+        ...(d.accentColor && { accentColor: d.accentColor }),
+        brandStyle: d,
+      }));
+      setWebsiteAnalyzed(true);
+      toast.success(d.primaryColor ? `Couleurs extraites : ${d.primaryColor}` : "Analyse terminée (pas de couleurs trouvées)");
+    } catch { toast.error("Erreur lors de l'analyse du site"); }
+    finally { setAnalyzingWebsite(false); }
+  }
+
   async function handleAmbianceImage(file: File) {
     setAmbiancePreview(URL.createObjectURL(file));
     setAnalyzingAmbiance(true);
@@ -147,11 +203,12 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
         ...f,
         ...(d.name && !f.name && { name: d.name }),
         ...(d.businessType && { businessType: d.businessType }),
-        ...(d.primaryColor && { primaryColor: d.primaryColor }),
-        ...(d.secondaryColor && { secondaryColor: d.secondaryColor }),
-        ...(d.accentColor && { accentColor: d.accentColor }),
+        // Colors from image only if website hasn't been analyzed
+        ...(!websiteAnalyzed && d.primaryColor && { primaryColor: d.primaryColor }),
+        ...(!websiteAnalyzed && d.secondaryColor && { secondaryColor: d.secondaryColor }),
+        ...(!websiteAnalyzed && d.accentColor && { accentColor: d.accentColor }),
       }));
-      toast.success("Nom, type et couleurs extraits !");
+      toast.success(websiteAnalyzed ? "Nom et type extraits (couleurs du site conservées)" : "Nom, type et couleurs extraits !");
     } catch { toast.error("Erreur lors de l'analyse"); }
     finally { setAnalyzingAmbiance(false); }
   }
@@ -189,7 +246,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       setForm((f) => {
         const next = { ...f };
         const apply = (key: keyof BusinessFormValues, val: string | null | undefined, label: string) => {
-          if (val && !f[key]) { (next as Record<string, string>)[key] = val; filled.push(label); }
+          if (val && !f[key]) { (next as unknown as Record<string, string>)[key] = val; filled.push(label); }
         };
         apply("name", d.name, "Nom"); apply("businessType", d.businessType, "Type");
         apply("description", d.description, "Description"); apply("address", d.address, "Adresse");
@@ -202,6 +259,11 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       if (hasData) {
         setGoogleResult(d);
         toast.success(filled.length > 0 ? `${filled.length} info(s) récupérée(s) !` : "Données récupérées");
+        // Auto-chain website analysis if a website URL was found
+        const websiteUrl = d.website;
+        if (websiteUrl) {
+          handleWebsiteAnalyze(websiteUrl);
+        }
       } else {
         toast("Aucune information trouvée", { icon: "⚠️" });
       }
@@ -252,7 +314,21 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
             value={form.businessType} onChange={(e) => set("businessType", e.target.value)} />
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Couleurs</label>
+            <div className="mb-2 flex items-center gap-2">
+              <label className="text-sm font-medium text-slate-700">Couleurs</label>
+              {analyzingWebsite && (
+                <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Analyse du site web…
+                </span>
+              )}
+              {websiteAnalyzed && !analyzingWebsite && (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Extraites du site web
+                </span>
+              )}
+            </div>
             <div className="flex gap-4">
               {(["primaryColor", "secondaryColor", "accentColor"] as const).map((key) => (
                 <div key={key} className="flex flex-col items-center gap-1">
@@ -323,17 +399,21 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
                         zipCode: "CP", phone: "Tél", website: "Site", googleMapsUrl: "Maps", description: "Desc",
                       };
                       const entries = Object.entries(LABELS)
-                        .map(([key, label]) => ({ label, value: googleResult[key] }))
+                        .map(([key, label]) => ({ key, label, value: googleResult[key] }))
                         .filter((e) => e.value);
                       if (!entries.length) return null;
                       return (
                         <div className="mt-2 rounded-lg border border-green-200 bg-green-50 p-3">
                           <p className="mb-2 text-xs font-semibold text-green-700">{entries.length} champ(s) récupéré(s)</p>
                           <div className="space-y-0.5">
-                            {entries.map(({ label, value }) => (
+                            {entries.map(({ label, value, key }) => (
                               <div key={label} className="flex gap-1.5 text-xs">
                                 <span className="w-16 flex-shrink-0 text-slate-400">{label}</span>
-                                <span className="truncate font-medium text-slate-700">{value}</span>
+                                {(key === "website" || key === "googleMapsUrl") && value ? (
+                                  <a href={value} target="_blank" rel="noreferrer" className="truncate font-medium text-indigo-600 hover:underline">{value}</a>
+                                ) : (
+                                  <span className="truncate font-medium text-slate-700">{value}</span>
+                                )}
                               </div>
                             ))}
                           </div>

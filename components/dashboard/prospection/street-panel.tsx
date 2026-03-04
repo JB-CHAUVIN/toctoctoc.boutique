@@ -265,13 +265,19 @@ function LeadCard({
 
       {/* Actions */}
       {lead.status === "CONVERTED" ? (
-        lead.businessId && (
-          <div className="mt-2">
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {lead.businessId && (
             <a href={`/dashboard/${lead.businessId}`} className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700">
               <CheckCircle className="h-3 w-3" />Voir le commerce
             </a>
-          </div>
-        )
+          )}
+          <button onClick={onAdd} disabled={loading} className="flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-green-700 disabled:opacity-50">
+            <Plus className="h-3 w-3" />Créer
+          </button>
+          <button onClick={onLink} disabled={loading} className="flex items-center gap-1 rounded-md bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50">
+            <Link2 className="h-3 w-3" />Déjà créé
+          </button>
+        </div>
       ) : lead.status === "DECLINED" ? (
         <div className="mt-2.5">
           <button onClick={onRestore} disabled={loading} className="flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 transition hover:bg-slate-200 disabled:opacity-50">

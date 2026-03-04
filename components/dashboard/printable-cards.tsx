@@ -3,8 +3,58 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import QRCode from "qrcode";
 import { toPng } from "html-to-image";
-import { Download, ChevronLeft, ChevronRight, ChevronDown, Printer } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, ChevronDown, Printer, Palette, Lock } from "lucide-react";
 import { contrastColor, safeGradientEnd } from "@/lib/utils";
+import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
+
+interface BrandStyleData {
+  // Colors
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textOnPrimary?: string;
+  // Typography
+  fontFamily?: string | null;
+  fontWeight?: string;
+  letterSpacing?: number;
+  textTransform?: "none" | "uppercase" | "lowercase";
+  // Background
+  bgStyle?: "gradient" | "solid" | "split";
+  gradientAngle?: number;
+  // Decorative
+  decorativeElement?: "waves" | "dots" | "circles" | "diagonalLines" | "geometric" | "cornerCut" | "none";
+  decorativeOpacity?: number;
+  decorativePosition?: "top" | "bottom" | "full" | "topRight" | "bottomLeft";
+  // Borders
+  borderRadius?: number;
+  borderStyle?: "none" | "solid" | "double";
+  borderWidth?: number;
+  borderColor?: string;
+  // Badge
+  badgeStyle?: "pill" | "rounded" | "square" | "outlined";
+  badgeBorderRadius?: number;
+  // General
+  mood?: string;
+  brandStyle?: string; // legacy compat
+}
+
+// Flatten nested brandStyle (GPT sometimes returns { "couleurs": { "primaryColor": ... }, ... })
+function flattenBrandStyle(raw: Record<string, unknown> | null | undefined): BrandStyleData | null {
+  if (!raw) return null;
+  // Already flat?
+  if (raw.primaryColor) return raw as unknown as BrandStyleData;
+  // Try to flatten nested objects
+  const flat: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      Object.assign(flat, value);
+    } else {
+      flat[key] = value;
+    }
+  }
+  return flat.primaryColor ? (flat as unknown as BrandStyleData) : null;
+}
 
 interface Props {
   businessName: string;
@@ -17,6 +67,162 @@ interface Props {
   appUrl: string;
   hasReviews: boolean;
   hasLoyalty: boolean;
+  brandStyle?: BrandStyleData | null;
+}
+
+interface ThemeStyles {
+  bg: string;
+  textColor: string;
+  subtextColor: string;
+  badgeBg: string;
+  badgeColor: string;
+  fontFamily: string;
+  qrBoxBg: string;
+  qrBoxShadow: string;
+  qrLabelColor: string;
+  nfcBoxBg: string;
+  nfcBoxBorder: string;
+  nfcTextColor: string;
+  footerColor: string;
+  decorativeCircle1: string;
+  decorativeCircle2: string;
+  // Custom theme extras (prefixed with _)
+  _fontWeight?: string;
+  _letterSpacing?: number;
+  _textTransform?: "none" | "uppercase" | "lowercase";
+  _borderRadius?: number;
+  _badgeBorderRadius?: number;
+  _isOutlinedBadge?: boolean;
+  _badgeOutlineColor?: string;
+}
+
+function getThemeStyles(
+  theme: PrintThemeId,
+  primaryColor: string,
+  secondaryColor: string,
+  accentColor: string,
+  brandStyle?: BrandStyleData | null,
+): ThemeStyles {
+  const gradientEnd = safeGradientEnd(primaryColor, secondaryColor);
+
+  switch (theme) {
+    case "minimal":
+      return {
+        bg: `#ffffff`,
+        textColor: "#1e293b",
+        subtextColor: "#64748b",
+        badgeBg: primaryColor,
+        badgeColor: contrastColor(primaryColor),
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        qrBoxBg: "#f8fafc",
+        qrBoxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        qrLabelColor: "#64748b",
+        nfcBoxBg: "#f1f5f9",
+        nfcBoxBorder: `2px solid ${primaryColor}`,
+        nfcTextColor: "#334155",
+        footerColor: "#94a3b8",
+        decorativeCircle1: "transparent",
+        decorativeCircle2: "transparent",
+      };
+    case "bold":
+      return {
+        bg: primaryColor,
+        textColor: "#fff",
+        subtextColor: "rgba(255,255,255,0.7)",
+        badgeBg: "#fff",
+        badgeColor: primaryColor,
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        qrBoxBg: "#fff",
+        qrBoxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+        qrLabelColor: "#64748b",
+        nfcBoxBg: "rgba(255,255,255,0.15)",
+        nfcBoxBorder: `2px solid rgba(255,255,255,0.5)`,
+        nfcTextColor: "rgba(255,255,255,0.95)",
+        footerColor: "rgba(255,255,255,0.45)",
+        decorativeCircle1: "rgba(255,255,255,0.08)",
+        decorativeCircle2: "rgba(255,255,255,0.05)",
+      };
+    case "custom": {
+      const bp = brandStyle?.primaryColor || primaryColor;
+      const bs = brandStyle?.secondaryColor || secondaryColor;
+      const ba = brandStyle?.accentColor || accentColor;
+      const bgc = brandStyle?.backgroundColor || null;
+      const textOnP = (brandStyle?.textOnPrimary || contrastColor(bp)).toLowerCase();
+      const bGradientEnd = safeGradientEnd(bp, bs);
+      const angle = brandStyle?.gradientAngle ?? 145;
+      const bStyle = brandStyle?.bgStyle || "gradient";
+
+      // Build background based on bgStyle
+      let bg: string;
+      if (bStyle === "solid") {
+        bg = bp;
+      } else if (bStyle === "split") {
+        // Top half primary, bottom half white (or bg color)
+        bg = `linear-gradient(180deg, ${bp} 0%, ${bp} 50%, ${bgc || "#ffffff"} 50%, ${bgc || "#ffffff"} 100%)`;
+      } else {
+        bg = `linear-gradient(${angle}deg, ${bp} 0%, ${bGradientEnd} 100%)`;
+      }
+
+      // For split, the bottom text needs dark colors
+      const isSplit = bStyle === "split";
+      const isDarkBg = textOnP === "#fff" || textOnP === "#ffffff" || textOnP === "white" || textOnP.startsWith("#ff");
+
+      // Border — never on printable cards
+
+      // Badge
+      const badgeR = brandStyle?.badgeBorderRadius ?? 20;
+      const isOutlinedBadge = brandStyle?.badgeStyle === "outlined";
+
+      return {
+        bg,
+        textColor: isSplit ? bp : (isDarkBg ? "#fff" : "#1e293b"),
+        subtextColor: isSplit ? "#64748b" : (isDarkBg ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.5)"),
+        badgeBg: isOutlinedBadge ? "transparent" : ba,
+        badgeColor: isOutlinedBadge ? ba : contrastColor(ba),
+        fontFamily: brandStyle?.fontFamily
+          ? `"${brandStyle.fontFamily}", system-ui, sans-serif`
+          : '"Plus Jakarta Sans", system-ui, sans-serif',
+        qrBoxBg: isSplit ? "#f8fafc" : "#fff",
+        qrBoxShadow: isSplit ? "0 2px 8px rgba(0,0,0,0.08)" : "0 4px 12px rgba(0,0,0,0.2)",
+        qrLabelColor: "#64748b",
+        nfcBoxBg: isDarkBg ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.05)",
+        nfcBoxBorder: isDarkBg
+          ? "1.5px solid rgba(255,255,255,0.5)"
+          : `1.5px solid ${bp}`,
+        nfcTextColor: isDarkBg ? "rgba(255,255,255,0.95)" : "#334155",
+        footerColor: isDarkBg ? "rgba(255,255,255,0.45)" : "#94a3b8",
+        decorativeCircle1: "transparent", // we use DecorativeOverlay instead
+        decorativeCircle2: "transparent",
+        borderStyle: undefined,
+        // Extra custom data carried through ThemeStyles
+        _fontWeight: brandStyle?.fontWeight ?? "800",
+        _letterSpacing: brandStyle?.letterSpacing ?? -0.5,
+        _textTransform: brandStyle?.textTransform ?? "none",
+        _borderRadius: brandStyle?.borderRadius ?? 0,
+        _badgeBorderRadius: badgeR,
+        _isOutlinedBadge: isOutlinedBadge,
+        _badgeOutlineColor: ba,
+      } as ThemeStyles;
+    }
+    default: // gradient
+      return {
+        bg: `linear-gradient(145deg, ${primaryColor} 0%, ${gradientEnd} 100%)`,
+        textColor: "#fff",
+        subtextColor: "rgba(255,255,255,0.65)",
+        badgeBg: accentColor,
+        badgeColor: contrastColor(accentColor),
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        qrBoxBg: "#fff",
+        qrBoxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+        qrLabelColor: "#64748b",
+        nfcBoxBg: "rgba(255,255,255,0.12)",
+        nfcBoxBorder: `${Math.max(1, 1.5)}px solid rgba(255,255,255,0.5)`,
+        nfcTextColor: "rgba(255,255,255,0.95)",
+        footerColor: "rgba(255,255,255,0.45)",
+        decorativeCircle1: "rgba(255,255,255,0.07)",
+        decorativeCircle2: "rgba(255,255,255,0.04)",
+      };
+  }
 }
 
 interface CardDef {
@@ -181,6 +387,162 @@ function IconLogo({ size = 12, logoB64 }: { size?: number; logoB64?: string }) {
   );
 }
 
+// ── Decorative SVG Overlays ──────────────────────────────────────────────────
+
+function DecorativeOverlay({
+  element,
+  opacity = 0.07,
+  position = "full",
+  color = "#fff",
+  w,
+  h,
+}: {
+  element: BrandStyleData["decorativeElement"];
+  opacity?: number;
+  position?: BrandStyleData["decorativePosition"];
+  color?: string;
+  w: number;
+  h: number;
+}) {
+  if (!element || element === "none") return null;
+
+  const posStyle: React.CSSProperties = {
+    position: "absolute",
+    pointerEvents: "none",
+    zIndex: 0,
+    opacity,
+    ...(position === "top" ? { top: 0, left: 0, width: w, height: h * 0.4 } :
+      position === "bottom" ? { bottom: 0, left: 0, width: w, height: h * 0.4 } :
+      position === "topRight" ? { top: 0, right: 0, width: w * 0.6, height: h * 0.5 } :
+      position === "bottomLeft" ? { bottom: 0, left: 0, width: w * 0.6, height: h * 0.5 } :
+      { top: 0, left: 0, width: w, height: h }),
+  };
+
+  const vb = `0 0 ${w} ${h}`;
+
+  switch (element) {
+    case "waves":
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb} preserveAspectRatio="none" fill="none">
+            <path
+              d={`M0,${h * 0.3} C${w * 0.25},${h * 0.15} ${w * 0.5},${h * 0.45} ${w},${h * 0.25} L${w},${h} L0,${h} Z`}
+              fill={color}
+            />
+            <path
+              d={`M0,${h * 0.5} C${w * 0.3},${h * 0.35} ${w * 0.7},${h * 0.65} ${w},${h * 0.45} L${w},${h} L0,${h} Z`}
+              fill={color}
+              opacity={0.5}
+            />
+          </svg>
+        </div>
+      );
+
+    case "dots": {
+      const dotR = Math.max(2, w * 0.012);
+      const spacing = dotR * 6;
+      const dots: React.ReactNode[] = [];
+      for (let x = spacing; x < w; x += spacing) {
+        for (let y = spacing; y < h; y += spacing) {
+          dots.push(<circle key={`${x}-${y}`} cx={x} cy={y} r={dotR} fill={color} />);
+        }
+      }
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb}>{dots}</svg>
+        </div>
+      );
+    }
+
+    case "circles":
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb} fill="none">
+            <circle cx={w * 0.85} cy={h * 0.1} r={w * 0.35} fill={color} />
+            <circle cx={w * 0.1} cy={h * 0.75} r={w * 0.25} fill={color} opacity={0.6} />
+            <circle cx={w * 0.6} cy={h * 0.55} r={w * 0.15} fill={color} opacity={0.35} />
+          </svg>
+        </div>
+      );
+
+    case "diagonalLines": {
+      const gap = Math.max(8, w * 0.04);
+      const lines: React.ReactNode[] = [];
+      for (let offset = -h; offset < w + h; offset += gap) {
+        lines.push(
+          <line
+            key={offset}
+            x1={offset}
+            y1={0}
+            x2={offset + h}
+            y2={h}
+            stroke={color}
+            strokeWidth={Math.max(1, w * 0.005)}
+          />
+        );
+      }
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb}>{lines}</svg>
+        </div>
+      );
+    }
+
+    case "geometric":
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb} fill="none">
+            {/* Large rotated square */}
+            <rect
+              x={w * 0.65} y={-h * 0.1}
+              width={w * 0.5} height={w * 0.5}
+              rx={w * 0.02}
+              fill={color}
+              transform={`rotate(15 ${w * 0.9} ${h * 0.15})`}
+            />
+            {/* Small diamond */}
+            <rect
+              x={-w * 0.05} y={h * 0.6}
+              width={w * 0.3} height={w * 0.3}
+              rx={w * 0.01}
+              fill={color}
+              opacity={0.6}
+              transform={`rotate(45 ${w * 0.1} ${h * 0.75})`}
+            />
+            {/* Triangle accent */}
+            <polygon
+              points={`${w * 0.4},${h * 0.85} ${w * 0.55},${h * 0.95} ${w * 0.3},${h}`}
+              fill={color}
+              opacity={0.4}
+            />
+          </svg>
+        </div>
+      );
+
+    case "cornerCut":
+      return (
+        <div style={posStyle}>
+          <svg width="100%" height="100%" viewBox={vb} fill="none">
+            {/* Top-right corner triangle */}
+            <polygon
+              points={`${w * 0.6},0 ${w},0 ${w},${h * 0.35}`}
+              fill={color}
+            />
+            {/* Bottom-left corner triangle */}
+            <polygon
+              points={`0,${h * 0.7} 0,${h} ${w * 0.35},${h}`}
+              fill={color}
+              opacity={0.5}
+            />
+          </svg>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
+
 // ── PrintCard ────────────────────────────────────────────────────────────────
 function PrintCard({
   card,
@@ -196,6 +558,8 @@ function PrintCard({
   style,
   cardW = 220,
   cardH = 330,
+  themeStyles,
+  brandStyle,
 }: {
   card: CardDef;
   businessName: string;
@@ -210,12 +574,25 @@ function PrintCard({
   style?: React.CSSProperties;
   cardW?: number;
   cardH?: number;
+  themeStyles?: ThemeStyles;
+  brandStyle?: BrandStyleData | null;
 }) {
   const isReviews = card.type === "reviews";
   const isSquare = cardH <= cardW;
   const initial = businessName[0]?.toUpperCase() ?? "?";
-  const gradientEnd = safeGradientEnd(primaryColor, secondaryColor);
-  const bg = `linear-gradient(145deg, ${primaryColor} 0%, ${gradientEnd} 100%)`;
+
+  // Use theme styles if provided, otherwise fall back to gradient default
+  const ts = themeStyles ?? getThemeStyles("gradient", primaryColor, secondaryColor, accentColor);
+
+  // Custom theme extras
+  const isCustom = !!brandStyle && !!ts._fontWeight;
+  const titleWeight = ts._fontWeight ?? "800";
+  const titleSpacing = ts._letterSpacing ?? -0.5;
+  const titleTransform = ts._textTransform ?? ("none" as const);
+  const cardRadius = ts._borderRadius ?? 0;
+  const badgeRadius = ts._badgeBorderRadius ?? 20;
+  const isOutlinedBadge = ts._isOutlinedBadge ?? false;
+
   // s  : structural/vertical scale (height-limited in square format)
   const s = Math.min(cardW / 220, cardH / 330);
   // sF : font & horizontal scale (width-limited only — prevents text overflow)
@@ -233,47 +610,65 @@ function PrintCard({
     gap: px(4),
   };
 
+  // Decorative overlay color — use white on dark backgrounds, primary on light
+  const isDarkText = ts.textColor === "#1e293b" || ts.textColor === "#334155";
+  const decorColor = isDarkText ? (brandStyle?.primaryColor || primaryColor) : "#ffffff";
+
   return (
     <div
       style={{
         width: cardW,
         height: cardH,
-        background: bg,
+        background: ts.bg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         padding: `${px(16)}px ${pf(14)}px ${px(12)}px`,
         overflow: "hidden",
         position: "relative",
-        fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif',
+        fontFamily: ts.fontFamily,
+        borderRadius: isCustom && cardRadius > 0 ? px(cardRadius) : 0,
         ...style,
       }}
     >
-      {/* Decorative circles */}
-      <div
-        style={{
-          position: "absolute",
-          width: px(160),
-          height: px(160),
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.07)",
-          top: -px(50),
-          right: -px(50),
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: px(100),
-          height: px(100),
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.04)",
-          bottom: px(60),
-          left: -px(30),
-          pointerEvents: "none",
-        }}
-      />
+      {/* Decorative overlay — custom theme uses brandStyle data, others use circles */}
+      {isCustom && brandStyle?.decorativeElement && brandStyle.decorativeElement !== "none" ? (
+        <DecorativeOverlay
+          element={brandStyle.decorativeElement}
+          opacity={brandStyle.decorativeOpacity ?? 0.07}
+          position={brandStyle.decorativePosition ?? "full"}
+          color={decorColor}
+          w={cardW}
+          h={cardH}
+        />
+      ) : (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              width: px(160),
+              height: px(160),
+              borderRadius: "50%",
+              background: ts.decorativeCircle1,
+              top: -px(50),
+              right: -px(50),
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              width: px(100),
+              height: px(100),
+              borderRadius: "50%",
+              background: ts.decorativeCircle2,
+              bottom: px(60),
+              left: -px(30),
+              pointerEvents: "none",
+            }}
+          />
+        </>
+      )}
 
       {/* Header: business name */}
       <div
@@ -322,7 +717,7 @@ function PrintCard({
           style={{
             fontSize: pf(10),
             fontWeight: 600,
-            color: "rgba(255,255,255,0.75)",
+            color: ts.subtextColor,
             letterSpacing: 0.2,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -353,10 +748,11 @@ function PrintCard({
         <div
           style={{
             fontSize: pf(22),
-            fontWeight: 800,
-            color: "#fff",
+            fontWeight: Number(titleWeight) || 800,
+            color: ts.textColor,
             lineHeight: 1.2,
-            letterSpacing: -0.5,
+            letterSpacing: titleSpacing,
+            textTransform: titleTransform,
           }}
         >
           {isReviews ? (
@@ -380,16 +776,17 @@ function PrintCard({
               display: "inline-flex",
               alignItems: "center",
               gap: pf(5),
-              background: accentColor,
-              borderRadius: pf(20),
+              background: ts.badgeBg,
+              borderRadius: pf(badgeRadius),
               padding: `${px(5)}px ${pf(11)}px`,
               fontSize: pf(9.5),
               fontWeight: 700,
-              color: contrastColor(accentColor),
-              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+              color: ts.badgeColor,
+              boxShadow: isOutlinedBadge ? "none" : "0 2px 8px rgba(0,0,0,0.25)",
+              ...(isOutlinedBadge ? { border: `2px solid ${ts._badgeOutlineColor || ts.badgeColor}` } : {}),
             }}
           >
-            <IconGift size={pf(11)} color={contrastColor(accentColor)} />
+            <IconGift size={pf(11)} color={ts.badgeColor} />
             {isReviews ? "Récompense à la clé !" : "Cadeaux à gagner !"}
           </div>
         )}
@@ -399,7 +796,7 @@ function PrintCard({
           <div
             style={{
               fontSize: pf(9.5),
-              color: "rgba(255,255,255,0.65)",
+              color: ts.subtextColor,
               lineHeight: 1.45,
             }}
           >
@@ -428,8 +825,8 @@ function PrintCard({
           <div
             style={{
               ...boxStyle,
-              background: "rgba(255,255,255,0.12)",
-              border: `${Math.max(1, px(1.5))}px solid rgba(255,255,255,0.5)`,
+              background: ts.nfcBoxBg,
+              border: ts.nfcBoxBorder,
               boxShadow: "0 0 0 0.5px rgba(255,255,255,0.15) inset",
               gap: px(2),
             }}
@@ -439,7 +836,7 @@ function PrintCard({
               style={{
                 fontSize: px(7.5),
                 fontWeight: 700,
-                color: "rgba(255,255,255,0.95)",
+                color: ts.nfcTextColor,
                 letterSpacing: 0.2,
                 textAlign: "center",
                 lineHeight: 1.4,
@@ -454,7 +851,7 @@ function PrintCard({
                 style={{
                   fontSize: px(6.5),
                   fontWeight: 500,
-                  color: "rgba(255,255,255,0.55)",
+                  color: ts.subtextColor,
                   letterSpacing: 0.5,
                   textTransform: "uppercase",
                 }}
@@ -468,8 +865,8 @@ function PrintCard({
         <div
           style={{
             ...boxStyle,
-            background: "#fff",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            background: ts.qrBoxBg,
+            boxShadow: ts.qrBoxShadow,
           }}
         >
           {qrDataUrl ? (
@@ -492,7 +889,7 @@ function PrintCard({
             style={{
               fontSize: px(7.5),
               fontWeight: 700,
-              color: "#64748b",
+              color: ts.qrLabelColor,
               letterSpacing: 0.2,
               textAlign: "center",
               lineHeight: 1.4,
@@ -521,7 +918,7 @@ function PrintCard({
           style={{
             fontSize: px(6.5),
             fontWeight: 800,
-            color: "#fff",
+            color: ts.footerColor === "rgba(255,255,255,0.45)" ? "#fff" : ts.footerColor,
             letterSpacing: 0.2,
             marginBottom: px(-2),
           }}
@@ -546,6 +943,8 @@ function CardStack({
   businessLogoB64,
   businessLogoUrl,
   logoBackground,
+  themeStyles,
+  brandStyle,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -558,6 +957,8 @@ function CardStack({
   businessLogoB64?: string;
   businessLogoUrl?: string;
   logoBackground?: string;
+  themeStyles?: ThemeStyles;
+  brandStyle?: BrandStyleData | null;
 }) {
   const [index, setIndex] = useState(0);
   const [sizeId, setSizeId] = useState<SizeId>("10x10");
@@ -618,6 +1019,8 @@ function CardStack({
     logoBackground,
     cardW,
     cardH,
+    themeStyles,
+    brandStyle,
   };
 
   return (
@@ -798,6 +1201,47 @@ function CardStack({
   );
 }
 
+// ── Theme Selector ────────────────────────────────────────────────────────────
+function ThemeSelector({
+  theme,
+  setTheme,
+  hasBrandStyle,
+}: {
+  theme: PrintThemeId;
+  setTheme: (t: PrintThemeId) => void;
+  hasBrandStyle: boolean;
+}) {
+  return (
+    <div className="mb-6 flex items-center gap-3">
+      <Palette className="h-4 w-4 text-slate-400" />
+      <span className="text-xs font-medium text-slate-500">Thème :</span>
+      <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+        {PRINT_THEMES.map((t) => {
+          const disabled = t.requiresBrandStyle && !hasBrandStyle;
+          return (
+            <button
+              key={t.id}
+              onClick={() => !disabled && setTheme(t.id)}
+              disabled={disabled}
+              title={disabled ? "Nécessite l'extraction des couleurs du site web" : t.description}
+              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                theme === t.id
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : disabled
+                    ? "cursor-not-allowed text-slate-300"
+                    : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t.name}
+              {disabled && <Lock className="h-3 w-3" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 export function PrintableCards({
   businessName,
@@ -810,9 +1254,11 @@ export function PrintableCards({
   appUrl,
   hasReviews,
   hasLoyalty,
+  brandStyle,
 }: Props) {
   const [logoB64, setLogoB64] = useState<string | undefined>();
   const [businessLogoB64, setBusinessLogoB64] = useState<string | undefined>();
+  const [theme, setTheme] = useState<PrintThemeId>("gradient");
 
   // ── Print at real size ──────────────────────────────────────────────────────
   const [printW, setPrintW] = useState("9.3");
@@ -873,6 +1319,23 @@ export function PrintableCards({
       .then(setPrintQrLoyalty).catch(() => {});
   }, [loyaltyUrl, hasLoyalty]);
 
+  const normalizedBrandStyle = flattenBrandStyle(brandStyle as Record<string, unknown> | null);
+
+  // Load Google Font if brandStyle specifies one
+  useEffect(() => {
+    const fontName = normalizedBrandStyle?.fontFamily;
+    if (!fontName) return;
+    const id = `gfont-${fontName.replace(/\s+/g, "-")}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;600;700;800;900&display=swap`;
+    document.head.appendChild(link);
+  }, [normalizedBrandStyle?.fontFamily]);
+  const hasBrandStyle = !!normalizedBrandStyle && !!(normalizedBrandStyle.primaryColor || normalizedBrandStyle.decorativeElement);
+  const themeStyles = getThemeStyles(theme, primaryColor, secondaryColor, accentColor, normalizedBrandStyle);
+
   if (!hasReviews && !hasLoyalty) return null;
 
   async function handlePrint() {
@@ -931,10 +1394,13 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
     businessLogoUrl: logoUrl ?? undefined,
     logoBackground: logoBackground ?? undefined,
     appUrl,
+    themeStyles,
+    brandStyle: normalizedBrandStyle,
   };
 
   return (
     <div>
+      <ThemeSelector theme={theme} setTheme={setTheme} hasBrandStyle={hasBrandStyle} />
       <div className="flex flex-wrap gap-12">
         {hasReviews && (
           <div>
@@ -987,6 +1453,8 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
           businessLogoUrl: logoUrl ?? undefined,
           logoBackground: logoBackground ?? undefined,
           cardW: renderW, cardH: renderH,
+          themeStyles,
+          brandStyle: normalizedBrandStyle,
         };
         return (
           <>

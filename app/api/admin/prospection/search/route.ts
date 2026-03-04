@@ -171,7 +171,8 @@ async function runOverpassWay(streetName: string, bboxFilter: string): Promise<A
   geometry?: Array<{ lat: number; lon: number }>;
   tags?: Record<string, string>;
 }> | null> {
-  const query = `[out:json][timeout:15];way["name"="${streetName}"]${bboxFilter};out geom;`;
+  // Filtrer uniquement les ways avec tag highway (routes) pour éviter bâtiments, limites, etc.
+  const query = `[out:json][timeout:15];way["name"="${streetName}"]["highway"]${bboxFilter};out geom;`;
   const ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
@@ -254,15 +255,62 @@ export async function POST(req: Request) {
   const bboxFilter = `(${viewport.sw.lat - PAD},${viewport.sw.lng - PAD},${viewport.ne.lat + PAD},${viewport.ne.lng + PAD})`;
   const wayElements = await runOverpassWay(canonicalName, bboxFilter) ?? [];
 
-  // Concaténer tous les points de géométrie
-  const allCoords: Array<{ lat: number; lng: number }> = [];
+  // Extraire les segments individuels (chaque way = un segment)
+  const segments: Array<Array<{ lat: number; lng: number }>> = [];
   for (const el of wayElements) {
-    if (el.type === "way" && el.geometry) {
-      for (const pt of el.geometry) {
-        allCoords.push({ lat: pt.lat, lng: pt.lon });
-      }
+    if (el.type === "way" && el.geometry && el.geometry.length >= 2) {
+      segments.push(el.geometry.map((pt) => ({ lat: pt.lat, lng: pt.lon })));
     }
   }
+
+  // Chaîner les segments bout-à-bout pour former une polyline continue
+  // Un segment est raccordé si son début/fin est proche du début/fin d'un autre
+  function chainSegments(segs: Array<Array<{ lat: number; lng: number }>>): Array<{ lat: number; lng: number }> {
+    if (segs.length === 0) return [];
+    if (segs.length === 1) return segs[0];
+
+    const remaining = segs.map((s, i) => ({ idx: i, pts: s }));
+    const chain = remaining.shift()!.pts.slice();
+    remaining.splice(0); // reset
+    const pool = segs.slice(1).map((s) => ({ pts: s, used: false }));
+
+    const THRESHOLD = 0.0001; // ~11m
+    const close = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+      Math.abs(a.lat - b.lat) < THRESHOLD && Math.abs(a.lng - b.lng) < THRESHOLD;
+
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const seg of pool) {
+        if (seg.used) continue;
+        const chainEnd = chain[chain.length - 1];
+        const chainStart = chain[0];
+        const segStart = seg.pts[0];
+        const segEnd = seg.pts[seg.pts.length - 1];
+
+        if (close(chainEnd, segStart)) {
+          chain.push(...seg.pts.slice(1));
+          seg.used = true; changed = true;
+        } else if (close(chainEnd, segEnd)) {
+          chain.push(...seg.pts.slice(0, -1).reverse());
+          seg.used = true; changed = true;
+        } else if (close(chainStart, segEnd)) {
+          chain.unshift(...seg.pts.slice(0, -1));
+          seg.used = true; changed = true;
+        } else if (close(chainStart, segStart)) {
+          chain.unshift(...seg.pts.slice(1).reverse());
+          seg.used = true; changed = true;
+        }
+      }
+    }
+    // Ajouter les segments orphelins à la fin (rues discontinues)
+    for (const seg of pool) {
+      if (!seg.used) chain.push(...seg.pts);
+    }
+    return chain;
+  }
+
+  const allCoords = chainSegments(segments);
   const geometry = allCoords.length > 1 ? allCoords : null;
 
   // ── 4. Upsert ProspectStreet ──

@@ -157,9 +157,9 @@ Extrais les informations du commerce et retourne UNIQUEMENT un JSON valide sans 
 {
   "name": "Nom du commerce ou null",
   "businessType": "Type parmi : Restaurant, Café, Bar, Bar à jeux, Glacier, Boulangerie, Pâtisserie, Boulangerie / Pâtisserie, Chocolaterie, Traiteur, Fromagerie, Boucherie, Charcuterie, Poissonnerie, Épicerie fine, Salon de coiffure, Barbier, Salon de beauté, Institut d'esthétique, Nail art, Spa, Studio de yoga, Coach sportif, Salle de sport, Épicerie, Superette, Fleuriste, Librairie, Boutique de vêtements, Boutique cadeaux, Bijouterie, Pressing, Garage / Auto, Autre, ou null",
-  "address": "Numéro et nom de rue ou null",
-  "city": "Ville ou null",
-  "zipCode": "Code postal ou null",
+  "address": "UNIQUEMENT le numéro et nom de rue (ex: '22 Rue des Bois'), SANS le code postal ni la ville. null si non trouvé",
+  "city": "UNIQUEMENT le nom de la ville (ex: 'Paris'), SANS le code postal. null si non trouvé",
+  "zipCode": "UNIQUEMENT le code postal (ex: '75019'). null si non trouvé",
   "phone": "Numéro de téléphone ou null",
   "website": "URL du site web officiel ou null",
   "googleMapsUrl": "URL Google Maps de la fiche ou null"
@@ -299,6 +299,18 @@ export async function POST(req: Request) {
     // (ne pas utiliser une chaîne "place_id:..." comme nom)
     if (!data.name && businessName && !businessName.startsWith("place_id:")) {
       data.name = businessName;
+    }
+
+    // Nettoyer l'adresse si elle contient le code postal ou la ville (doublon fréquent)
+    if (data.address && data.zipCode) {
+      data.address = data.address.replace(new RegExp(`,?\\s*${data.zipCode}\\s*`, "g"), " ").trim();
+    }
+    if (data.address && data.city) {
+      data.address = data.address.replace(new RegExp(`,?\\s*${data.city}\\s*$`, "i"), "").trim();
+    }
+    // Supprimer une virgule ou espace résiduel en fin
+    if (data.address) {
+      data.address = data.address.replace(/,\s*$/, "").trim();
     }
 
     console.log(`[Google] ✓ Résultat final :`, data);

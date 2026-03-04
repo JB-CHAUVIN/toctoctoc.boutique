@@ -67,6 +67,7 @@ export default async function SupportsPage({ params }: { params: { businessId: s
         appUrl={APP_URL}
         hasReviews={hasReviews}
         hasLoyalty={hasLoyalty}
+        brandStyle={business.brandStyle as Record<string, string> | null}
       />
 
       {/* Séparateur */}

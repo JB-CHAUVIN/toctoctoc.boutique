@@ -74,6 +74,7 @@ const createBusinessSchema = z.object({
   reviewUrl: z.string().optional(),
   logoUrl: z.string().optional(),
   logoBackground: z.string().optional(),
+  brandStyle: z.any().optional(),
 });
 
 export async function GET() {

@@ -292,6 +292,26 @@ export const PRINT_PRODUCTS_MAP: Record<string, PrintProduct> = Object.fromEntri
   PRINT_PRODUCTS.map((p) => [p.id, p])
 );
 
+// ─────────────────────────────────────────
+// THÈMES SUPPORTS IMPRIMABLES
+// ─────────────────────────────────────────
+
+export type PrintThemeId = "gradient" | "minimal" | "bold" | "custom";
+
+export interface PrintTheme {
+  id: PrintThemeId;
+  name: string;
+  description: string;
+  requiresBrandStyle?: boolean;
+}
+
+export const PRINT_THEMES: PrintTheme[] = [
+  { id: "gradient", name: "TocTocToc", description: "Design actuel (dégradé primary → secondary)" },
+  { id: "minimal", name: "Minimal", description: "Fond blanc, bordure colorée, texte sombre" },
+  { id: "bold", name: "Bold", description: "Couleur primaire pleine, texte large" },
+  { id: "custom", name: "Custom", description: "Charte graphique du commerce (couleurs + font du site web)", requiresBrandStyle: true },
+];
+
 export const PRINT_ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   PENDING: { label: "En attente de paiement", color: "yellow" },
   PAID: { label: "Payé", color: "green" },
