@@ -35,6 +35,10 @@ export async function PATCH(req: Request, { params }: { params: { token: string 
         googleReviewInitiatedAt: new Date(),
       },
     });
+
+    // Fire-and-forget tracking
+    prisma.log.create({ data: { action: "review.google_clicked", meta: { businessId: review.businessId, token: params.token } } }).catch(() => {});
+
     return NextResponse.json({ success: true, data: updated });
   }
 
@@ -72,6 +76,9 @@ export async function PATCH(req: Request, { params }: { params: { token: string 
       },
       include: { reward: true },
     });
+
+    // Fire-and-forget tracking
+    prisma.log.create({ data: { action: "review.spin", meta: { businessId: review.businessId, rewardName: reward?.name ?? null } } }).catch(() => {});
 
     return NextResponse.json({ success: true, data: updated });
   }

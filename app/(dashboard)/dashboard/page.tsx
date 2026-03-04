@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 import { CreateBusinessDialog } from "@/components/dashboard/create-business-dialog";
+import { WalkthroughAutoShow } from "@/components/dashboard/walkthrough-modal";
 import type { BusinessWithModules } from "@/types";
 
 type BusinessWithCount = BusinessWithModules & {
@@ -214,6 +215,20 @@ function DashboardContent() {
           router.refresh();
         }}
       />
+
+      {/* Walkthrough — auto au 1er accès (non-admin uniquement) */}
+      {!isAdmin && !loading && businesses.length > 0 && (() => {
+        const b = businesses[0];
+        return (
+          <WalkthroughAutoShow
+            businessId={b.id}
+            businessName={b.name}
+            primaryColor={b.primaryColor}
+            accentColor={b.accentColor}
+            logoUrl={b.logoUrl}
+          />
+        );
+      })()}
 
       {/* ── Vue Admin ── */}
       {isAdmin && (

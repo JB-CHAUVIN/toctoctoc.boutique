@@ -28,9 +28,21 @@ import {
   Printer,
   Map,
   Search,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PROSPECT_STEPS } from "@/lib/prospect-steps";
 import type { ModuleType } from "@prisma/client";
+
+const STEP_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
+  created:      { bg: "bg-slate-600/20",   text: "text-slate-400" },
+  contacted:    { bg: "bg-orange-600/20",  text: "text-orange-400" },
+  page_viewed:  { bg: "bg-blue-600/20",    text: "text-blue-400" },
+  claimed:      { bg: "bg-green-600/20",   text: "text-green-400" },
+  demo_viewed:  { bg: "bg-emerald-600/20", text: "text-emerald-400" },
+  configured:   { bg: "bg-violet-600/20",  text: "text-violet-400" },
+  product_used: { bg: "bg-pink-600/20",    text: "text-pink-400" },
+};
 
 interface BusinessModule {
   module: ModuleType;
@@ -44,6 +56,8 @@ interface BusinessNav {
   primaryColor: string;
   logoUrl: string | null;
   logoBackground: string | null;
+  claimedAt: Date | string | null;
+  claimToken: string | null;
   modules: BusinessModule[];
   user: { name: string | null; email: string };
 }
@@ -54,6 +68,7 @@ interface SidebarProps {
   businessCount: number;
   planLabel: string;
   isAdmin?: boolean;
+  prospectStepMap?: Record<string, number>;
 }
 
 const VISIBLE_MODULES: ModuleType[] = ["SHOWCASE", "BOOKING", "REVIEWS", "LOYALTY"];
@@ -123,7 +138,7 @@ const MODULE_NAV: Record<string, ModuleNavDef> = {
   },
 };
 
-export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, isAdmin }: SidebarProps) {
+export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, isAdmin, prospectStepMap }: SidebarProps) {
   const pathname = usePathname();
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
@@ -259,7 +274,18 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <span className="block truncate text-sm font-semibold">{business.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="block truncate text-sm font-semibold">{business.name}</span>
+                      {isAdmin && business.claimToken && prospectStepMap && prospectStepMap[business.id] !== undefined && (() => {
+                        const step = PROSPECT_STEPS[prospectStepMap[business.id]];
+                        const colors = STEP_BADGE_COLORS[step.key];
+                        return (
+                          <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${colors.bg} ${colors.text}`}>
+                            {step.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
                     {isAdmin && (
                       <span className="block truncate text-[10px] text-slate-500">
                         {business.user.name ?? business.user.email}
@@ -497,6 +523,18 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
           <p className="mb-1 px-3 text-xs font-medium uppercase tracking-wider text-slate-600">
             Administration
           </p>
+          <Link
+            href="/admin/stats"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
+              pathname.startsWith("/admin/stats")
+                ? "bg-indigo-600 text-white"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+            )}
+          >
+            <TrendingUp className="h-4 w-4" />
+            Stats & Pilotage
+          </Link>
           <Link
             href="/prospection"
             className={cn(

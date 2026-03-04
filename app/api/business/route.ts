@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
@@ -151,6 +152,8 @@ export async function POST(req: Request) {
         ...rest,
         isPublished: true,
         userId: session.user.id,
+        // Admin crée un prospect → claimToken auto-généré
+        ...(isAdmin && { claimToken: randomBytes(24).toString("hex") }),
         modules: {
           create: [
             { module: "SHOWCASE", isActive: true },
@@ -161,6 +164,15 @@ export async function POST(req: Request) {
       },
       include: { modules: true },
     });
+
+    // Log business creation
+    prisma.log.create({
+      data: {
+        action: "business.created",
+        userId: session.user.id,
+        meta: { businessId: business.id, name: business.name, byAdmin: isAdmin },
+      },
+    }).catch(() => {});
 
     // Créer ReviewConfig + rewards par défaut
     const defaultRewards = getDefaultRewards(parsed.data.businessType ?? null);

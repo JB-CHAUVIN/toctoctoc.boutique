@@ -60,6 +60,9 @@ export async function POST(req: Request) {
       },
     });
 
+    // Fire-and-forget tracking
+    prisma.log.create({ data: { action: "review.created", meta: { businessId, customerName: customerName ?? null } } }).catch(() => {});
+
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (error) {
     console.error("[REVIEW_CREATE_ERROR]", error);

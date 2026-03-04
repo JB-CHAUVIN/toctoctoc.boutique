@@ -947,6 +947,17 @@ export function WalkthroughAutoShow(props: WalkthroughProps) {
   function handleClose(finished: boolean) {
     localStorage.setItem(`ttt_wt_${props.businessId}`, "1");
     setIsOpen(false);
+
+    // Log walkthrough completion (fire-and-forget)
+    fetch("/api/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "walkthrough.completed",
+        meta: { businessId: props.businessId },
+      }),
+    }).catch(() => {});
+
     if (props.promoCode) {
       setTimeout(() => setShowPromo(true), 400);
     } else if (!finished) {

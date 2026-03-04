@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Check, Settings2, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProspectLetterButton } from "./prospect-letter";
+import { ProspectStepper } from "./prospect-stepper";
 
 const PAPER_TYPES = ["A4 200g", "A4 Photo"] as const;
 const PRINTABLE_SIZES = ["9.3 × 9.3 cm", "10 × 10 cm", "10 × 15 cm"] as const;
@@ -37,6 +38,7 @@ interface Props {
   prospectInfo?: ProspectInfoData | null;
   promoCode?: string | null;
   stripePromoCodeId?: string | null;
+  prospectStep?: number;
 }
 
 function CopyButton({ url, label }: { url: string; label: string }) {
@@ -72,6 +74,7 @@ export function SetupPanel({
   prospectInfo: initialProspectInfo,
   promoCode,
   stripePromoCodeId,
+  prospectStep,
 }: Props) {
   const [prospectedAt, setProspectedAt] = useState<Date | null>(
     initialProspectedAt,
@@ -199,6 +202,19 @@ export function SetupPanel({
         </button>
       </div>
 
+      {claimToken && (
+        <div className="mt-2">
+          <a
+            href={`${appUrl}/claim/${claimToken}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-violet-400 underline decoration-violet-300 hover:text-violet-600"
+          >
+            Voir la page revendiquer
+          </a>
+        </div>
+      )}
+
       {/* Code promo Stripe */}
       {promoCode && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">
@@ -261,6 +277,15 @@ export function SetupPanel({
             </select>
           </div>
 
+        </div>
+      )}
+
+      {prospectStep !== undefined && (
+        <div className="mt-4 rounded-xl border border-violet-100 bg-white p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-400">
+            Avancement prospect
+          </p>
+          <ProspectStepper currentStep={prospectStep} />
         </div>
       )}
     </div>

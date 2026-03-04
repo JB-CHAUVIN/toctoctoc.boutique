@@ -82,6 +82,26 @@ export async function PATCH(req: Request, { params }: { params: { businessId: st
     include: { modules: true },
   });
 
+  // Log publish toggle
+  if (data.isPublished !== undefined) {
+    prisma.log.create({
+      data: {
+        action: "business.published",
+        userId: session.user.id,
+        meta: { businessId: params.businessId, slug: updated.slug, isPublished: updated.isPublished },
+      },
+    }).catch(() => {});
+  }
+
+  // Log dashboard.configured (tracks that the user actually did something)
+  prisma.log.create({
+    data: {
+      action: "dashboard.configured",
+      userId: session.user.id,
+      meta: { businessId: params.businessId },
+    },
+  }).catch(() => {});
+
   return NextResponse.json({ success: true, data: updated });
 }
 

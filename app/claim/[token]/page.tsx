@@ -39,6 +39,14 @@ export default async function ClaimPage({ params }: { params: { token: string } 
 
   if (!business) notFound();
 
+  // Fire-and-forget: log page view
+  prisma.log.create({
+    data: {
+      action: "claim.page_viewed",
+      meta: { businessId: business.id, businessName: business.name, token: params.token },
+    },
+  }).catch(() => {});
+
   if (business.claimedAt) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-50 via-white to-slate-50 p-4">
@@ -114,14 +122,14 @@ export default async function ClaimPage({ params }: { params: { token: string } 
         {/* Promo banner */}
         {business.promoCode && (
           <div className="mb-6 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 p-4 text-center text-white shadow-md">
-            <p className="text-sm font-semibold">
-              <div>
-                {LAUNCH_PROMO.discount} code de bienvenue rien que pour vous
-              </div>
+            <div className="text-sm font-semibold">
+              <span>
+                {LAUNCH_PROMO.discount} code de bienvenue rien que pour vous !
+              </span>
               <div className="rounded bg-white/20 px-2 py-0.5 font-mono font-bold mt-2">
-                {business.promoCode} !
+                {business.promoCode}
               </div>
-            </p>
+            </div>
           </div>
         )}
 

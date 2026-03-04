@@ -24,6 +24,9 @@ export async function POST(
   }
 
   if (business.claimedAt) {
+    prisma.log.create({
+      data: { action: "claim.already_claimed", meta: { businessId: business.id } },
+    }).catch(() => {});
     return NextResponse.json({ error: "Ce lien a déjà été utilisé." }, { status: 409 });
   }
 
@@ -35,6 +38,11 @@ export async function POST(
       { status: 409 }
     );
   }
+
+  // Log form submission
+  prisma.log.create({
+    data: { action: "claim.form_submitted", meta: { businessId: business.id, email } },
+  }).catch(() => {});
 
   const hashed = await bcrypt.hash(password, 10);
 
@@ -59,6 +67,11 @@ export async function POST(
       },
     });
   });
+
+  // Log successful claim
+  prisma.log.create({
+    data: { action: "claim.success", meta: { businessId: business.id, email } },
+  }).catch(() => {});
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toctoctoc.boutique";
   sendEmail({

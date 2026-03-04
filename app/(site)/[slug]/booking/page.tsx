@@ -19,6 +19,9 @@ export default async function BookingPage({ params }: { params: { slug: string }
 
   if (!business || !business.modules.length || !business.bookingConfig) notFound();
 
+  // Fire-and-forget tracking
+  prisma.log.create({ data: { action: "page.booking", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+
   const subtitle =
     business.bookingConfig.mode === "TABLE"
       ? "Choisissez votre date, heure et nombre de couverts"

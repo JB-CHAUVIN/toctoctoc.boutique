@@ -569,6 +569,7 @@ model Log {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([action])
 }
 
 // ─────────────────────────────────────────

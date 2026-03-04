@@ -20,6 +20,9 @@ export default async function FidelitePage({ params }: { params: { slug: string 
 
   if (!business || !business.modules.length) notFound();
 
+  // Fire-and-forget tracking
+  prisma.log.create({ data: { action: "page.loyalty", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+
   const config = business.loyaltyConfig ?? {
     id: "",
     businessId: business.id,

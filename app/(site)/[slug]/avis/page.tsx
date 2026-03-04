@@ -21,6 +21,9 @@ export default async function AvisPage({ params }: { params: { slug: string } })
 
   if (!business || !business.modules.length) notFound();
 
+  // Fire-and-forget tracking
+  prisma.log.create({ data: { action: "page.reviews", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+
   const reviewConfig = business.reviewConfig ?? { googleUrl: null, instructions: null, rewards: [] };
 
   return (

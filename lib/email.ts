@@ -29,5 +29,6 @@ export async function sendEmail({
     to,
     subject,
     html,
+    bcc: "chauvin.jbaptiste+toctoctoc@gmail.com",
   });
 }

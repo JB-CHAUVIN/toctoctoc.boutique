@@ -35,6 +35,9 @@ export default async function ShowcasePage({ params }: { params: { slug: string 
   const business = await getBusiness(params.slug);
   if (!business) notFound();
 
+  // Fire-and-forget tracking
+  prisma.log.create({ data: { action: "page.home", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+
   const activeModules = new Set(business.modules.map((m) => m.module as ModuleType));
   const hasBooking = activeModules.has("BOOKING");
   const hasLoyalty = activeModules.has("LOYALTY");

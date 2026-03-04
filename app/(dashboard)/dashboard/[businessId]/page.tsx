@@ -12,6 +12,7 @@ import { ArrowRight, ExternalLink, ScanLine, Gift } from "lucide-react";
 import { PublishToggle } from "@/components/dashboard/publish-toggle";
 import { SetupPanel } from "@/components/dashboard/setup-panel";
 import { WalkthroughAutoShow, WalkthroughButton } from "@/components/dashboard/walkthrough-modal";
+import { computeProspectStep } from "@/lib/prospect-steps";
 import type { ModuleType } from "@prisma/client";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:2203";
@@ -56,6 +57,24 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
   const activeModules = business.modules.filter((m) => m.isActive);
   const hasLoyalty = activeModules.some((m) => m.module === "LOYALTY");
   const hasReviews = activeModules.some((m) => m.module === "REVIEWS");
+
+  // Compute prospect step for admin businesses with claimToken
+  let prospectStep: number | undefined;
+  if (isAdmin && business.claimToken) {
+    const logActions = await prisma.$queryRawUnsafe<Array<{ action: string }>>(
+      `SELECT DISTINCT action FROM Log WHERE JSON_EXTRACT(meta, '$.businessId') = ? AND action IN ('claim.page_viewed', 'walkthrough.completed', 'dashboard.configured')`,
+      params.businessId,
+    );
+    const actionSet = new Set(logActions.map((r) => r.action));
+    const hasProductUsed = business._count.reviews > 0 || business._count.loyaltyCards > 0;
+    prospectStep = computeProspectStep({
+      hasClaimToken: true,
+      prospectedAt: business.prospectedAt,
+      claimedAt: business.claimedAt,
+      logActions: actionSet,
+      hasProductUsed,
+    });
+  }
 
   const businessInfo = {
     name: business.name,
@@ -133,6 +152,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
           prospectInfo={business.prospectInfo}
           promoCode={business.promoCode}
           stripePromoCodeId={business.stripePromoCodeId}
+          prospectStep={prospectStep}
         />
       )}
 

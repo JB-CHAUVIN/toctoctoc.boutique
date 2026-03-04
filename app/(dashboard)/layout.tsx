@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { MobileMenuButton } from "@/components/dashboard/mobile-menu-button";
 import Image from "next/image";
 import { PLAN_LIMITS } from "@/lib/constants";
+import { batchGetProspectData, computeProspectStep } from "@/lib/prospect-steps";
 
 export default async function DashboardLayout({
   children,
@@ -29,11 +30,32 @@ export default async function DashboardLayout({
     select: {
       id: true, name: true, slug: true, primaryColor: true,
       logoUrl: true, logoBackground: true,
+      claimedAt: true, claimToken: true,
+      prospectedAt: true,
       modules: { select: { module: true, isActive: true } },
       user: { select: { name: true, email: true } },
     },
     orderBy: { createdAt: isAdmin ? "desc" : "asc" },
   });
+
+  // Compute prospect steps for admin businesses with claimToken
+  let prospectStepMap: Record<string, number> | undefined;
+  if (isAdmin) {
+    const prospectBusinesses = businesses.filter((b) => b.claimToken);
+    const prospectIds = prospectBusinesses.map((b) => b.id);
+    const prospectDataMap = await batchGetProspectData(prospectIds, prisma);
+    prospectStepMap = {};
+    for (const b of prospectBusinesses) {
+      const data = prospectDataMap[b.id];
+      prospectStepMap[b.id] = computeProspectStep({
+        hasClaimToken: !!b.claimToken,
+        prospectedAt: b.prospectedAt,
+        claimedAt: b.claimedAt,
+        logActions: data?.logActions ?? new Set(),
+        hasProductUsed: data?.hasProductUsed ?? false,
+      });
+    }
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -43,6 +65,7 @@ export default async function DashboardLayout({
         businessCount={businesses.length}
         planLabel={planLabel}
         isAdmin={isAdmin}
+        prospectStepMap={prospectStepMap}
       />
       <main className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar mobile */}

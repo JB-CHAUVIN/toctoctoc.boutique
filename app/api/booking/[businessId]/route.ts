@@ -189,6 +189,9 @@ export async function POST(req: Request, { params }: { params: { businessId: str
     const formattedTime = format(bookingDate, "HH:mm");
     const address = [booking.business.address, booking.business.city].filter(Boolean).join(", ");
 
+    // Fire-and-forget tracking
+    prisma.log.create({ data: { action: "booking.created", meta: { businessId: params.businessId, customerName, serviceName: booking.service?.name ?? null } } }).catch(() => {});
+
     sendEmail({
       to: customerEmail,
       subject: `Réservation chez ${booking.business.name} — ${formattedDate}`,

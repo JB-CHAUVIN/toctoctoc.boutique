@@ -117,5 +117,14 @@ export async function POST(req: Request, { params }: { params: { businessId: str
     }
   }
 
+  // Log dashboard.configured
+  prisma.log.create({
+    data: {
+      action: "dashboard.configured",
+      userId: session.user.id,
+      meta: { businessId: params.businessId, module, isActive } as Record<string, string | boolean>,
+    },
+  }).catch(() => {});
+
   return NextResponse.json({ success: true, data: moduleRecord });
 }

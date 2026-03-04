@@ -91,6 +91,9 @@ export async function POST(req: Request) {
       });
     }
 
+    // Fire-and-forget tracking
+    prisma.log.create({ data: { action: "loyalty.card_created", meta: { businessId, customerName } } }).catch(() => {});
+
     return NextResponse.json({ success: true, data: card });
   } catch (error) {
     console.error("[LOYALTY_CARD_CREATE]", error);
