@@ -27,6 +27,7 @@ import {
   Info,
   Printer,
   Map,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ModuleType } from "@prisma/client";
@@ -127,6 +128,7 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [businessSearch, setBusinessSearch] = useState("");
 
   // Fermer le drawer à chaque navigation
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -190,6 +192,22 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3">
+        {/* Recherche business (admin avec 5+ businesses) */}
+        {isAdmin && businesses.length >= 5 && (
+          <div className="px-4 pb-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                value={businessSearch}
+                onChange={(e) => setBusinessSearch(e.target.value)}
+                placeholder="Rechercher…"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        )}
+
         {businesses.length === 0 ? (
           <div className="px-4">
             <Link
@@ -201,7 +219,15 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
             </Link>
           </div>
         ) : (
-          businesses.map((business) => {
+          businesses.filter((b) => {
+            if (!businessSearch.trim()) return true;
+            const q = businessSearch.toLowerCase();
+            return (
+              b.name.toLowerCase().includes(q) ||
+              b.user.email.toLowerCase().includes(q) ||
+              (b.user.name ?? "").toLowerCase().includes(q)
+            );
+          }).map((business) => {
             const isCurrent = business.id === currentBusinessId;
             const activeModules = VISIBLE_MODULES.filter((m) =>
               business.modules.some((bm) => bm.module === m && bm.isActive)

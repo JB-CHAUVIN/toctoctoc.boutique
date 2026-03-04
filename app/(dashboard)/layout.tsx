@@ -32,7 +32,7 @@ export default async function DashboardLayout({
       modules: { select: { module: true, isActive: true } },
       user: { select: { name: true, email: true } },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: isAdmin ? "desc" : "asc" },
   });
 
   return (
