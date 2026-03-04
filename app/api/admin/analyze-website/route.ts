@@ -127,11 +127,8 @@ Regarde bien le site : y a-t-il des vagues, des cercles, des points, des lignes 
 - decorativeOpacity : opacité de l'overlay (0.03 à 0.15)
 - decorativePosition : où placer l'overlay ("top", "bottom", "full", "topRight", "bottomLeft")
 
-### Bordures et coins
+### Coins
 - borderRadius : rayon des coins de la carte en px (0 = carré, 8 = léger arrondi, 16 = arrondi, 24 = très arrondi)
-- borderStyle : style de bordure ("none", "solid", "double") — "none" si le site n'a pas de bordures visibles
-- borderWidth : épaisseur en px (0, 1, 2, 3)
-- borderColor : couleur de la bordure (hex)
 
 ### Badge de récompense
 - badgeStyle : forme du badge ("pill", "rounded", "square", "outlined")
