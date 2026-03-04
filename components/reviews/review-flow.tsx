@@ -31,20 +31,7 @@ interface ReviewData {
   rewardClaimedAt: string | null;
 }
 
-function normalizeGoogleReviewUrl(url: string | null): string | null {
-  if (!url) return null;
-  // Si c'est déjà une URL writereview, la garder telle quelle
-  if (url.includes("writereview")) return url;
-  // Extraire le place_id depuis une URL Google Maps (format: place_id:ChIJ...)
-  const placeIdMatch = url.match(/place_id[=:]([A-Za-z0-9_-]+)/);
-  if (placeIdMatch) {
-    return `https://search.google.com/local/writereview?placeid=${placeIdMatch[1]}`;
-  }
-  return url;
-}
-
-export function ReviewFlow({ businessId, businessName, primaryColor, accentColor, googleUrl: rawGoogleUrl, instructions, rewards }: Props) {
-  const googleUrl = normalizeGoogleReviewUrl(rawGoogleUrl);
+export function ReviewFlow({ businessId, businessName, primaryColor, accentColor, googleUrl, instructions, rewards }: Props) {
   const [step, setStep] = useState<Step>("info");
   const [token, setToken] = useState<string | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);

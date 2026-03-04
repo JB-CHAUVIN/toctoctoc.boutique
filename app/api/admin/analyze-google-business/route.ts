@@ -313,6 +313,15 @@ export async function POST(req: Request) {
       data.address = data.address.replace(/,\s*$/, "").trim();
     }
 
+    // Générer reviewUrl si absente mais place_id disponible
+    if (!data.reviewUrl) {
+      const pid = placeId
+        || data.googleMapsUrl?.match(/place_id[=:]([A-Za-z0-9_-]+)/)?.[1];
+      if (pid) {
+        data.reviewUrl = `https://search.google.com/local/writereview?placeid=${pid}`;
+      }
+    }
+
     console.log(`[Google] ✓ Résultat final :`, data);
     return NextResponse.json({ success: true, data });
   } catch (error) {
