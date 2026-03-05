@@ -56,15 +56,24 @@ function statusColor(status: ProspectLead["status"]): string {
   }
 }
 
-function parseGeometry(geometry: unknown): Array<{ lat: number; lng: number }> | null {
-  if (!Array.isArray(geometry) || geometry.length < 2) return null;
-  return geometry as Array<{ lat: number; lng: number }>;
+/** Parse la geometry : supporte l'ancien format (tableau plat) et le nouveau (tableau de chaînes) */
+function parseGeometry(geometry: unknown): Array<Array<{ lat: number; lng: number }>> | null {
+  if (!Array.isArray(geometry) || geometry.length === 0) return null;
+  // Nouveau format : tableau de chaînes [[{lat,lng}, ...], ...]
+  if (Array.isArray(geometry[0]) && geometry[0].length >= 2) {
+    return geometry as Array<Array<{ lat: number; lng: number }>>;
+  }
+  // Ancien format : tableau plat [{lat,lng}, ...]
+  if (typeof geometry[0] === "object" && "lat" in geometry[0] && geometry.length >= 2) {
+    return [geometry as Array<{ lat: number; lng: number }>];
+  }
+  return null;
 }
 
 export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet[] }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
-  const polylinesRef = useRef<Map<string, import("leaflet").Polyline>>(new Map());
+  const polylinesRef = useRef<Map<string, import("leaflet").Polyline[]>>(new Map());
   const markersRef = useRef<Map<string, import("leaflet").CircleMarker[]>>(new Map());
 
   const [streets, setStreets] = useState<ProspectStreet[]>(initialStreets);
@@ -127,19 +136,23 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     const L = (await import("leaflet")).default;
 
     // Supprimer anciens tracés
-    polylinesRef.current.get(street.id)?.remove();
+    polylinesRef.current.get(street.id)?.forEach((p) => p.remove());
     markersRef.current.get(street.id)?.forEach((m) => m.remove());
 
     const ratio = getConversionRatio(street.leads);
     const color = ratioToColor(ratio);
 
-    const coords = parseGeometry(street.geometry);
-    if (coords && coords.length > 1) {
-      const latlngs = coords.map((p) => [p.lat, p.lng] as [number, number]);
-      const polyline = L.polyline(latlngs, { color, weight: 5, opacity: 0.85 }).addTo(mapRef.current!);
-      polyline.bindTooltip(street.name, { sticky: true });
-      polyline.on("click", () => setSelectedStreet(street));
-      polylinesRef.current.set(street.id, polyline);
+    const chains = parseGeometry(street.geometry);
+    if (chains && chains.length > 0) {
+      const polylines: import("leaflet").Polyline[] = [];
+      for (const chain of chains) {
+        const latlngs = chain.map((p) => [p.lat, p.lng] as [number, number]);
+        const polyline = L.polyline(latlngs, { color, weight: 5, opacity: 0.85 }).addTo(mapRef.current!);
+        polyline.bindTooltip(street.name, { sticky: true });
+        polyline.on("click", () => setSelectedStreet(street));
+        polylines.push(polyline);
+      }
+      polylinesRef.current.set(street.id, polylines);
     }
 
     const streetMarkers: import("leaflet").CircleMarker[] = [];
@@ -189,10 +202,11 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
       });
       setSelectedStreet(newStreet);
 
-      const coords = parseGeometry(newStreet.geometry);
-      if (mapRef.current && coords && coords.length > 0) {
-        const lats = coords.map((p) => p.lat);
-        const lngs = coords.map((p) => p.lng);
+      const chains = parseGeometry(newStreet.geometry);
+      const allPts = chains?.flat() ?? [];
+      if (mapRef.current && allPts.length > 0) {
+        const lats = allPts.map((p) => p.lat);
+        const lngs = allPts.map((p) => p.lng);
         mapRef.current.fitBounds(
           [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]],
           { padding: [40, 40] }

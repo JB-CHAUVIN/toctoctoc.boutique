@@ -263,55 +263,60 @@ export async function POST(req: Request) {
     }
   }
 
-  // Chaîner les segments bout-à-bout pour former une polyline continue
-  // Un segment est raccordé si son début/fin est proche du début/fin d'un autre
-  function chainSegments(segs: Array<Array<{ lat: number; lng: number }>>): Array<{ lat: number; lng: number }> {
+  // Chaîner les segments bout-à-bout → tableau de chaînes indépendantes
+  // Les segments proches sont fusionnés, les disjoints restent séparés (pas de trait parasite)
+  function chainSegments(segs: Array<Array<{ lat: number; lng: number }>>): Array<Array<{ lat: number; lng: number }>> {
     if (segs.length === 0) return [];
-    if (segs.length === 1) return segs[0];
-
-    const remaining = segs.map((s, i) => ({ idx: i, pts: s }));
-    const chain = remaining.shift()!.pts.slice();
-    remaining.splice(0); // reset
-    const pool = segs.slice(1).map((s) => ({ pts: s, used: false }));
+    if (segs.length === 1) return [segs[0]];
 
     const THRESHOLD = 0.0001; // ~11m
     const close = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
       Math.abs(a.lat - b.lat) < THRESHOLD && Math.abs(a.lng - b.lng) < THRESHOLD;
+
+    // Chaque chaîne est un tableau de points qu'on étend par les deux bouts
+    const chains: Array<Array<{ lat: number; lng: number }>> = [segs[0].slice()];
+    const pool = segs.slice(1).map((s) => ({ pts: s, used: false }));
 
     let changed = true;
     while (changed) {
       changed = false;
       for (const seg of pool) {
         if (seg.used) continue;
-        const chainEnd = chain[chain.length - 1];
-        const chainStart = chain[0];
         const segStart = seg.pts[0];
         const segEnd = seg.pts[seg.pts.length - 1];
 
-        if (close(chainEnd, segStart)) {
-          chain.push(...seg.pts.slice(1));
-          seg.used = true; changed = true;
-        } else if (close(chainEnd, segEnd)) {
-          chain.push(...seg.pts.slice(0, -1).reverse());
-          seg.used = true; changed = true;
-        } else if (close(chainStart, segEnd)) {
-          chain.unshift(...seg.pts.slice(0, -1));
-          seg.used = true; changed = true;
-        } else if (close(chainStart, segStart)) {
-          chain.unshift(...seg.pts.slice(1).reverse());
-          seg.used = true; changed = true;
+        for (const chain of chains) {
+          const chainEnd = chain[chain.length - 1];
+          const chainStart = chain[0];
+
+          if (close(chainEnd, segStart)) {
+            chain.push(...seg.pts.slice(1));
+            seg.used = true; changed = true; break;
+          } else if (close(chainEnd, segEnd)) {
+            chain.push(...seg.pts.slice(0, -1).reverse());
+            seg.used = true; changed = true; break;
+          } else if (close(chainStart, segEnd)) {
+            chain.unshift(...seg.pts.slice(0, -1));
+            seg.used = true; changed = true; break;
+          } else if (close(chainStart, segStart)) {
+            chain.unshift(...seg.pts.slice(1).reverse());
+            seg.used = true; changed = true; break;
+          }
         }
       }
     }
-    // Ajouter les segments orphelins à la fin (rues discontinues)
+
+    // Les segments orphelins deviennent des chaînes indépendantes
     for (const seg of pool) {
-      if (!seg.used) chain.push(...seg.pts);
+      if (!seg.used) chains.push(seg.pts);
     }
-    return chain;
+
+    return chains.filter((c) => c.length >= 2);
   }
 
-  const allCoords = chainSegments(segments);
-  const geometry = allCoords.length > 1 ? allCoords : null;
+  const chainedSegments = chainSegments(segments);
+  // Stocker comme tableau de chaînes (multi-polyline)
+  const geometry = chainedSegments.length > 0 ? chainedSegments : null;
 
   // ── 4. Upsert ProspectStreet ──
   const street = await prisma.prospectStreet.upsert({
