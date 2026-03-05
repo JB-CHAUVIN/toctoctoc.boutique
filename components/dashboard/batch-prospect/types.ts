@@ -26,8 +26,11 @@ export interface BusinessData {
   modules: BusinessModule[];
 }
 
+export type CardVariant = "qr" | "nfc";
+
 export interface BusinessConfig {
   tractTheme: PrintThemeId;
   supportTheme: PrintThemeId;
   showAvatar: boolean;
+  cardVariant: CardVariant;
 }

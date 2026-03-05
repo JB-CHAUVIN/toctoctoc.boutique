@@ -1,8 +1,15 @@
 import QRCode from "qrcode";
-import type { BusinessData } from "./types";
+import { REVIEW_CARDS, LOYALTY_CARDS, type CardDef } from "../printable-cards";
+import type { BusinessData, CardVariant } from "./types";
 
 export function hasModule(b: BusinessData, mod: string): boolean {
   return b.modules.some((m) => m.module === mod && m.isActive);
+}
+
+export function getCard(type: "reviews" | "loyalty", variant: CardVariant): CardDef {
+  const cards = type === "reviews" ? REVIEW_CARDS : LOYALTY_CARDS;
+  const hasNFC = variant === "nfc";
+  return cards.find((c) => c.hasNFC === hasNFC) ?? cards[0];
 }
 
 export async function ensureClaimToken(businessId: string): Promise<string | null> {
@@ -44,18 +51,37 @@ export function buildCombinedTractHtml(pages: string[]): string {
   if (pages.length === 0) return "";
   if (pages.length === 1) return pages[0];
 
-  const bodies = pages.map((html) => {
-    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    return bodyMatch ? bodyMatch[1] : "";
-  });
-
-  const pageStyles = pages.map((html) => {
+  // Each page has its own colors baked into identical CSS selectors.
+  // Scope each page's styles under a unique class to avoid conflicts.
+  const scopedBlocks = pages.map((html, i) => {
+    const scope = `tract-${i}`;
     const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-    return styleMatch ? styleMatch[1] : "";
+    const rawCss = styleMatch ? styleMatch[1] : "";
+    // Prefix every rule with the scope class
+    const scopedCss = rawCss.replace(
+      /([^\n{}]+)\{/g,
+      (match, selector: string) => {
+        // Don't scope @-rules (@page, @media, @font-face)
+        if (selector.trim().startsWith("@")) return match;
+        // Don't scope * reset
+        if (selector.trim() === "*") return `.${scope} * {`;
+        // Don't scope body
+        if (selector.trim() === "body") return `.${scope} {`;
+        return `.${scope} ${selector.trim()} {`;
+      },
+    );
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const body = bodyMatch ? bodyMatch[1] : "";
+    return { scope, css: scopedCss, body };
   });
 
-  const allStyles = new Set<string>();
-  pageStyles.forEach((s) => allStyles.add(s));
+  // Collect unique Google Font links from all pages
+  const fontLinks = new Set<string>();
+  pages.forEach((html) => {
+    let m: RegExpExecArray | null;
+    const re = /<link[^>]*href="(https:\/\/fonts\.googleapis\.com[^"]*)"[^>]*>/gi;
+    while ((m = re.exec(html)) !== null) fontLinks.add(m[1]);
+  });
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -63,7 +89,7 @@ export function buildCombinedTractHtml(pages: string[]): string {
 <meta charset="UTF-8" />
 <title>Tracts prospection - ${pages.length} commerces</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
+${Array.from(fontLinks).map((href) => `<link href="${href}" rel="stylesheet" />`).join("\n")}
 <style>
   @page { size: A4; margin: 0; }
   @media print {
@@ -73,15 +99,13 @@ export function buildCombinedTractHtml(pages: string[]): string {
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { margin: 0; }
 </style>
-${Array.from(allStyles)
-  .map((s) => `<style>${s}</style>`)
-  .join("\n")}
+${scopedBlocks.map((b) => `<style>${b.css}</style>`).join("\n")}
 </head>
 <body>
-${bodies
+${scopedBlocks
   .map(
-    (body, i) =>
-      `${i > 0 ? '<div class="page-separator"></div>' : ""}${body}`,
+    (b, i) =>
+      `${i > 0 ? '<div class="page-separator"></div>' : ""}<div class="${b.scope}">${b.body}</div>`,
   )
   .join("\n")}
 </body>

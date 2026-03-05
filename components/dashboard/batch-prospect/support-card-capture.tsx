@@ -4,11 +4,10 @@ import { useState, useEffect } from "react";
 import QRCode from "qrcode";
 import {
   PrintCard,
-  REVIEW_CARDS,
-  LOYALTY_CARDS,
   type BrandStyleData,
 } from "../printable-cards";
-import type { BusinessData } from "./types";
+import { getCard } from "./helpers";
+import type { BusinessData, CardVariant } from "./types";
 
 const SUPPORT_CARD_W = 300;
 const SUPPORT_CARD_H = 300;
@@ -25,6 +24,7 @@ interface SupportCardCaptureProps {
   businessLogoB64?: string;
   refSetter: (el: HTMLDivElement | null) => void;
   cardType: "reviews" | "loyalty";
+  cardVariant: CardVariant;
 }
 
 export function SupportCardCapture({
@@ -37,6 +37,7 @@ export function SupportCardCapture({
   businessLogoB64,
   refSetter,
   cardType,
+  cardVariant,
 }: SupportCardCaptureProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
@@ -45,7 +46,7 @@ export function SupportCardCapture({
       ? `${appUrl}/${business.id}/avis`
       : `${appUrl}/${business.id}/fidelite`;
 
-  const card = cardType === "reviews" ? REVIEW_CARDS[1] : LOYALTY_CARDS[1];
+  const card = getCard(cardType, cardVariant);
 
   useEffect(() => {
     QRCode.toDataURL(url, {

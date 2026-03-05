@@ -11,21 +11,20 @@ import {
   PrintCard,
   getThemeStyles,
   flattenBrandStyle,
-  REVIEW_CARDS,
-  LOYALTY_CARDS,
 } from "../printable-cards";
 import { ThemeButtons } from "./theme-buttons";
 import { TractPreview } from "./tract-preview";
 import { SupportCardCapture, SUPPORT_CARD_W, SUPPORT_CARD_H } from "./support-card-capture";
 import {
   hasModule,
+  getCard,
   ensureClaimToken,
   generateClaimQr,
   loadImageAsBase64,
   buildCombinedTractHtml,
   markBusinessAsProspected,
 } from "./helpers";
-import type { BusinessData, BusinessConfig } from "./types";
+import type { BusinessData, BusinessConfig, CardVariant } from "./types";
 
 interface ConfigureExportProps {
   businesses: BusinessData[];
@@ -302,6 +301,12 @@ export function ConfigureAndExport({
                     <ThemeButtons value={config.supportTheme} onChange={(t) => updateConfig(b.id, { supportTheme: t })} hasBrandStyle={hasBs} />
                   </div>
                 )}
+                {(bHasReviews || bHasLoyalty) && (
+                  <div>
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">Variante carte</p>
+                    <CardVariantButtons value={config.cardVariant} onChange={(v) => updateConfig(b.id, { cardVariant: v })} />
+                  </div>
+                )}
               </div>
 
               {/* Avatar toggle (separate line) */}
@@ -330,7 +335,7 @@ export function ConfigureAndExport({
                 {bHasReviews && (
                   <SupportPreviewMini
                     label="Avis"
-                    card={REVIEW_CARDS[1]}
+                    card={getCard("reviews", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
                     brandStyle={normalizedBs}
@@ -342,7 +347,7 @@ export function ConfigureAndExport({
                 {bHasLoyalty && (
                   <SupportPreviewMini
                     label="Fidelite"
-                    card={LOYALTY_CARDS[1]}
+                    card={getCard("loyalty", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
                     brandStyle={normalizedBs}
@@ -367,10 +372,10 @@ export function ConfigureAndExport({
         return (
           <div key={`capture-${b.id}`}>
             {hasModule(b, "REVIEWS") && (
-              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" />
+              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} />
             )}
             {hasModule(b, "LOYALTY") && (
-              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" />
+              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} />
             )}
           </div>
         );
@@ -445,7 +450,7 @@ function SupportPreviewMini({
   businessLogoB64,
 }: {
   label: string;
-  card: (typeof REVIEW_CARDS)[number];
+  card: import("../printable-cards").CardDef;
   business: BusinessData;
   themeStyles: ReturnType<typeof getThemeStyles>;
   brandStyle: ReturnType<typeof flattenBrandStyle>;
@@ -477,6 +482,31 @@ function SupportPreviewMini({
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+const CARD_VARIANTS: { id: CardVariant; label: string }[] = [
+  { id: "qr", label: "QR Code" },
+  { id: "nfc", label: "QR + NFC" },
+];
+
+function CardVariantButtons({ value, onChange }: { value: CardVariant; onChange: (v: CardVariant) => void }) {
+  return (
+    <div className="flex gap-1">
+      {CARD_VARIANTS.map((v) => (
+        <button
+          key={v.id}
+          onClick={() => onChange(v.id)}
+          className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${
+            value === v.id
+              ? "bg-indigo-600 text-white shadow-sm"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+          }`}
+        >
+          {v.label}
+        </button>
+      ))}
     </div>
   );
 }
