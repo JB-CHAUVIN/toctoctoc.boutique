@@ -52,8 +52,8 @@ export default async function LoyaltyStampPage({
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-md p-4 pt-6">
-        <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <div className="mx-auto max-w-md p-3 pt-5 sm:p-4 sm:pt-6">
+        <div className="overflow-hidden rounded-2xl bg-white p-4 shadow-sm sm:p-5">
           <StampScanner businessId={params.businessId} />
         </div>
       </div>

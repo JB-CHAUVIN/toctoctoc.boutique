@@ -33,32 +33,24 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  const startCamera = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      throw new Error("camera_insecure");
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-      });
-      streamRef.current = stream;
-      scanningRef.current = true;
+  // Quand cameraActive passe à true, le <video> devient visible dans le DOM.
+  // On attache alors le stream et on lance le scan.
+  const pendingStreamRef = useRef<MediaStream | null>(null);
 
-      // Attacher le stream et attendre que la vidéo ait des frames avant d'afficher
-      // (évite l'écran noir sur Chrome Android quand le <video> passe de hidden à visible)
-      const video = videoRef.current;
-      if (video) {
-        video.srcObject = stream;
-        await new Promise<void>((resolve) => {
-          const onReady = () => { video.removeEventListener("loadeddata", onReady); resolve(); };
-          if (video.readyState >= 2) resolve();
-          else video.addEventListener("loadeddata", onReady);
-        });
-        try { await video.play(); } catch { /* autoPlay attribute handles it */ }
-      }
-      setCameraActive(true);
+  useEffect(() => {
+    if (!cameraActive || !pendingStreamRef.current) return;
+    const stream = pendingStreamRef.current;
+    pendingStreamRef.current = null;
 
-      // Prefer native BarcodeDetector (Chrome/Android) for speed, fallback to jsQR (universal)
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.srcObject = stream;
+
+    const startScan = async () => {
+      try { await video.play(); } catch { /* autoPlay handles it */ }
+
+      // Prefer native BarcodeDetector (Chrome/Android) for speed, fallback to jsQR
       const useNative =
         "BarcodeDetector" in window &&
         typeof (window as unknown as Record<string, unknown>).BarcodeDetector !== "undefined";
@@ -85,7 +77,6 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
         };
         rafRef.current = requestAnimationFrame(scanFrame);
       } else {
-        // jsQR fallback — works on iOS Safari, Firefox, etc.
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext("2d", { willReadFrequently: true }) ?? null;
 
@@ -110,6 +101,25 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
         };
         rafRef.current = requestAnimationFrame(scanFrame);
       }
+    };
+
+    startScan();
+  }, [cameraActive, stopCamera]);
+
+  const startCamera = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new Error("camera_insecure");
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+      });
+      streamRef.current = stream;
+      scanningRef.current = true;
+      // Stocker le stream et rendre le <video> visible d'abord (via setCameraActive)
+      // Le useEffect ci-dessus se charge d'attacher le stream une fois le <video> visible
+      pendingStreamRef.current = stream;
+      setCameraActive(true);
     } catch {
       stopCamera();
       throw new Error("camera_denied");

@@ -165,13 +165,13 @@ export function StampScanner({ businessId }: { businessId: string }) {
             {/* Saisie manuelle */}
             <form
               onSubmit={(e) => { e.preventDefault(); lookupCard(qrInput); }}
-              className="flex gap-3"
+              className="flex gap-2 sm:gap-3"
             >
-              <div className="relative flex-1">
+              <div className="relative min-w-0 flex-1">
                 <QrCode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   ref={inputRef}
-                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-3 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="Code de la carte fidélité"
                   value={qrInput}
                   onChange={(e) => setQrInput(e.target.value)}
