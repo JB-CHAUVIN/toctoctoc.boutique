@@ -38,7 +38,7 @@ interface Props {
   brandStyle?: BrandStyleData | null;
 }
 
-function buildLetterHtml(
+export function buildLetterHtml(
   business: BusinessInfo,
   businessId: string,
   appUrl: string,
@@ -46,6 +46,7 @@ function buildLetterHtml(
   claimQrDataUrl: string | null,
   theme: PrintThemeId = "gradient",
   brandStyle?: BrandStyleData | null,
+  showAvatar = true,
 ): string {
   const today = new Date().toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -542,7 +543,7 @@ function buildLetterHtml(
     <div style="position:absolute;width:30mm;height:30mm;border-radius:50%;background:rgba(255,255,255,0.06);top:-5mm;left:40%;"></div>
 
     <div class="hero-left">
-      ${businessAvatar}
+      ${showAvatar ? businessAvatar : ""}
       <div>
         <div class="hero-business-name">${business.name}</div>
         ${business.businessType ? `<div class="hero-type">${business.businessType}</div>` : ""}

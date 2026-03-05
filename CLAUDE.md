@@ -179,6 +179,38 @@ prisma/
 - **STAFF** : Gestion d'équipe / planning
 - **INVOICING** : Facturation électronique (conformité FR)
 
+## Règles Clean Code (OBLIGATOIRE)
+
+Ces règles s'appliquent à TOUT le code produit. Elles ne sont pas optionnelles.
+
+### Structure des fichiers
+- **Max ~300 lignes par fichier.** Au-delà, décomposer en sous-modules (helpers, sous-composants, types, constantes).
+- **Single Responsibility** : chaque fichier, fonction et composant fait une seule chose. Un composant qui render + fetch + transforme des données fait trop de choses.
+- **Co-localiser le code lié** : garder composants, types et helpers proches dans l'arborescence. Créer un sous-dossier quand un composant a besoin de plusieurs fichiers (ex: `batch-prospect/`).
+
+### Réutilisation
+- **Lire avant d'écrire.** Toujours explorer le code existant avant de créer quoi que ce soit. Chercher dans le codebase les fonctions, composants, types et constantes réutilisables.
+- **Réutiliser avant de créer.** Si une fonction/composant/type existe déjà, l'utiliser. Si c'est presque ce qu'on veut, l'étendre plutôt que le dupliquer.
+- **Exporter** les fonctions/types locaux quand ils sont nécessaires ailleurs — ne jamais copier-coller.
+- **Types partagés** dans `types/` ou exportés depuis le fichier source. Ne pas redéfinir la même interface dans plusieurs fichiers.
+- **Constantes** dans `lib/constants.ts` ou un fichier de constantes dédié au domaine. Pas de constantes éparpillées dans les composants.
+
+### Fonctions
+- Fonctions courtes : idéalement < 30 lignes. Si une fonction est longue, extraire des sous-fonctions avec des noms descriptifs.
+- Nommer par ce que ça fait : `buildLetterHtml`, `markAsProspected`, pas `doStuff` ou `handleClick2`.
+- Préférer les fonctions pures quand possible.
+
+### Composants React
+- Extraire les patterns UI réutilisables en composants partagés.
+- Si un composant prend > 5-6 props, envisager de grouper ou de splitter.
+- Séparer data fetching (server components / hooks) et présentation (UI components).
+- Ne pas répéter de blocs JSX — extraire en sous-composants ou utiliser `.map()`.
+
+### Qualité
+- **Pas de code mort** : supprimer imports, variables, fonctions et blocs commentés inutilisés. Pas de marqueurs `// removed`.
+- **Vérifier la compilation** : `tsc --noEmit` + `yarn build` doivent passer sans erreur avant de finir.
+- **Pas de duplication** entre le nouveau code et le code existant.
+
 ## Conventions de Code
 
 ### API Routes

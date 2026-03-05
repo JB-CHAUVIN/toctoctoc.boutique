@@ -547,6 +547,18 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
             <Map className="h-4 w-4" />
             Prospection Paris
           </Link>
+          <Link
+            href="/admin/batch-prospect"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
+              pathname.startsWith("/admin/batch-prospect")
+                ? "bg-indigo-600 text-white"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+            )}
+          >
+            <Printer className="h-4 w-4" />
+            Prospection en lot
+          </Link>
         </div>
       )}
 

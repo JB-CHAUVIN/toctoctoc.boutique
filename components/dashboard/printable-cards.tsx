@@ -7,7 +7,7 @@ import { Download, ChevronLeft, ChevronRight, ChevronDown, Printer, Palette, Loc
 import { contrastColor, safeGradientEnd } from "@/lib/utils";
 import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
 
-interface BrandStyleData {
+export interface BrandStyleData {
   // Colors
   primaryColor?: string;
   secondaryColor?: string;
@@ -40,7 +40,7 @@ interface BrandStyleData {
 }
 
 // Flatten nested brandStyle (GPT sometimes returns { "couleurs": { "primaryColor": ... }, ... })
-function flattenBrandStyle(raw: Record<string, unknown> | null | undefined): BrandStyleData | null {
+export function flattenBrandStyle(raw: Record<string, unknown> | null | undefined): BrandStyleData | null {
   if (!raw) return null;
   // Already flat?
   if (raw.primaryColor) return raw as unknown as BrandStyleData;
@@ -96,7 +96,7 @@ interface ThemeStyles {
   _badgeOutlineColor?: string;
 }
 
-function getThemeStyles(
+export function getThemeStyles(
   theme: PrintThemeId,
   primaryColor: string,
   secondaryColor: string,
@@ -225,21 +225,21 @@ function getThemeStyles(
   }
 }
 
-interface CardDef {
+export interface CardDef {
   id: string;
   type: "reviews" | "loyalty";
   hasNFC: boolean;
   hasReward: boolean;
 }
 
-const REVIEW_CARDS: CardDef[] = [
+export const REVIEW_CARDS: CardDef[] = [
   { id: "r-nfc-reward", type: "reviews", hasNFC: true, hasReward: true },
   { id: "r-qr-reward", type: "reviews", hasNFC: false, hasReward: true },
   { id: "r-nfc", type: "reviews", hasNFC: true, hasReward: false },
   { id: "r-qr", type: "reviews", hasNFC: false, hasReward: false },
 ];
 
-const LOYALTY_CARDS: CardDef[] = [
+export const LOYALTY_CARDS: CardDef[] = [
   { id: "l-nfc", type: "loyalty", hasNFC: true, hasReward: true },
   { id: "l-qr", type: "loyalty", hasNFC: false, hasReward: true },
 ];
@@ -544,7 +544,7 @@ function DecorativeOverlay({
 }
 
 // ── PrintCard ────────────────────────────────────────────────────────────────
-function PrintCard({
+export function PrintCard({
   card,
   businessName,
   primaryColor,
