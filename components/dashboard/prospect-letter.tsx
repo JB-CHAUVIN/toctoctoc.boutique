@@ -255,15 +255,88 @@ export function buildLetterHtml(
     line-height: 1.6;
   }
 
-  /* ── SUBJECT ── */
-  .subject-line {
-    background: rgba(${primaryRgb}, 0.08);
-    border-left: 4px solid ${primary};
-    padding: 3mm 5mm;
+  /* ── HOOK BANNER ── */
+  .hook-banner {
+    background: linear-gradient(135deg, ${primary} 0%, ${accent} 100%);
+    border-radius: 10px;
+    padding: 5mm 6mm;
     margin-bottom: 5mm;
-    font-size: 12pt;
-    font-weight: 600;
-    color: ${primary};
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hook-banner::before {
+    content: "";
+    position: absolute;
+    top: -15mm;
+    right: -10mm;
+    width: 40mm;
+    height: 40mm;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+
+  .hook-banner::after {
+    content: "";
+    position: absolute;
+    bottom: -8mm;
+    left: 10mm;
+    width: 25mm;
+    height: 25mm;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+
+  .hook-question {
+    font-size: 13pt;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .hook-benefits {
+    display: flex;
+    justify-content: center;
+    gap: 4mm;
+    margin-top: 3.5mm;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hook-benefit {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 3mm 4mm;
+    flex: 1;
+    text-align: center;
+  }
+
+  .hook-benefit-title {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 1mm;
+  }
+
+  .hook-benefit-desc {
+    font-size: 8.5pt;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .hook-sub {
+    text-align: center;
+    margin-top: 2.5mm;
+    font-size: 8pt;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
   }
 
   /* ── BODY ── */
@@ -311,15 +384,6 @@ export function buildLetterHtml(
     color: #334155;
   }
 
-  .feature-dot {
-    width: 5px;
-    height: 5px;
-    min-width: 5px;
-    border-radius: 50%;
-    background: ${accent};
-    margin-top: 5px;
-  }
-
   .feature-text strong {
     display: block;
     font-weight: 700;
@@ -330,6 +394,43 @@ export function buildLetterHtml(
   .feature-text span {
     font-size: 8.5pt;
     color: #64748b;
+  }
+
+  .features-divider {
+    border: none;
+    border-top: 1px solid rgba(${primaryRgb}, 0.15);
+    margin: 3.5mm 0;
+  }
+
+  .features-secondary-label {
+    font-size: 8pt;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 2mm;
+  }
+
+  .features-secondary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5mm 6mm;
+  }
+
+  .feature-secondary {
+    font-size: 8pt;
+    color: #64748b;
+  }
+
+  .feature-secondary strong {
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .features-coming {
+    margin-top: 3mm;
+    font-size: 7.5pt;
+    color: #94a3b8;
+    font-style: italic;
+    line-height: 1.45;
   }
 
   /* ── CARDS SECTION ── */
@@ -577,27 +678,30 @@ export function buildLetterHtml(
       </div>
     </div>
 
-    <!-- SUBJECT -->
-    <div class="subject-line">
-      Objet : Outils digitaux pour ${business.name} (carte de <b>fidélité</b>, <b>boost avis</b> Google, ...)
+    <!-- HOOK BANNER -->
+    <div class="hook-banner">
+      <div class="hook-question">Et si vous pouviez digitaliser ${business.name} en 5 minutes ?</div>
+      <div class="hook-benefits">
+        <div class="hook-benefit">
+          <div class="hook-benefit-title">⭐ Booster vos avis Google</div>
+          <div class="hook-benefit-desc">Grimpez en tête des recherches locales et attirez de nouveaux clients chaque jour</div>
+        </div>
+        <div class="hook-benefit">
+          <div class="hook-benefit-title">🎯 Fidéliser vos clients</div>
+          <div class="hook-benefit-desc">Des clients qui reviennent, qui recommandent et qui dépensent plus à chaque visite</div>
+        </div>
+      </div>
+      <div class="hook-sub">Tout est déjà prêt pour vous — il ne reste qu'à activer.</div>
     </div>
 
     <!-- BODY -->
     <div class="body">
-      <p>Madame, Monsieur,</p>
+      <p>Bonjour,</p>
 
       <p>
-        Je me permets de vous contacter au sujet de <span class="highlight">${business.name}</span>${business.businessType ? `, votre ${business.businessType.toLowerCase()}` : ""}.
-        J'ai eu l'occasion de préparer pour vous un espace digital complet sur notre plateforme
-        <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et opérationnel.
-      </p>
-
-      <p>
-        Notre conviction est simple : la vraie valeur d'une présence digitale se joue <strong>en magasin</strong>.
-        Deux outils suffisent à transformer l'expérience client au quotidien : une invitation à laisser un
-        <span class="highlight">avis Google</span> — pour booster votre visibilité locale —
-        et une <span class="highlight">carte de fidélité numérique</span> — pour fidéliser sans carton ni impression.
-        Vos clients scannent un QR code depuis leur téléphone, en quelques secondes, sans rien télécharger.
+        J'ai préparé un espace digital complet pour <span class="highlight">${business.name}</span> sur
+        <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi.
+        Vos clients scannent un simple QR code : ils laissent un avis Google et tentent de gagner une récompense, ou accèdent à leur carte de fidélité pour cumuler des points — le tout en quelques secondes, sans rien télécharger.
       </p>
 
       <!-- FEATURES -->
@@ -606,7 +710,7 @@ export function buildLetterHtml(
         <div class="features-grid">
           <div class="feature-item">
             <div class="feature-text">
-              <strong>⭐ Avis Google automatisés</strong>
+              <strong>⭐ Collecte d'avis Google</strong>
               <span>Un système gamifié incite vos clients à laisser des avis — votre visibilité locale s'envole</span>
             </div>
           </div>
@@ -616,18 +720,18 @@ export function buildLetterHtml(
               <span>Remplacez les cartons tamponnés par une carte numérique QR — zéro perte, zéro impression</span>
             </div>
           </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <strong>🌐 Site vitrine inclus</strong>
-              <span>Une page professionnelle aux couleurs de votre commerce, visible immédiatement sur Google</span>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <strong>📅 Réservations en ligne</strong>
-              <span>Vos clients réservent 24h/24 sans vous déranger — vous gérez tout depuis votre tableau de bord</span>
-            </div>
-          </div>
+        </div>
+
+        <hr class="features-divider" />
+
+        <div class="features-secondary-label">Également inclus dans votre espace, sans surcoût :</div>
+        <div class="features-secondary-grid">
+          <div class="feature-secondary"><strong>🌐 Site vitrine</strong> — une page pro aux couleurs de votre commerce</div>
+          <div class="feature-secondary"><strong>📅 Réservations en ligne</strong> — vos clients réservent 24h/24</div>
+        </div>
+
+        <div class="features-coming">
+          Bientôt disponible : publication automatique sur les réseaux sociaux, boutique en ligne, standard téléphonique IA, gestion d'équipe, facturation électronique…
         </div>
       </div>
 
@@ -648,7 +752,7 @@ export function buildLetterHtml(
     <!-- FOOTER (page 1) -->
     <div class="footer" style="margin-top:auto;">
       <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
-      <span>Document personnalisé pour ${business.name} — page 1/2</span>
+      <span>page 1/2</span>
     </div>
 
   </div><!-- /inner -->
@@ -741,7 +845,7 @@ export function buildLetterHtml(
     <!-- FOOTER (page 2) -->
     <div class="footer">
       <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
-      <span>Document personnalisé pour ${business.name} — page 2/2</span>
+      <span>page 2/2</span>
     </div>
 
   </div><!-- /inner -->

@@ -269,7 +269,7 @@ export default function HomePage() {
             {features.map((f) => {
               const card = (
                 <div
-                  className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${f.href ? "cursor-pointer" : ""}`}
+                  className={`h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md ${f.href ? "cursor-pointer" : ""}`}
                 >
                   <div className="mb-3 text-3xl">{f.emoji}</div>
                   <h3 className="mb-2 font-semibold text-slate-900">{f.title}</h3>
