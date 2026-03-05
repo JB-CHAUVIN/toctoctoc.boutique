@@ -647,7 +647,6 @@ export function buildLetterHtml(
       ${showAvatar ? businessAvatar : ""}
       <div>
         <div class="hero-business-name">${business.name}</div>
-        ${business.businessType ? `<div class="hero-type">${business.businessType}</div>` : ""}
       </div>
     </div>
     <div class="hero-right">
