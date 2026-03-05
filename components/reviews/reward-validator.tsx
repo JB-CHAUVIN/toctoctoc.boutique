@@ -100,42 +100,42 @@ export function RewardValidator({ businessId }: { businessId: string }) {
   if (step === "input") {
     return (
       <div className="flex flex-col gap-5">
-        {cameraActive ? (
-          <div className="relative overflow-hidden rounded-2xl bg-black">
-            <video
-              ref={videoRef}
-              className="w-full"
-              playsInline
-              muted
-              style={{ minHeight: 260, objectFit: "cover" }}
-            />
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-52 w-52 rounded-2xl border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
-            </div>
-            <button
-              onClick={stopCamera}
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <p className="absolute bottom-4 left-0 right-0 text-center text-sm text-white/80">
-              Scannez le QR code du client
-            </p>
+        {/* Canvas caché pour jsQR (fallback iOS/Firefox) — toujours dans le DOM */}
+        <canvas ref={canvasRef} style={{ display: "none" }} />
+
+        {/* Vue caméra live — toujours dans le DOM pour que videoRef soit prêt */}
+        <div className={`relative overflow-hidden rounded-2xl bg-black ${!cameraActive ? "hidden" : ""}`}>
+          <video
+            ref={videoRef}
+            className="w-full"
+            playsInline
+            autoPlay
+            muted
+            style={{ minHeight: 260, objectFit: "cover", width: "100%" }}
+          />
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <div className="h-52 w-52 rounded-2xl border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
           </div>
-        ) : (
-          cameraSupported && (
-            <>
-            {/* Canvas caché pour jsQR (fallback iOS/Firefox) */}
-            <canvas ref={canvasRef} style={{ display: "none" }} />
-            <button
-              onClick={handleStartCamera}
-              className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-10 text-slate-500 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600 active:scale-95"
-            >
-              <Camera className="h-8 w-8" />
-              <span className="text-sm font-medium">Scanner le QR code du lot</span>
-            </button>
-            </>
-          )
+          <button
+            onClick={stopCamera}
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <p className="absolute bottom-4 left-0 right-0 text-center text-sm text-white/80">
+            Scannez le QR code du client
+          </p>
+        </div>
+
+        {/* Bouton démarrer caméra */}
+        {!cameraActive && cameraSupported && (
+          <button
+            onClick={handleStartCamera}
+            className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-10 text-slate-500 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600 active:scale-95"
+          >
+            <Camera className="h-8 w-8" />
+            <span className="text-sm font-medium">Scanner le QR code du lot</span>
+          </button>
         )}
 
         {!cameraActive && (

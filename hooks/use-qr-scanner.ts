@@ -20,7 +20,6 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
   onScanRef.current = onScan;
 
   useEffect(() => {
-    // Toujours afficher le bouton côté client — on gère l'échec au moment du clic
     setCameraSupported(true);
   }, []);
 
@@ -34,21 +33,33 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
   useEffect(() => () => stopCamera(), [stopCamera]);
 
   // Quand cameraActive passe à true, le <video> devient visible dans le DOM.
-  // On attache alors le stream et on lance le scan.
+  // On attache le stream, on attend que la vidéo ait des données, puis on lance le scan.
   const pendingStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     if (!cameraActive || !pendingStreamRef.current) return;
     const stream = pendingStreamRef.current;
     pendingStreamRef.current = null;
+    let cancelled = false;
 
     const video = videoRef.current;
     if (!video) return;
 
     video.srcObject = stream;
 
-    const startScan = async () => {
-      try { await video.play(); } catch { /* autoPlay handles it */ }
+    const beginScanning = async () => {
+      // Attendre que la vidéo ait reçu des frames avant de jouer
+      if (video.readyState < 2) {
+        await new Promise<void>((resolve) => {
+          const handler = () => { video.removeEventListener("loadeddata", handler); resolve(); };
+          video.addEventListener("loadeddata", handler);
+        });
+      }
+      if (cancelled) return;
+
+      // Lancer la lecture — MediaStream est exempt de la politique autoplay
+      try { await video.play(); } catch { /* autoPlay attribute en fallback */ }
+      if (cancelled) return;
 
       // Prefer native BarcodeDetector (Chrome/Android) for speed, fallback to jsQR
       const useNative =
@@ -62,7 +73,7 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
         }).BarcodeDetector({ formats: ["qr_code"] });
 
         const scanFrame = async () => {
-          if (!scanningRef.current || !videoRef.current) return;
+          if (cancelled || !scanningRef.current || !videoRef.current) return;
           try {
             if (videoRef.current.readyState >= 2) {
               const codes = await detector.detect(videoRef.current);
@@ -81,7 +92,7 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
         const ctx = canvas?.getContext("2d", { willReadFrequently: true }) ?? null;
 
         const scanFrame = () => {
-          if (!scanningRef.current || !videoRef.current || !canvas || !ctx) return;
+          if (cancelled || !scanningRef.current || !videoRef.current || !canvas || !ctx) return;
           if (videoRef.current.readyState >= 2) {
             const { videoWidth: w, videoHeight: h } = videoRef.current;
             if (w > 0 && h > 0) {
@@ -103,7 +114,9 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
       }
     };
 
-    startScan();
+    beginScanning();
+
+    return () => { cancelled = true; };
   }, [cameraActive, stopCamera]);
 
   const startCamera = useCallback(async () => {
@@ -116,8 +129,6 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
       });
       streamRef.current = stream;
       scanningRef.current = true;
-      // Stocker le stream et rendre le <video> visible d'abord (via setCameraActive)
-      // Le useEffect ci-dessus se charge d'attacher le stream une fois le <video> visible
       pendingStreamRef.current = stream;
       setCameraActive(true);
     } catch {
