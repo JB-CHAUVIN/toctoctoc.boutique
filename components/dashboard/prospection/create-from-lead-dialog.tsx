@@ -11,6 +11,28 @@ interface Props {
   onConverted: (businessId: string) => void;
 }
 
+/** Parse "118 Rue de Belleville, 75020 Paris" → { street, zipCode, city } */
+function parseAddress(raw: string | null): { street: string; zipCode: string; city: string } {
+  if (!raw) return { street: "", zipCode: "", city: "" };
+  // Split on comma, trim parts
+  const parts = raw.split(",").map((s) => s.trim());
+  // Last part often contains "75020 Paris" or "Paris" or "75020 Paris, France"
+  // Remove trailing "France" part
+  const filtered = parts.filter((p) => !/^france$/i.test(p));
+  if (filtered.length <= 1) {
+    // Single part — try to extract zipCode from it
+    const match = filtered[0]?.match(/^(.+?)\s+(\d{5})\s+(.+)$/);
+    if (match) return { street: match[1], zipCode: match[2], city: match[3] };
+    return { street: filtered[0] ?? "", zipCode: "", city: "" };
+  }
+  const street = filtered[0];
+  // Look for a part matching "75020 Paris" pattern
+  const cityPart = filtered.slice(1).join(", ");
+  const zipMatch = cityPart.match(/(\d{5})\s*(.+)/);
+  if (zipMatch) return { street, zipCode: zipMatch[1], city: zipMatch[2] };
+  return { street, zipCode: "", city: cityPart };
+}
+
 export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
   const router = useRouter();
 
@@ -30,6 +52,8 @@ export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
     router.refresh();
   }
 
+  const parsed = parseAddress(lead.address);
+
   return (
     <CreateBusinessDialog
       open={true}
@@ -40,7 +64,9 @@ export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
       initialValues={{
         name: lead.name,
         businessType: lead.businessType ?? "",
-        address: lead.address ?? "",
+        address: parsed.street,
+        city: parsed.city,
+        zipCode: parsed.zipCode,
         phone: lead.phone ?? "",
         website: lead.website ?? "",
         googleMapsUrl: lead.googleMapsUrl ?? "",
