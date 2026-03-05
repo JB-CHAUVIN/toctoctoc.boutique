@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RewardRoulette } from "./reward-roulette";
-import { Star, ExternalLink, Gift, CheckCircle, Ban } from "lucide-react";
+import { Star, ExternalLink, Gift, CheckCircle, Ban, PartyPopper } from "lucide-react";
 import type { Reward } from "@prisma/client";
 
 interface Props {
@@ -41,6 +41,7 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
   const [customerName, setCustomerName] = useState(() => loadCustomer().name ?? "");
   const [customerEmail, setCustomerEmail] = useState(() => loadCustomer().email ?? "");
   const [rewardQrUrl, setRewardQrUrl] = useState<string>("");
+  const [justClaimed, setJustClaimed] = useState(false);
 
   // Récupérer le token depuis localStorage si déjà visité
   useEffect(() => {
@@ -51,13 +52,19 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
     }
   }, [businessId]);
 
-  async function fetchReview(t: string) {
+  async function fetchReview(t: string, silent = false) {
     const res = await fetch(`/api/reviews/${t}`);
     const data = await res.json();
     if (data.success) {
+      const prev = reviewData;
       setReviewData(data.data);
       if (data.data.rewardCode) {
         QRCode.toDataURL(data.data.rewardCode, { width: 200, margin: 1 }).then(setRewardQrUrl);
+        // Détecter si le lot vient d'être validé (transition non-claimed → claimed)
+        if (silent && prev && !prev.rewardClaimed && data.data.rewardClaimed) {
+          setJustClaimed(true);
+          toast.success("🎉 Votre récompense a été validée !", { duration: 6000 });
+        }
         setStep("result");
       } else if (data.data.googleReviewInitiated) {
         setStep("roulette");
@@ -66,6 +73,13 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
       }
     }
   }
+
+  // Polling : quand le lot est actif, vérifier toutes les 3s s'il a été validé par le commerçant
+  useEffect(() => {
+    if (!token || !reviewData?.rewardCode || reviewData.rewardClaimed) return;
+    const interval = setInterval(() => fetchReview(token, true), 3000);
+    return () => clearInterval(interval);
+  }, [token, reviewData?.rewardCode, reviewData?.rewardClaimed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleStart(e: React.FormEvent) {
     e.preventDefault();
@@ -276,28 +290,49 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           {reviewData.reward ? (
             reviewData.rewardClaimed ? (
-              /* ── Lot déjà consommé ── */
-              <>
-                <div className="mb-4 text-6xl opacity-30">{reviewData.reward.emoji}</div>
-                <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500">
-                  <Ban className="h-4 w-4" />
-                  Lot déjà utilisé
-                </div>
-                <p className="text-base font-semibold text-slate-400 line-through">
-                  {reviewData.reward.name}
-                </p>
-                {reviewData.rewardClaimedAt && (
-                  <p className="mt-2 text-xs text-slate-400">
-                    Consommé le{" "}
-                    {new Date(reviewData.rewardClaimedAt).toLocaleDateString("fr-FR", {
-                      day: "numeric", month: "long", year: "numeric",
-                    })}
+              justClaimed ? (
+                /* ── Lot tout juste validé — écran joyeux ── */
+                <>
+                  <div className="mb-2 text-7xl animate-bounce">{reviewData.reward.emoji}</div>
+                  <div className="mx-auto mb-3 flex w-fit items-center gap-2 rounded-full px-5 py-2 text-sm font-bold text-white" style={{ backgroundColor: primaryColor }}>
+                    <PartyPopper className="h-4 w-4" />
+                    Récompense validée !
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">Profitez bien !</h2>
+                  <p className="mt-2 text-lg font-semibold" style={{ color: primaryColor }}>
+                    {reviewData.reward.name}
                   </p>
-                )}
-                <p className="mt-6 text-sm text-slate-400">
-                  Merci d&apos;avoir joué et de faire confiance à {businessName}&nbsp;!
-                </p>
-              </>
+                  <div className="mx-auto mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                    <CheckCircle className="h-8 w-8 text-emerald-500" />
+                  </div>
+                  <p className="mt-4 text-sm text-slate-500">
+                    Merci pour votre confiance et à très bientôt chez {businessName}&nbsp;! 🙏
+                  </p>
+                </>
+              ) : (
+                /* ── Lot déjà consommé (retour sur la page plus tard) ── */
+                <>
+                  <div className="mb-4 text-6xl opacity-30">{reviewData.reward.emoji}</div>
+                  <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500">
+                    <Ban className="h-4 w-4" />
+                    Lot déjà utilisé
+                  </div>
+                  <p className="text-base font-semibold text-slate-400 line-through">
+                    {reviewData.reward.name}
+                  </p>
+                  {reviewData.rewardClaimedAt && (
+                    <p className="mt-2 text-xs text-slate-400">
+                      Consommé le{" "}
+                      {new Date(reviewData.rewardClaimedAt).toLocaleDateString("fr-FR", {
+                        day: "numeric", month: "long", year: "numeric",
+                      })}
+                    </p>
+                  )}
+                  <p className="mt-6 text-sm text-slate-400">
+                    Merci d&apos;avoir joué et de faire confiance à {businessName}&nbsp;!
+                  </p>
+                </>
+              )
             ) : (
               /* ── Lot actif ── */
               <>

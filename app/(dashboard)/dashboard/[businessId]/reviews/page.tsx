@@ -78,7 +78,7 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
       </div>
 
       {/* Stats */}
-      <div className="mb-6 grid grid-cols-3 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatsCard label="Avis initiés" value={business._count.reviews} icon="📝" color="indigo" />
         <StatsCard label="Récompenses gagnées" value={reviewsWithReward.length} icon="🎁" color="amber" />
         <StatsCard label="Récompenses utilisées" value={reviewsClaimed.length} icon="✅" color="emerald" />
@@ -89,10 +89,10 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
         <CardHeader>
           <CardTitle>Lien de la page avis</CardTitle>
         </CardHeader>
-        <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-4">
-          <code className="flex-1 text-sm text-indigo-700">{publicUrl}</code>
+        <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-3 sm:gap-3 sm:p-4">
+          <code className="min-w-0 flex-1 truncate text-xs text-indigo-700 sm:text-sm">{publicUrl}</code>
           <CopyLinkButton url={publicUrl} />
-          <Link href={publicUrl} target="_blank">
+          <Link href={publicUrl} target="_blank" className="hidden sm:block">
             <Button size="sm" variant="outline">Tester</Button>
           </Link>
         </div>
@@ -126,7 +126,7 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
       )}
 
       {/* Historique */}
-      <Card padding="none">
+      <Card padding="none" className="overflow-hidden">
         <CardHeader className="px-6 pt-6">
           <CardTitle>Historique des avis</CardTitle>
         </CardHeader>

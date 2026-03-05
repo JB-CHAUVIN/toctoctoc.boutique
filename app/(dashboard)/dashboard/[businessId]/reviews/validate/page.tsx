@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { RewardValidator } from "@/components/reviews/reward-validator";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { ArrowLeft, Gift } from "lucide-react";
 
 export const metadata = { title: "Valider un lot" };
@@ -28,6 +29,7 @@ export default async function RewardValidatePage({ params }: { params: { busines
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <ScrollToTop />
       <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex items-center gap-3">
           <Link
