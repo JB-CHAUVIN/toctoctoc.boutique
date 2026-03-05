@@ -42,11 +42,12 @@ export function RewardValidator({ businessId }: { businessId: string }) {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
     setLoading(true);
+    setCodeInput(trimmed);
     try {
       const res = await fetch(`/api/reviews/claim/${encodeURIComponent(trimmed)}`);
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        toast.error(data?.error || `Erreur ${res.status}`);
+        toast.error(data?.error ? `${data.error} (${trimmed})` : `Erreur ${res.status}`);
         return;
       }
       const data = await res.json();
