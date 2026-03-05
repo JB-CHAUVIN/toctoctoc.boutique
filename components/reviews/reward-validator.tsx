@@ -44,11 +44,12 @@ export function RewardValidator({ businessId }: { businessId: string }) {
     setLoading(true);
     try {
       const res = await fetch(`/api/reviews/claim/${encodeURIComponent(trimmed)}`);
-      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Code introuvable");
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || `Erreur ${res.status}`);
         return;
       }
+      const data = await res.json();
       setReward(data.data);
       setStep("confirm");
     } catch {
@@ -76,9 +77,9 @@ export function RewardValidator({ businessId }: { businessId: string }) {
       const res = await fetch(`/api/reviews/claim/${encodeURIComponent(reward.rewardCode)}`, {
         method: "POST",
       });
-      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Erreur");
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || `Erreur ${res.status}`);
         return;
       }
       setReward((prev) => prev ? { ...prev, rewardClaimed: true } : prev);

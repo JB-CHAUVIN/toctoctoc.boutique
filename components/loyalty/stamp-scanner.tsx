@@ -51,11 +51,12 @@ export function StampScanner({ businessId }: { businessId: string }) {
     setLoading(true);
     try {
       const res = await fetch(`/api/loyalty/cards/${encodeURIComponent(trimmed)}`);
-      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Carte introuvable");
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || `Erreur ${res.status}`);
         return;
       }
+      const data = await res.json();
       setCard(data.data);
       setStampCount(1);
       setStep("confirm");
@@ -86,11 +87,12 @@ export function StampScanner({ businessId }: { businessId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ count: stampCount }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Erreur");
+        const errData = await res.json().catch(() => null);
+        toast.error(errData?.error || `Erreur ${res.status}`);
         return;
       }
+      const data = await res.json();
       setResult(data);
       setStep("success");
     } finally {

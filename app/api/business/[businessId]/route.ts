@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { slugify } from "@/lib/utils";
 
 const updateSchema = z.object({
@@ -84,23 +85,11 @@ export async function PATCH(req: Request, { params }: { params: { businessId: st
 
   // Log publish toggle
   if (data.isPublished !== undefined) {
-    prisma.log.create({
-      data: {
-        action: "business.published",
-        userId: session.user.id,
-        meta: { businessId: params.businessId, slug: updated.slug, isPublished: updated.isPublished },
-      },
-    }).catch(() => {});
+    logAction("business.published", { req, userId: session.user.id, meta: { businessId: params.businessId, slug: updated.slug, isPublished: updated.isPublished } });
   }
 
   // Log dashboard.configured (tracks that the user actually did something)
-  prisma.log.create({
-    data: {
-      action: "dashboard.configured",
-      userId: session.user.id,
-      meta: { businessId: params.businessId },
-    },
-  }).catch(() => {});
+  logAction("dashboard.configured", { req, userId: session.user.id, meta: { businessId: params.businessId } });
 
   return NextResponse.json({ success: true, data: updated });
 }

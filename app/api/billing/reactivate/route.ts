@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { stripe } from "@/lib/stripe";
 
 export async function POST() {
@@ -29,14 +30,7 @@ export async function POST() {
     },
   });
 
-  await prisma.log.create({
-    data: {
-      level: "INFO",
-      action: "subscription.reactivated",
-      userId: session.user.id,
-      meta: { stripeSubscriptionId: sub.stripeSubscriptionId },
-    },
-  });
+  logAction("subscription.reactivated", { userId: session.user.id, meta: { stripeSubscriptionId: sub.stripeSubscriptionId } });
 
   return NextResponse.json({ success: true });
 }

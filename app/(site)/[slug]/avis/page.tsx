@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { ReviewFlow } from "@/components/reviews/review-flow";
 import type { Metadata } from "next";
 
@@ -22,7 +23,7 @@ export default async function AvisPage({ params }: { params: { slug: string } })
   if (!business || !business.modules.length) notFound();
 
   // Fire-and-forget tracking
-  prisma.log.create({ data: { action: "page.reviews", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+  logAction("page.reviews", { meta: { businessId: business.id, slug: params.slug } });
 
   const reviewConfig = business.reviewConfig ?? { googleUrl: null, instructions: null, rewards: [] };
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { randomBytes } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { slugify } from "@/lib/utils";
 import { PLAN_LIMITS } from "@/lib/constants";
 import { getOrCreateProspectCoupon, createBusinessPromoCode } from "@/lib/stripe";
@@ -167,13 +168,7 @@ export async function POST(req: Request) {
     });
 
     // Log business creation
-    prisma.log.create({
-      data: {
-        action: "business.created",
-        userId: session.user.id,
-        meta: { businessId: business.id, name: business.name, byAdmin: isAdmin },
-      },
-    }).catch(() => {});
+    logAction("business.created", { req, userId: session.user.id, meta: { businessId: business.id, name: business.name, byAdmin: isAdmin } });
 
     // Créer ReviewConfig + rewards par défaut
     const defaultRewards = getDefaultRewards(parsed.data.businessType ?? null);

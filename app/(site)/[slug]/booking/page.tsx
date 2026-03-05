@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { BookingFlow } from "@/components/booking/booking-flow";
 import type { Metadata } from "next";
 
@@ -20,7 +21,7 @@ export default async function BookingPage({ params }: { params: { slug: string }
   if (!business || !business.modules.length || !business.bookingConfig) notFound();
 
   // Fire-and-forget tracking
-  prisma.log.create({ data: { action: "page.booking", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+  logAction("page.booking", { meta: { businessId: business.id, slug: params.slug } });
 
   const subtitle =
     business.bookingConfig.mode === "TABLE"

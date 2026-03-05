@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { stripe } from "@/lib/stripe";
 
 const schema = z.object({
@@ -38,14 +39,7 @@ export async function POST(req: Request) {
     },
   });
 
-  await prisma.log.create({
-    data: {
-      level: "INFO",
-      action: "subscription.cancel_requested",
-      userId: session.user.id,
-      meta: { reason: parsed.data.reason, stripeSubscriptionId: sub.stripeSubscriptionId },
-    },
-  });
+  logAction("subscription.cancel_requested", { req, userId: session.user.id, meta: { reason: parsed.data.reason, stripeSubscriptionId: sub.stripeSubscriptionId } });
 
   return NextResponse.json({ success: true });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { PLAN_LIMITS } from "@/lib/constants";
 import type { ModuleType } from "@prisma/client";
 
@@ -118,13 +119,7 @@ export async function POST(req: Request, { params }: { params: { businessId: str
   }
 
   // Log dashboard.configured
-  prisma.log.create({
-    data: {
-      action: "dashboard.configured",
-      userId: session.user.id,
-      meta: { businessId: params.businessId, module, isActive } as Record<string, string | boolean>,
-    },
-  }).catch(() => {});
+  logAction("dashboard.configured", { req, userId: session.user.id, meta: { businessId: params.businessId, module, isActive } });
 
   return NextResponse.json({ success: true, data: moduleRecord });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { generateRewardCode, pickRewardByProbability } from "@/lib/utils";
 
 /** GET → récupère les infos d'un token de review */
@@ -37,7 +38,7 @@ export async function PATCH(req: Request, { params }: { params: { token: string 
     });
 
     // Fire-and-forget tracking
-    prisma.log.create({ data: { action: "review.google_clicked", meta: { businessId: review.businessId, token: params.token } } }).catch(() => {});
+    logAction("review.google_clicked", { req, meta: { businessId: review.businessId, token: params.token } });
 
     return NextResponse.json({ success: true, data: updated });
   }
@@ -78,7 +79,7 @@ export async function PATCH(req: Request, { params }: { params: { token: string 
     });
 
     // Fire-and-forget tracking
-    prisma.log.create({ data: { action: "review.spin", meta: { businessId: review.businessId, rewardName: reward?.name ?? null } } }).catch(() => {});
+    logAction("review.spin", { req, meta: { businessId: review.businessId, rewardName: reward?.name ?? null } });
 
     return NextResponse.json({ success: true, data: updated });
   }

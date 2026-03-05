@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { PLAN_LIMITS } from "@/lib/constants";
 
 const createReviewSchema = z.object({
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
     });
 
     // Fire-and-forget tracking
-    prisma.log.create({ data: { action: "review.created", meta: { businessId, customerName: customerName ?? null } } }).catch(() => {});
+    logAction("review.created", { req, meta: { businessId, customerName: customerName ?? null } });
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (error) {

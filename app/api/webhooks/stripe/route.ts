@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { stripe, PRICE_TO_PLAN, mapStripeStatus, downgradeModules } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { sendEmail } from "@/lib/email";
 import { PrintOrderConfirmationEmail } from "@/emails/print-order-confirmation";
 import { PrintOrderNotificationEmail } from "@/emails/print-order-notification";
@@ -111,14 +112,7 @@ export async function POST(req: Request) {
             console.error("[webhook] Erreur email notification print order", e);
           }
 
-          await prisma.log.create({
-            data: {
-              level: "INFO",
-              action: "print_order.paid",
-              userId: session.metadata.userId,
-              meta: { printOrderId, amount: order.totalAmount },
-            },
-          });
+          logAction("print_order.paid", { req, userId: session.metadata.userId, meta: { printOrderId, amount: order.totalAmount } });
           break;
         }
 
@@ -145,14 +139,7 @@ export async function POST(req: Request) {
           },
         });
 
-        await prisma.log.create({
-          data: {
-            level: "INFO",
-            action: "checkout.session.completed",
-            userId,
-            meta: { sessionId: session.id, subscriptionId: subId },
-          },
-        });
+        logAction("checkout.session.completed", { req, userId, meta: { sessionId: session.id, subscriptionId: subId } });
         break;
       }
 
@@ -199,14 +186,7 @@ export async function POST(req: Request) {
           },
         });
 
-        await prisma.log.create({
-          data: {
-            level: "INFO",
-            action: `subscription.${event.type === "customer.subscription.created" ? "created" : "updated"}`,
-            userId,
-            meta: { subscriptionId: sub.id, plan, status },
-          },
-        });
+        logAction(`subscription.${event.type === "customer.subscription.created" ? "created" : "updated"}`, { req, userId, meta: { subscriptionId: sub.id, plan, status } });
         break;
       }
 
@@ -229,14 +209,7 @@ export async function POST(req: Request) {
 
         await downgradeModules(userId);
 
-        await prisma.log.create({
-          data: {
-            level: "WARN",
-            action: "subscription.deleted",
-            userId,
-            meta: { subscriptionId: sub.id },
-          },
-        });
+        logAction("subscription.deleted", { req, level: "WARN", userId, meta: { subscriptionId: sub.id } });
         break;
       }
 
@@ -267,14 +240,7 @@ export async function POST(req: Request) {
           },
         });
 
-        await prisma.log.create({
-          data: {
-            level: "INFO",
-            action: "payment.succeeded",
-            userId: dbSub.userId,
-            meta: { invoiceId: invoice.id, amount: invoice.amount_paid },
-          },
-        });
+        logAction("payment.succeeded", { req, userId: dbSub.userId, meta: { invoiceId: invoice.id, amount: invoice.amount_paid } });
         break;
       }
 
@@ -296,14 +262,7 @@ export async function POST(req: Request) {
           data: { status: "PAST_DUE" },
         });
 
-        await prisma.log.create({
-          data: {
-            level: "WARN",
-            action: "payment.failed",
-            userId: dbSub.userId,
-            meta: { invoiceId: invoice.id, amount: invoice.amount_due },
-          },
-        });
+        logAction("payment.failed", { req, level: "WARN", userId: dbSub.userId, meta: { invoiceId: invoice.id, amount: invoice.amount_due } });
         break;
       }
 
@@ -312,13 +271,7 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error(`[webhook] Erreur interne (${event.type})`, err);
-    await prisma.log.create({
-      data: {
-        level: "ERROR",
-        action: `webhook.error.${event.type}`,
-        meta: { error: String(err) },
-      },
-    }).catch(() => null);
+    logAction(`webhook.error.${event.type}`, { req, level: "ERROR", meta: { error: String(err) } });
 
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
   }

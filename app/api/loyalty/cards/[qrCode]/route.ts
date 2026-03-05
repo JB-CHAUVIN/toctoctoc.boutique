@@ -25,7 +25,9 @@ export async function GET(_req: Request, { params }: { params: { qrCode: string 
 
   if (!card) return NextResponse.json({ error: "Carte introuvable" }, { status: 404 });
 
-  if (card.business.userId !== session.user.id) {
+  // Admin bypass ownership check
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  if (dbUser?.role !== "ADMIN" && card.business.userId !== session.user.id) {
     return NextResponse.json({ error: "Cette carte n'appartient pas à votre commerce" }, { status: 403 });
   }
 

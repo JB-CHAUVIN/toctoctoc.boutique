@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "@/lib/email";
 import { ClaimSuccessEmail } from "@/emails/claim-success";
@@ -24,9 +25,7 @@ export async function POST(
   }
 
   if (business.claimedAt) {
-    prisma.log.create({
-      data: { action: "claim.already_claimed", meta: { businessId: business.id } },
-    }).catch(() => {});
+    logAction("claim.already_claimed", { req, meta: { businessId: business.id } });
     return NextResponse.json({ error: "Ce lien a déjà été utilisé." }, { status: 409 });
   }
 
@@ -40,9 +39,7 @@ export async function POST(
   }
 
   // Log form submission
-  prisma.log.create({
-    data: { action: "claim.form_submitted", meta: { businessId: business.id, email } },
-  }).catch(() => {});
+  logAction("claim.form_submitted", { req, meta: { businessId: business.id, email } });
 
   const hashed = await bcrypt.hash(password, 10);
 
@@ -69,9 +66,7 @@ export async function POST(
   });
 
   // Log successful claim
-  prisma.log.create({
-    data: { action: "claim.success", meta: { businessId: business.id, email } },
-  }).catch(() => {});
+  logAction("claim.success", { req, meta: { businessId: business.id, email } });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toctoctoc.boutique";
   sendEmail({

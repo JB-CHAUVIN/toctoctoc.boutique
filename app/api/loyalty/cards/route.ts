@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { PLAN_LIMITS } from "@/lib/constants";
 
 const createCardSchema = z.object({
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
     }
 
     // Fire-and-forget tracking
-    prisma.log.create({ data: { action: "loyalty.card_created", meta: { businessId, customerName } } }).catch(() => {});
+    logAction("loyalty.card_created", { req, meta: { businessId, customerName } });
 
     return NextResponse.json({ success: true, data: card });
   } catch (error) {

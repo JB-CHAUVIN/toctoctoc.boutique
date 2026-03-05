@@ -3,6 +3,7 @@ import { z } from "zod";
 import { addMinutes, format, parseISO, setHours, setMinutes, isBefore } from "date-fns";
 import { fr } from "date-fns/locale";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import type { TimeSlot } from "@/types";
 import { sendEmail } from "@/lib/email";
 import { BookingConfirmedEmail } from "@/emails/booking-confirmed";
@@ -190,7 +191,7 @@ export async function POST(req: Request, { params }: { params: { businessId: str
     const address = [booking.business.address, booking.business.city].filter(Boolean).join(", ");
 
     // Fire-and-forget tracking
-    prisma.log.create({ data: { action: "booking.created", meta: { businessId: params.businessId, customerName, serviceName: booking.service?.name ?? null } } }).catch(() => {});
+    logAction("booking.created", { req, meta: { businessId: params.businessId, customerName, serviceName: booking.service?.name ?? null } });
 
     sendEmail({
       to: customerEmail,

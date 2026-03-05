@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 
 const ALLOWED_ACTIONS = ["walkthrough.completed", "dashboard.configured"];
 
@@ -17,13 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Action non autorisee" }, { status: 400 });
   }
 
-  await prisma.log.create({
-    data: {
-      action,
-      userId: session.user.id,
-      meta: (meta ?? {}) as Record<string, string>,
-    },
-  });
+  logAction(action, { req, userId: session.user.id, meta: (meta ?? {}) as Record<string, unknown> });
 
   return NextResponse.json({ success: true });
 }

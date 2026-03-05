@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { BlockRenderer } from "@/components/site/blocks/block-renderer";
 import type { ModuleType } from "@prisma/client";
 
@@ -36,7 +37,7 @@ export default async function ShowcasePage({ params }: { params: { slug: string 
   if (!business) notFound();
 
   // Fire-and-forget tracking
-  prisma.log.create({ data: { action: "page.home", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+  logAction("page.home", { meta: { businessId: business.id, slug: params.slug } });
 
   const activeModules = new Set(business.modules.map((m) => m.module as ModuleType));
   const hasBooking = activeModules.has("BOOKING");

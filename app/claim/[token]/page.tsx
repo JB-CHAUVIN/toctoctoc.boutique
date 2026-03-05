@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { MODULES_INFO, LAUNCH_PROMO } from "@/lib/constants";
 import { ClaimForm } from "./claim-form";
 
@@ -40,12 +41,7 @@ export default async function ClaimPage({ params }: { params: { token: string } 
   if (!business) notFound();
 
   // Fire-and-forget: log page view
-  prisma.log.create({
-    data: {
-      action: "claim.page_viewed",
-      meta: { businessId: business.id, businessName: business.name, token: params.token },
-    },
-  }).catch(() => {});
+  logAction("claim.page_viewed", { meta: { businessId: business.id, businessName: business.name, token: params.token } });
 
   if (business.claimedAt) {
     return (

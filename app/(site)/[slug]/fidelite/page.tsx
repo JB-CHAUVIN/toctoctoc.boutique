@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { logAction } from "@/lib/log";
 import { LoyaltyFlow } from "@/components/loyalty/loyalty-flow";
 import type { Metadata } from "next";
 
@@ -21,7 +22,7 @@ export default async function FidelitePage({ params }: { params: { slug: string 
   if (!business || !business.modules.length) notFound();
 
   // Fire-and-forget tracking
-  prisma.log.create({ data: { action: "page.loyalty", meta: { businessId: business.id, slug: params.slug } } }).catch(() => {});
+  logAction("page.loyalty", { meta: { businessId: business.id, slug: params.slug } });
 
   const config = business.loyaltyConfig ?? {
     id: "",

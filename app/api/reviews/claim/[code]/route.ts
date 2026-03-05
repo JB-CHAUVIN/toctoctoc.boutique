@@ -19,7 +19,9 @@ export async function GET(req: Request, { params }: { params: { code: string } }
     return NextResponse.json({ error: "Code introuvable" }, { status: 404 });
   }
 
-  if (review.business.userId !== session.user.id) {
+  // Admin bypass ownership check
+  const dbUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  if (dbUser?.role !== "ADMIN" && review.business.userId !== session.user.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
@@ -55,7 +57,9 @@ export async function POST(req: Request, { params }: { params: { code: string } 
     return NextResponse.json({ error: "Code introuvable" }, { status: 404 });
   }
 
-  if (review.business.userId !== session.user.id) {
+  // Admin bypass ownership check
+  const dbUser2 = await prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } });
+  if (dbUser2?.role !== "ADMIN" && review.business.userId !== session.user.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
