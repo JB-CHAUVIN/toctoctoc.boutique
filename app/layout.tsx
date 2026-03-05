@@ -62,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ContactButton />
         <Toaster
           position="top-right"
+          containerStyle={{ position: "fixed", top: 16, right: 16, zIndex: 99999 }}
           gutter={10}
           toastOptions={{
             duration: 4000,

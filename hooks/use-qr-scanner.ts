@@ -41,13 +41,21 @@ export function useQrScanner({ onScan }: UseQrScannerOptions) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } },
       });
-      // videoRef est toujours dans le DOM (caché) — on peut attacher le stream avant d'afficher
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        try { await videoRef.current.play(); } catch { /* autoPlay attribute handles it */ }
-      }
       streamRef.current = stream;
       scanningRef.current = true;
+
+      // Attacher le stream et attendre que la vidéo ait des frames avant d'afficher
+      // (évite l'écran noir sur Chrome Android quand le <video> passe de hidden à visible)
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        await new Promise<void>((resolve) => {
+          const onReady = () => { video.removeEventListener("loadeddata", onReady); resolve(); };
+          if (video.readyState >= 2) resolve();
+          else video.addEventListener("loadeddata", onReady);
+        });
+        try { await video.play(); } catch { /* autoPlay attribute handles it */ }
+      }
       setCameraActive(true);
 
       // Prefer native BarcodeDetector (Chrome/Android) for speed, fallback to jsQR (universal)
