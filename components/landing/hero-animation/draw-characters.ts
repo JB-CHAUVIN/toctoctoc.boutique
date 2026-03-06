@@ -1,4 +1,4 @@
-import { type Character, SCENE } from "./types";
+import { type Character } from "./types";
 
 export function drawCharacter(ctx: CanvasRenderingContext2D, char: Character, time: number) {
   const { x, y, direction, scale, skinColor, shirtColor, pantsColor, state, stateTime, hasPhone } = char;

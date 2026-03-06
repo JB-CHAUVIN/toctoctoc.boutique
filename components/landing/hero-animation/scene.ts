@@ -180,9 +180,6 @@ export function createAnimationController(canvas: HTMLCanvasElement) {
   let animId = 0;
   let lastTime = 0;
   let running = false;
-  let paused = false;
-  let pauseStart = 0;
-  const PAUSE_DURATION = 15;
   let isMobile = false;
 
   function resize() {
