@@ -1,7 +1,7 @@
-import { type Character, type Particle, type FloatingText, SCENE, PERSON_COLORS } from "./types";
+import { type Character, type Particle, type FloatingText, SCENE, PERSON_STYLES } from "./types";
 import { drawSky, drawGridPattern, drawGround, drawBackgroundBuildings, drawShop, drawQRStand } from "./draw-scene";
 import { drawCharacter, drawMerchant } from "./draw-characters";
-import { drawStars, drawParticles, drawFloatingTexts, drawFloatingIcons, drawConstellationNetwork, drawRoulette } from "./draw-effects";
+import { drawStars, drawParticles, drawFloatingTexts, drawConstellationNetwork, drawRoulette } from "./draw-effects";
 
 interface SceneState {
   time: number;
@@ -43,22 +43,25 @@ function getAct(t: number): 1 | 2 | 3 | 4 {
 }
 
 function spawnCustomer(state: SceneState, fromRight: boolean): Character {
-  const colors = PERSON_COLORS[state.customerIndex % PERSON_COLORS.length];
+  const style = PERSON_STYLES[state.customerIndex % PERSON_STYLES.length];
+  const isFirst = state.customerIndex === 0;
   state.customerIndex++;
-  const startX = fromRight ? SCENE.W + 40 : -40;
-  const dir: 1 | -1 = fromRight ? -1 : 1;
+  // First customer spawns close to the shop for a quick start
+  const startX = isFirst ? 250 : fromRight ? SCENE.W + 40 : -40;
+  const dir: 1 | -1 = fromRight && !isFirst ? -1 : 1;
   return {
     x: startX,
     y: SCENE.GROUND_Y,
-    targetX: SCENE.QR_X + (fromRight ? 40 : -20),
-    speed: 80 + Math.random() * 40,
+    targetX: SCENE.QR_X + (fromRight && !isFirst ? 40 : -20),
+    speed: isFirst ? 160 : 80 + Math.random() * 40,
     state: "walking",
     stateTime: 0,
     hasPhone: true,
-    headColor: colors.head,
-    bodyColor: colors.body,
+    skinColor: style.skin,
+    shirtColor: style.shirt,
+    pantsColor: style.pants,
     direction: dir,
-    scale: 0.9 + Math.random() * 0.2,
+    scale: 0.9 + Math.random() * 0.15,
     scanned: false,
   };
 }
@@ -193,26 +196,14 @@ export function createAnimationController(canvas: HTMLCanvasElement) {
   }
 
   function update(dt: number) {
-    // Handle pause between cycles
-    if (paused) {
-      pauseStart += dt;
-      if (pauseStart >= PAUSE_DURATION) {
-        paused = false;
-        state = createState();
-      }
-      return;
-    }
-
     // On mobile, speed up acts 1 & 2
     let act = getAct(state.time);
     const speedMult = isMobile && (act === 1 || act === 2) ? 3 : 1;
     state.time += dt * speedMult;
 
-    // End of cycle — enter pause
+    // End of cycle — restart immediately
     if (state.time >= SCENE.CYCLE_DURATION) {
-      state.time = SCENE.CYCLE_DURATION;
-      paused = true;
-      pauseStart = 0;
+      state = createState();
       return;
     }
 
@@ -280,10 +271,11 @@ export function createAnimationController(canvas: HTMLCanvasElement) {
     // On narrow screens, zoom into the shop area instead of showing full width
     const shopCenterX = SCENE.SHOP_X + SCENE.SHOP_W / 2;
     const aspectRatio = canvas.width / canvas.height;
-    // Wide screens (>1.5): show full scene. Narrow screens: show ~600px around shop
-    const visibleW = aspectRatio > 1.5 ? SCENE.W : Math.max(400, Math.min(SCENE.W, aspectRatio * 400));
+    // Wide screens: full scene centered. Narrow screens: zoom on shop
+    const isWide = aspectRatio > 1.5;
+    const visibleW = isWide ? SCENE.W : Math.max(400, Math.min(SCENE.W, aspectRatio * 400));
     const scale = canvas.width / visibleW;
-    const offsetX = -(shopCenterX - visibleW / 2) * scale;
+    const offsetX = isWide ? (canvas.width - SCENE.W * scale) / 2 : -(shopCenterX - visibleW / 2) * scale;
     const offsetY = (canvas.height - SCENE.H * scale) / 2;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -319,8 +311,6 @@ export function createAnimationController(canvas: HTMLCanvasElement) {
     drawStars(ctx, state.rating, state.reviewCount, state.time);
     drawParticles(ctx, state.particles);
     drawFloatingTexts(ctx, state.floatingTexts);
-    drawFloatingIcons(ctx, state.prosperity, state.time);
-
     if (state.rouletteProgress >= 0) {
       drawRoulette(ctx, SCENE.QR_X + 10, SCENE.QR_Y - 30, state.rouletteProgress, state.time);
     }

@@ -318,8 +318,8 @@ const SLIDES = [
   {
     category: "Tarifs",
     categoryColor: "#10b981",
-    title: "Moins cher que votre café du matin ☕",
-    description: "Site vitrine + Réservations + Avis gamifiés + Fidélité VIP. Tout inclus à partir de 9€/mois. Vos concurrents facturent 50€+ pour bien moins.",
+    title: "3 a 8x moins cher que la concurrence",
+    description: "Site vitrine + Reservations + Avis gamifies + Fidelite VIP. Tout inclus a partir de 9€/mois. Les solutions concurrentes facturent entre 30 et 80€ pour des fonctionnalites equivalentes.",
     bullets: [
       "Sans engagement, résiliable en 1 clic",
       "14 jours d'essai gratuit",

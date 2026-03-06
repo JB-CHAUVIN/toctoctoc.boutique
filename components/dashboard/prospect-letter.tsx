@@ -808,7 +808,7 @@ export function buildLetterHtml(
       </div>
 
       <p style="margin-top:3mm;">
-        Les solutions concurrentes coûtent entre <strong>30 et 80€/mois</strong>. Chez TocTocToc.boutique, on croit que chaque commerce local mérite des outils performants à un prix juste. C'est pourquoi nous proposons le système complet à partir de <strong>9€/mois</strong>, soit le prix d'un café par semaine.
+        Les solutions concurrentes coûtent entre <strong>30 et 80€/mois</strong>. Chez TocTocToc.boutique, on croit que chaque commerce local mérite des outils performants à un prix juste. C'est pourquoi nous proposons le système complet à partir de <strong>9€/mois</strong>, soit 3 à 8 fois moins cher que la concurrence.
       </p>
 
       ${claimSection}

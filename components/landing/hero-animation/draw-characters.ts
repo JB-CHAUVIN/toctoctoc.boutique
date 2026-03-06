@@ -1,68 +1,70 @@
 import { type Character, SCENE } from "./types";
-import { roundRect } from "./draw-scene";
 
 export function drawCharacter(ctx: CanvasRenderingContext2D, char: Character, time: number) {
-  const { x, y, direction, scale, headColor, bodyColor, state, stateTime, hasPhone } = char;
+  const { x, y, direction, scale, skinColor, shirtColor, pantsColor, state, stateTime, hasPhone } = char;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(direction * scale, scale);
 
-  const walkBob = state === "walking" ? Math.sin(time * 8) * 3 : 0;
-  const legSwing = state === "walking" ? Math.sin(time * 8) * 12 : 0;
+  const walkBob = state === "walking" ? Math.sin(time * 8) * 2 : 0;
+  const legSwing = state === "walking" ? Math.sin(time * 8) * 15 : 0;
 
   // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillStyle = "rgba(0,0,0,0.06)";
   ctx.beginPath();
-  ctx.ellipse(0, 0, 16, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 2, 14, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Legs
-  ctx.strokeStyle = bodyColor;
-  ctx.lineWidth = 5;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(-5, -12);
-  ctx.lineTo(-5 - legSwing * 0.3, 0);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(5, -12);
-  ctx.lineTo(5 + legSwing * 0.3, 0);
-  ctx.stroke();
+  // Legs (tapered)
+  drawLeg(ctx, -5, -14, legSwing, pantsColor);
+  drawLeg(ctx, 5, -14, -legSwing, pantsColor);
 
-  // Body
-  ctx.fillStyle = bodyColor;
-  roundRect(ctx, -12, -42 + walkBob, 24, 32, 6);
+  // Body (torso — tapered shape)
+  ctx.fillStyle = shirtColor;
+  ctx.beginPath();
+  ctx.moveTo(-10, -44 + walkBob);
+  ctx.quadraticCurveTo(-12, -28 + walkBob, -8, -14);
+  ctx.lineTo(8, -14);
+  ctx.quadraticCurveTo(12, -28 + walkBob, 10, -44 + walkBob);
+  ctx.closePath();
   ctx.fill();
 
-  // Head
-  ctx.fillStyle = headColor;
+  // Neck
+  ctx.fillStyle = skinColor;
+  ctx.fillRect(-3, -48 + walkBob, 6, 6);
+
+  // Head (slightly oval)
+  ctx.fillStyle = skinColor;
   ctx.beginPath();
-  ctx.arc(0, -52 + walkBob, 12, 0, Math.PI * 2);
+  ctx.ellipse(0, -55 + walkBob, 10, 11, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Face expression
-  drawFace(ctx, 0, -52 + walkBob, state);
+  // Hair
+  ctx.fillStyle = darken(skinColor, 40);
+  ctx.beginPath();
+  ctx.ellipse(0, -60 + walkBob, 10, 7, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
 
-  // Phone in hand (when scanning or celebrating)
+  // Arms
+  const armY = -38 + walkBob;
   if (hasPhone && (state === "scanning" || state === "celebrating")) {
-    drawPhone(ctx, state, stateTime, time);
+    // One arm holding phone up
+    drawArm(ctx, -10, armY, -18, armY + 14, shirtColor, skinColor);
+    drawPhoneArm(ctx, 10, armY, state, stateTime, time, shirtColor, skinColor);
+  } else {
+    const swing = state === "walking" ? Math.sin(time * 8) * 10 : 0;
+    drawArm(ctx, -10, armY, -16 - swing * 0.3, armY + 18 + Math.abs(swing) * 0.3, shirtColor, skinColor);
+    drawArm(ctx, 10, armY, 16 + swing * 0.3, armY + 18 + Math.abs(swing) * 0.3, shirtColor, skinColor);
   }
 
-  // Celebration effect
+  // Celebration sparkles
   if (state === "celebrating") {
-    const celebProgress = Math.min(stateTime / 1.5, 1);
-    ctx.globalAlpha = 1 - celebProgress;
-    ctx.fillStyle = "#FDE68A";
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2 + time * 3;
-      const dist = 20 + celebProgress * 30;
-      ctx.beginPath();
-      ctx.arc(
-        Math.cos(angle) * dist,
-        -40 + Math.sin(angle) * dist - celebProgress * 20,
-        3, 0, Math.PI * 2
-      );
-      ctx.fill();
+    const progress = Math.min(stateTime / 1.5, 1);
+    ctx.globalAlpha = 0.6 * (1 - progress);
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + time * 2;
+      const dist = 18 + progress * 25;
+      drawSparkle(ctx, Math.cos(angle) * dist, -45 + Math.sin(angle) * dist - progress * 15, 3);
     }
     ctx.globalAlpha = 1;
   }
@@ -70,67 +72,102 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, char: Character, ti
   ctx.restore();
 }
 
-function drawFace(ctx: CanvasRenderingContext2D, x: number, y: number, state: string) {
-  ctx.fillStyle = "#1E1B4B";
-  // Eyes
+function drawLeg(ctx: CanvasRenderingContext2D, baseX: number, baseY: number, swing: number, color: string) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.arc(x - 4, y - 2, 1.5, 0, Math.PI * 2);
-  ctx.arc(x + 4, y - 2, 1.5, 0, Math.PI * 2);
+  ctx.moveTo(baseX, baseY);
+  ctx.lineTo(baseX + swing * 0.25, baseY + 14);
+  ctx.stroke();
+  // Shoe
+  ctx.fillStyle = "#1E293B";
+  ctx.beginPath();
+  ctx.ellipse(baseX + swing * 0.25, baseY + 15, 4, 2.5, swing * 0.02, 0, Math.PI * 2);
   ctx.fill();
-  // Mouth
-  if (state === "celebrating" || state === "idle") {
-    ctx.strokeStyle = "#1E1B4B";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(x, y + 2, 4, 0.1 * Math.PI, 0.9 * Math.PI);
-    ctx.stroke();
-  }
 }
 
-function drawPhone(
+function drawArm(
   ctx: CanvasRenderingContext2D,
-  state: string, stateTime: number, time: number
+  sx: number, sy: number, ex: number, ey: number,
+  shirtColor: string, skinColor: string
 ) {
-  const phoneAngle = state === "scanning" ? -0.8 : -0.3;
-  const phoneX = 16;
-  const phoneY = -38;
-
-  ctx.save();
-  ctx.translate(phoneX, phoneY);
-  ctx.rotate(phoneAngle);
-
-  // Phone body
-  ctx.fillStyle = "#1E293B";
-  roundRect(ctx, -6, -10, 12, 20, 3);
+  ctx.strokeStyle = shirtColor;
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  // Hand
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.arc(ex, ey, 3, 0, Math.PI * 2);
   ctx.fill();
-  // Screen
-  ctx.fillStyle = "#60A5FA";
-  ctx.fillRect(-4, -7, 8, 14);
+}
+
+function drawPhoneArm(
+  ctx: CanvasRenderingContext2D,
+  sx: number, sy: number,
+  state: string, stateTime: number, time: number,
+  shirtColor: string, skinColor: string
+) {
+  const raised = state === "scanning" ? Math.min(stateTime / 0.5, 1) : 1;
+  const ex = sx + 8;
+  const ey = sy - 10 * raised;
+
+  drawArm(ctx, sx, sy, ex, ey, shirtColor, skinColor);
+
+  // Phone
+  ctx.fillStyle = "#0F172A";
+  const phoneW = 6;
+  const phoneH = 11;
+  ctx.save();
+  ctx.translate(ex + 2, ey - phoneH / 2);
+  ctx.rotate(-0.2 * raised);
+  roundRect(ctx, -phoneW / 2, -phoneH / 2, phoneW, phoneH, 2);
+  ctx.fill();
+  // Screen glow
+  ctx.fillStyle = "#818CF8";
+  ctx.globalAlpha = 0.8;
+  ctx.fillRect(-phoneW / 2 + 1, -phoneH / 2 + 1.5, phoneW - 2, phoneH - 3);
+  ctx.globalAlpha = 1;
+  ctx.restore();
 
   // Scan beam
-  if (state === "scanning" && stateTime < 1.5) {
-    ctx.restore();
-    const beamAlpha = 0.3 + 0.2 * Math.sin(time * 10);
-    ctx.strokeStyle = `rgba(96,165,250,${beamAlpha})`;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
+  if (state === "scanning" && stateTime > 0.3 && stateTime < 1.8) {
+    const beamAlpha = 0.15 + 0.1 * Math.sin(time * 8);
+    ctx.strokeStyle = `rgba(129,140,248,${beamAlpha})`;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    const beamStartX = phoneX + 8;
-    const beamStartY = phoneY - 5;
-    ctx.moveTo(beamStartX, beamStartY);
-    ctx.lineTo(beamStartX - 40, beamStartY + 20);
+    ctx.moveTo(ex + 4, ey);
+    ctx.lineTo(ex - 30, ey + 25);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Scan glow at QR
-    const glowAlpha = 0.4 + 0.2 * Math.sin(time * 12);
-    ctx.fillStyle = `rgba(96,165,250,${glowAlpha})`;
-    ctx.beginPath();
-    ctx.arc(beamStartX - 42, beamStartY + 22, 15, 0, Math.PI * 2);
-    ctx.fill();
-  } else {
-    ctx.restore();
+    // Scan glow at target
+    const glow = ctx.createRadialGradient(ex - 32, ey + 27, 0, ex - 32, ey + 27, 12);
+    glow.addColorStop(0, `rgba(129,140,248,${beamAlpha * 1.5})`);
+    glow.addColorStop(1, "rgba(129,140,248,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(ex - 44, ey + 15, 24, 24);
   }
+}
+
+function drawSparkle(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  ctx.fillStyle = "#FDE68A";
+  ctx.beginPath();
+  ctx.moveTo(x, y - size);
+  ctx.lineTo(x + size * 0.3, y - size * 0.3);
+  ctx.lineTo(x + size, y);
+  ctx.lineTo(x + size * 0.3, y + size * 0.3);
+  ctx.lineTo(x, y + size);
+  ctx.lineTo(x - size * 0.3, y + size * 0.3);
+  ctx.lineTo(x - size, y);
+  ctx.lineTo(x - size * 0.3, y - size * 0.3);
+  ctx.closePath();
+  ctx.fill();
 }
 
 export function drawMerchant(
@@ -141,16 +178,16 @@ export function drawMerchant(
   ctx.save();
   ctx.translate(x, y);
 
-  const idle = Math.sin(time * 1.5) * 2;
+  const idle = Math.sin(time * 1.5) * 1.5;
 
   // Shadow
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillStyle = "rgba(0,0,0,0.06)";
   ctx.beginPath();
-  ctx.ellipse(0, 0, 18, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 2, 16, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Legs
-  ctx.strokeStyle = "#1E3A5F";
+  ctx.strokeStyle = "#1E293B";
   ctx.lineWidth = 6;
   ctx.lineCap = "round";
   ctx.beginPath();
@@ -162,72 +199,139 @@ export function drawMerchant(
   ctx.lineTo(6, 0);
   ctx.stroke();
 
-  // Body
+  // Shoes
+  ctx.fillStyle = "#0F172A";
+  ctx.beginPath();
+  ctx.ellipse(-6, 1, 5, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(6, 1, 5, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body (torso)
   ctx.fillStyle = "#4F46E5";
-  roundRect(ctx, -14, -48 + idle, 28, 36, 7);
+  ctx.beginPath();
+  ctx.moveTo(-12, -48 + idle);
+  ctx.quadraticCurveTo(-14, -30 + idle, -9, -14);
+  ctx.lineTo(9, -14);
+  ctx.quadraticCurveTo(14, -30 + idle, 12, -48 + idle);
+  ctx.closePath();
   ctx.fill();
 
   // Apron
   ctx.fillStyle = "#FFFFFF";
-  roundRect(ctx, -10, -32 + idle, 20, 20, 4);
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(-8, -32 + idle);
+  ctx.lineTo(8, -32 + idle);
+  ctx.lineTo(9, -14);
+  ctx.lineTo(-9, -14);
+  ctx.closePath();
   ctx.fill();
   ctx.strokeStyle = "#E2E8F0";
-  ctx.lineWidth = 1;
-  roundRect(ctx, -10, -32 + idle, 20, 20, 4);
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Apron strap
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-4, -32 + idle);
+  ctx.lineTo(-2, -44 + idle);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(4, -32 + idle);
+  ctx.lineTo(2, -44 + idle);
   ctx.stroke();
 
+  // Neck
+  ctx.fillStyle = "#F5D0B0";
+  ctx.fillRect(-3, -52 + idle, 6, 6);
+
   // Head
-  ctx.fillStyle = "#FBBF24";
+  ctx.fillStyle = "#F5D0B0";
   ctx.beginPath();
-  ctx.arc(0, -58 + idle, 14, 0, Math.PI * 2);
+  ctx.ellipse(0, -59 + idle, 11, 12, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Face — mood-dependent
-  ctx.fillStyle = "#1E1B4B";
+  // Hair
+  ctx.fillStyle = "#292524";
   ctx.beginPath();
-  ctx.arc(-5, -60 + idle, 2, 0, Math.PI * 2);
-  ctx.arc(5, -60 + idle, 2, 0, Math.PI * 2);
+  ctx.ellipse(0, -65 + idle, 11, 7, 0, Math.PI, Math.PI * 2);
   ctx.fill();
 
-  // Mouth
-  ctx.strokeStyle = "#1E1B4B";
-  ctx.lineWidth = 2;
+  // Eyes
+  ctx.fillStyle = "#1E293B";
+  ctx.beginPath();
+  ctx.arc(-4, -60 + idle, 1.5, 0, Math.PI * 2);
+  ctx.arc(4, -60 + idle, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth — mood-dependent
+  ctx.strokeStyle = "#78716C";
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = "round";
   ctx.beginPath();
   if (mood > 0.5) {
-    // Happy smile
-    ctx.arc(0, -53 + idle, 6, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.arc(0, -54 + idle, 4, 0.15 * Math.PI, 0.85 * Math.PI);
   } else {
-    // Neutral/slightly sad
-    ctx.arc(0, -50 + idle, 5, 1.1 * Math.PI, 1.9 * Math.PI);
+    ctx.moveTo(-3, -54 + idle);
+    ctx.lineTo(3, -54 + idle);
   }
   ctx.stroke();
 
   // Arms
-  ctx.strokeStyle = "#4F46E5";
-  ctx.lineWidth = 5;
-  ctx.lineCap = "round";
   if (mood > 0.7) {
-    // Welcoming gesture
-    const wave = Math.sin(time * 3) * 0.2;
-    ctx.beginPath();
-    ctx.moveTo(-14, -40 + idle);
-    ctx.lineTo(-24, -48 + idle + Math.sin(time * 3 + wave) * 5);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(14, -40 + idle);
-    ctx.lineTo(24, -48 + idle + Math.sin(time * 3 + 1 + wave) * 5);
-    ctx.stroke();
+    const wave = Math.sin(time * 2.5) * 0.15;
+    drawMerchantArm(ctx, -12, -42 + idle, -22, -50 + idle + Math.sin(time * 2.5 + wave) * 4, "#4F46E5", "#F5D0B0");
+    drawMerchantArm(ctx, 12, -42 + idle, 22, -50 + idle + Math.sin(time * 2.5 + 1 + wave) * 4, "#4F46E5", "#F5D0B0");
   } else {
-    // Arms crossed
-    ctx.beginPath();
-    ctx.moveTo(-14, -38 + idle);
-    ctx.lineTo(-8, -30 + idle);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(14, -38 + idle);
-    ctx.lineTo(8, -30 + idle);
-    ctx.stroke();
+    drawMerchantArm(ctx, -12, -40 + idle, -6, -28 + idle, "#4F46E5", "#F5D0B0");
+    drawMerchantArm(ctx, 12, -40 + idle, 6, -28 + idle, "#4F46E5", "#F5D0B0");
   }
 
   ctx.restore();
+}
+
+function drawMerchantArm(
+  ctx: CanvasRenderingContext2D,
+  sx: number, sy: number, ex: number, ey: number,
+  sleeveColor: string, skinColor: string
+) {
+  ctx.strokeStyle = sleeveColor;
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+  ctx.fillStyle = skinColor;
+  ctx.beginPath();
+  ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function darken(hex: string, amount: number): string {
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
+  return `rgb(${r},${g},${b})`;
 }

@@ -10,13 +10,13 @@ export function drawSky(ctx: CanvasRenderingContext2D) {
 
 export function drawGridPattern(ctx: CanvasRenderingContext2D, time: number) {
   ctx.fillStyle = COLORS.gridDot;
-  const spacing = 40;
-  const offset = (time * 3) % spacing;
+  const spacing = 50;
+  const offset = (time * 2) % spacing;
   for (let x = -spacing + offset; x < SCENE.W + spacing; x += spacing) {
     for (let y = 0; y < SCENE.GROUND_Y; y += spacing) {
-      ctx.globalAlpha = 0.3 + 0.1 * Math.sin(x * 0.01 + y * 0.01 + time);
+      ctx.globalAlpha = 0.15 + 0.05 * Math.sin(x * 0.008 + y * 0.008 + time * 0.5);
       ctx.beginPath();
-      ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+      ctx.arc(x, y, 1, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -26,44 +26,57 @@ export function drawGridPattern(ctx: CanvasRenderingContext2D, time: number) {
 export function drawGround(ctx: CanvasRenderingContext2D) {
   // Sidewalk
   ctx.fillStyle = COLORS.sidewalk;
-  ctx.fillRect(0, SCENE.GROUND_Y, SCENE.W, 30);
+  ctx.fillRect(0, SCENE.GROUND_Y, SCENE.W, 25);
   // Road
-  ctx.fillStyle = COLORS.ground;
-  ctx.fillRect(0, SCENE.GROUND_Y + 30, SCENE.W, SCENE.H - SCENE.GROUND_Y - 30);
-  // Curb line
-  ctx.strokeStyle = "#94A3B8";
-  ctx.lineWidth = 2;
+  const roadGrad = ctx.createLinearGradient(0, SCENE.GROUND_Y + 25, 0, SCENE.H);
+  roadGrad.addColorStop(0, COLORS.ground);
+  roadGrad.addColorStop(1, "#CBD5E1");
+  ctx.fillStyle = roadGrad;
+  ctx.fillRect(0, SCENE.GROUND_Y + 25, SCENE.W, SCENE.H - SCENE.GROUND_Y - 25);
+  // Subtle curb line
+  ctx.strokeStyle = "#CBD5E1";
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(0, SCENE.GROUND_Y + 30);
-  ctx.lineTo(SCENE.W, SCENE.GROUND_Y + 30);
+  ctx.moveTo(0, SCENE.GROUND_Y + 25);
+  ctx.lineTo(SCENE.W, SCENE.GROUND_Y + 25);
   ctx.stroke();
 }
 
 export function drawBackgroundBuildings(ctx: CanvasRenderingContext2D, time: number) {
   const buildings = [
-    { x: 40, w: 120, h: 180, color: "#E2E8F0" },
-    { x: 180, w: 100, h: 140, color: "#F1F5F9" },
-    { x: 300, w: 130, h: 200, color: "#E2E8F0" },
-    { x: 950, w: 110, h: 160, color: "#F1F5F9" },
-    { x: 1080, w: 140, h: 190, color: "#E2E8F0" },
-    { x: 1240, w: 120, h: 150, color: "#F1F5F9" },
+    { x: 50, w: 110, h: 170, color: "#F1F5F9", accent: "#E2E8F0" },
+    { x: 180, w: 90, h: 130, color: "#F8FAFC", accent: "#E2E8F0" },
+    { x: 290, w: 120, h: 190, color: "#F1F5F9", accent: "#E2E8F0" },
+    { x: 940, w: 100, h: 150, color: "#F8FAFC", accent: "#E2E8F0" },
+    { x: 1060, w: 130, h: 180, color: "#F1F5F9", accent: "#E2E8F0" },
+    { x: 1210, w: 110, h: 140, color: "#F8FAFC", accent: "#E2E8F0" },
   ];
+  const parallax = Math.sin(time * 0.15) * 1.5;
+
   for (const b of buildings) {
-    const parallax = Math.sin(time * 0.2) * 2;
+    const bx = b.x + parallax;
+    const by = SCENE.GROUND_Y - b.h;
+
+    // Building body
     ctx.fillStyle = b.color;
-    roundRect(ctx, b.x + parallax, SCENE.GROUND_Y - b.h, b.w, b.h, 4);
-    ctx.fill();
-    // windows
-    ctx.fillStyle = "#CBD5E1";
-    const winW = 14;
-    const winH = 18;
-    const cols = Math.floor((b.w - 20) / 24);
-    const rows = Math.floor((b.h - 30) / 30);
+    ctx.fillRect(bx, by, b.w, b.h);
+
+    // Subtle border
+    ctx.strokeStyle = b.accent;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, b.w, b.h);
+
+    // Windows (subtle grid)
+    ctx.fillStyle = b.accent;
+    const winW = 10;
+    const winH = 14;
+    const colGap = 20;
+    const rowGap = 24;
+    const cols = Math.floor((b.w - 16) / colGap);
+    const rows = Math.floor((b.h - 20) / rowGap);
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const wx = b.x + parallax + 12 + c * 24;
-        const wy = SCENE.GROUND_Y - b.h + 20 + r * 30;
-        ctx.fillRect(wx, wy, winW, winH);
+        ctx.fillRect(bx + 10 + c * colGap, by + 16 + r * rowGap, winW, winH);
       }
     }
   }
@@ -83,71 +96,95 @@ export function drawShop(
   // Glow behind shop
   if (glow > 0) {
     const glowGrad = ctx.createRadialGradient(
-      sx + sw / 2, st + sh / 2, 30,
-      sx + sw / 2, st + sh / 2, sw * 0.8
+      sx + sw / 2, st + sh / 2, 20,
+      sx + sw / 2, st + sh / 2, sw
     );
-    glowGrad.addColorStop(0, `rgba(99,102,241,${0.15 * glow})`);
-    glowGrad.addColorStop(1, "rgba(99,102,241,0)");
+    glowGrad.addColorStop(0, `rgba(79,70,229,${0.08 * glow})`);
+    glowGrad.addColorStop(1, "rgba(79,70,229,0)");
     ctx.fillStyle = glowGrad;
-    ctx.fillRect(sx - 100, st - 80, sw + 200, sh + 100);
+    ctx.fillRect(sx - 120, st - 60, sw + 240, sh + 80);
   }
 
-  // Main building
-  const wallColor = prosperity > 0.5 ? COLORS.shopWallLit : COLORS.shopWall;
-  ctx.fillStyle = wallColor;
-  roundRect(ctx, sx, st, sw, sh, 6);
+  // Building shadow
+  ctx.fillStyle = "rgba(0,0,0,0.04)";
+  roundRect(ctx, sx + 4, st + 4, sw, sh, 4);
   ctx.fill();
-  ctx.strokeStyle = "#A5B4FC";
-  ctx.lineWidth = 2;
-  roundRect(ctx, sx, st, sw, sh, 6);
+
+  // Main building
+  const wallGrad = ctx.createLinearGradient(sx, st, sx, st + sh);
+  wallGrad.addColorStop(0, prosperity > 0.5 ? COLORS.shopWallLit : COLORS.shopWall);
+  wallGrad.addColorStop(1, "#F5F5F4");
+  ctx.fillStyle = wallGrad;
+  roundRect(ctx, sx, st, sw, sh, 4);
+  ctx.fill();
+  ctx.strokeStyle = "#D6D3D1";
+  ctx.lineWidth = 1;
+  roundRect(ctx, sx, st, sw, sh, 4);
   ctx.stroke();
 
   // Awning
-  drawAwning(ctx, sx - 8, st - 5, sw + 16, 32, time);
+  drawAwning(ctx, sx - 6, st - 4, sw + 12, 28, time);
 
   // Sign
   ctx.fillStyle = COLORS.sign;
-  roundRect(ctx, sx + sw / 2 - 72, st + 8, 144, 26, 6);
+  const signW = 130;
+  const signH = 22;
+  roundRect(ctx, sx + sw / 2 - signW / 2, st + 8, signW, signH, 4);
   ctx.fill();
   ctx.fillStyle = COLORS.signText;
-  ctx.font = "bold 12px 'Plus Jakarta Sans', sans-serif";
+  ctx.font = "600 10px 'Plus Jakarta Sans', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("MON COMMERCE", sx + sw / 2, st + 26);
+  ctx.fillText("MON COMMERCE", sx + sw / 2, st + 22);
 
   // Windows
-  drawWindow(ctx, sx + 24, st + 48, 56, 44);
-  drawWindow(ctx, sx + sw - 80, st + 48, 56, 44);
+  drawWindow(ctx, sx + 20, st + 42, 50, 38);
+  drawWindow(ctx, sx + sw - 70, st + 42, 50, 38);
 
   // Door
-  const doorW = 48;
-  const doorH = 80;
+  const doorW = 40;
+  const doorH = 68;
   const doorX = sx + sw / 2 - doorW / 2;
   const doorY = SCENE.GROUND_Y - doorH;
-  const doorColor = prosperity > 0.3 ? COLORS.doorLight : COLORS.door;
-  ctx.fillStyle = doorColor;
-  roundRect(ctx, doorX, doorY, doorW, doorH, [8, 8, 0, 0]);
+
+  // Door frame
+  ctx.fillStyle = "#78716C";
+  roundRect(ctx, doorX - 3, doorY - 3, doorW + 6, doorH + 3, [4, 4, 0, 0]);
   ctx.fill();
+
+  // Door
+  ctx.fillStyle = prosperity > 0.3 ? COLORS.doorLight : COLORS.door;
+  roundRect(ctx, doorX, doorY, doorW, doorH, [3, 3, 0, 0]);
+  ctx.fill();
+
   // Door handle
-  ctx.fillStyle = "#FDE68A";
+  ctx.fillStyle = "#D4AF37";
   ctx.beginPath();
-  ctx.arc(doorX + doorW - 12, doorY + doorH / 2, 4, 0, Math.PI * 2);
+  ctx.arc(doorX + doorW - 9, doorY + doorH / 2, 2.5, 0, Math.PI * 2);
   ctx.fill();
-  // Light from door
+
+  // Light spill from door
   if (prosperity > 0.3) {
-    ctx.fillStyle = `rgba(253,230,138,${0.2 * prosperity})`;
+    const lightGrad = ctx.createLinearGradient(
+      doorX + doorW / 2, doorY + doorH,
+      doorX + doorW / 2, SCENE.GROUND_Y + 8
+    );
+    lightGrad.addColorStop(0, `rgba(253,224,71,${0.12 * prosperity})`);
+    lightGrad.addColorStop(1, "rgba(253,224,71,0)");
+    ctx.fillStyle = lightGrad;
     ctx.beginPath();
     ctx.moveTo(doorX, doorY + doorH);
-    ctx.lineTo(doorX - 20, SCENE.GROUND_Y + 10);
-    ctx.lineTo(doorX + doorW + 20, SCENE.GROUND_Y + 10);
+    ctx.lineTo(doorX - 14, SCENE.GROUND_Y + 8);
+    ctx.lineTo(doorX + doorW + 14, SCENE.GROUND_Y + 8);
     ctx.lineTo(doorX + doorW, doorY + doorH);
     ctx.closePath();
     ctx.fill();
   }
 
-  // Plants (appear with prosperity)
+  // Potted plants (appear with prosperity)
   if (prosperity > 0.5) {
-    drawPlant(ctx, sx + 10, SCENE.GROUND_Y, prosperity);
-    drawPlant(ctx, sx + sw - 25, SCENE.GROUND_Y, prosperity);
+    const plantAlpha = Math.min(1, (prosperity - 0.5) * 2);
+    drawPlant(ctx, sx + 8, SCENE.GROUND_Y, plantAlpha);
+    drawPlant(ctx, sx + sw - 18, SCENE.GROUND_Y, plantAlpha);
   }
 }
 
@@ -155,57 +192,84 @@ function drawAwning(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, time: number
 ) {
-  const segments = 8;
+  const segments = 7;
   const segW = w / segments;
   for (let i = 0; i < segments; i++) {
-    ctx.fillStyle = i % 2 === 0 ? COLORS.awning : COLORS.awningStripe;
-    const wave = Math.sin(time * 1.5 + i * 0.5) * 2;
+    ctx.fillStyle = i % 2 === 0 ? COLORS.awning : COLORS.awningDark;
+    const wave = Math.sin(time * 1.2 + i * 0.6) * 1.5;
     ctx.beginPath();
     ctx.moveTo(x + i * segW, y);
     ctx.lineTo(x + (i + 1) * segW, y);
     ctx.lineTo(x + (i + 1) * segW, y + h + wave);
     ctx.quadraticCurveTo(
-      x + i * segW + segW / 2, y + h + 8 + wave,
+      x + i * segW + segW / 2, y + h + 5 + wave,
       x + i * segW, y + h + wave
     );
     ctx.closePath();
     ctx.fill();
   }
+  // Awning shadow
+  ctx.fillStyle = "rgba(0,0,0,0.03)";
+  ctx.fillRect(x + 2, y + h, w - 4, 8);
 }
 
 function drawWindow(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-  ctx.fillStyle = COLORS.window;
-  roundRect(ctx, x, y, w, h, 4);
+  // Frame
+  ctx.fillStyle = COLORS.windowFrame;
+  roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 3);
   ctx.fill();
-  ctx.strokeStyle = COLORS.windowFrame;
-  ctx.lineWidth = 2;
-  roundRect(ctx, x, y, w, h, 4);
-  ctx.stroke();
+  // Glass
+  const glassGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+  glassGrad.addColorStop(0, "#DBEAFE");
+  glassGrad.addColorStop(0.5, "#EFF6FF");
+  glassGrad.addColorStop(1, "#DBEAFE");
+  ctx.fillStyle = glassGrad;
+  roundRect(ctx, x, y, w, h, 2);
+  ctx.fill();
   // Cross bars
+  ctx.strokeStyle = COLORS.windowFrame;
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x + w / 2, y);
   ctx.lineTo(x + w / 2, y + h);
   ctx.moveTo(x, y + h / 2);
   ctx.lineTo(x + w, y + h / 2);
   ctx.stroke();
+  // Reflection
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y + 3);
+  ctx.lineTo(x + w / 3, y + 3);
+  ctx.lineTo(x + 3, y + h / 3);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function drawPlant(ctx: CanvasRenderingContext2D, x: number, groundY: number, alpha: number) {
   ctx.globalAlpha = alpha;
   // Pot
-  ctx.fillStyle = "#92400E";
-  roundRect(ctx, x, groundY - 20, 16, 20, 3);
+  ctx.fillStyle = "#A8A29E";
+  ctx.beginPath();
+  ctx.moveTo(x, groundY - 16);
+  ctx.lineTo(x + 2, groundY);
+  ctx.lineTo(x + 10, groundY);
+  ctx.lineTo(x + 12, groundY - 16);
+  ctx.closePath();
   ctx.fill();
-  // Leaves
+  // Pot rim
+  ctx.fillStyle = "#78716C";
+  ctx.fillRect(x - 1, groundY - 18, 14, 3);
+  // Leaves (more organic shape)
   ctx.fillStyle = "#22C55E";
   ctx.beginPath();
-  ctx.arc(x + 8, groundY - 28, 10, 0, Math.PI * 2);
+  ctx.arc(x + 6, groundY - 24, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#16A34A";
+  ctx.beginPath();
+  ctx.arc(x + 2, groundY - 21, 5, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(x + 2, groundY - 24, 7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 14, groundY - 24, 7, 0, Math.PI * 2);
+  ctx.arc(x + 10, groundY - 21, 5, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 }
@@ -213,33 +277,37 @@ function drawPlant(ctx: CanvasRenderingContext2D, x: number, groundY: number, al
 export function drawQRStand(ctx: CanvasRenderingContext2D) {
   const x = SCENE.QR_X;
   const y = SCENE.QR_Y;
+
   // Stand pole
-  ctx.fillStyle = "#94A3B8";
-  ctx.fillRect(x + 8, y, 4, 50);
+  ctx.fillStyle = "#A8A29E";
+  ctx.fillRect(x + 7, y - 2, 3, 50);
+
   // Base
-  ctx.fillStyle = "#64748B";
-  roundRect(ctx, x, y + 46, 20, 6, 3);
+  ctx.fillStyle = "#78716C";
+  roundRect(ctx, x + 1, y + 44, 15, 5, 2);
   ctx.fill();
-  // QR card
+
+  // Card backing
   ctx.fillStyle = "#FFFFFF";
-  roundRect(ctx, x - 2, y - 22, 24, 24, 3);
+  roundRect(ctx, x - 1, y - 22, 20, 22, 2);
   ctx.fill();
-  ctx.strokeStyle = "#4F46E5";
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, x - 2, y - 22, 24, 24, 3);
+  ctx.strokeStyle = "#D6D3D1";
+  ctx.lineWidth = 0.8;
+  roundRect(ctx, x - 1, y - 22, 20, 22, 2);
   ctx.stroke();
-  // QR pattern (simple)
-  ctx.fillStyle = "#1E1B4B";
-  const qs = 3;
+
+  // QR pattern
+  ctx.fillStyle = "#1E293B";
+  const qs = 2.5;
   const qx = x + 2;
-  const qy = y - 18;
+  const qy = y - 19;
   const pattern = [
-    [1,1,1,0,1,1],
-    [1,0,1,0,0,1],
-    [1,1,1,0,1,0],
-    [0,0,0,1,0,1],
-    [1,0,1,1,1,1],
-    [1,0,0,1,0,1],
+    [1, 1, 1, 0, 1, 1],
+    [1, 0, 1, 0, 0, 1],
+    [1, 1, 1, 0, 1, 0],
+    [0, 0, 0, 1, 0, 1],
+    [1, 0, 1, 1, 1, 1],
+    [1, 0, 0, 1, 0, 1],
   ];
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 6; c++) {
