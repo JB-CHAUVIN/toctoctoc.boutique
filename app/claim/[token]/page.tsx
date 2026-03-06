@@ -11,9 +11,9 @@ const CLAIM_FEATURES = (["REVIEWS", "LOYALTY", "BOOKING", "SHOWCASE"] as const).
 }));
 
 const TRUST_BADGES = [
-  "Gratuit, sans engagement",
-  "Prêt en 2 minutes",
-  "Aucune compétence technique",
+  "100% gratuit pour démarrer",
+  "Déjà configuré pour vous",
+  "Aucune compétence technique requise",
 ];
 
 export async function generateMetadata({ params }: { params: { token: string } }) {
@@ -90,10 +90,10 @@ export default async function ClaimPage({ params }: { params: { token: string } 
         {/* Hero text */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-            Votre espace digital est prêt
+            Votre espace est prêt, il ne manque que vous
           </h1>
           <p className="mt-2 text-slate-500">
-            Activez-le en 2 minutes, c{"'"}est gratuit.
+            Récoltez plus d{"'"}avis Google et fidélisez vos clients dès aujourd{"'"}hui.
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export default async function ClaimPage({ params }: { params: { token: string } 
         {/* Claim form card */}
         <div className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
           <h3 className="mb-5 text-center text-lg font-bold text-slate-900">
-            Créez votre compte
+            Activez votre espace gratuit
           </h3>
           <ClaimForm token={params.token} businessName={business.name} />
         </div>

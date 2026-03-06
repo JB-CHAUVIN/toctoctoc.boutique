@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { LandingDemoSection } from "@/components/landing/demo-section";
+import { HeroCanvas } from "@/components/landing/hero-canvas";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,33 +13,33 @@ const features = [
   {
     emoji: "⭐",
     title: "Avis Google + Roulette",
-    desc: "Incitez vos clients à laisser des avis et récompensez-les avec une roulette de cadeaux.",
+    desc: "Vos clients scannent un QR code, laissent un avis Google et tentent de gagner une récompense. Résultat : votre note monte, votre visibilité explose.",
     href: "/fonctionnalites/avis-google",
   },
   {
     emoji: "🎯",
     title: "Carte de fidélité digitale",
-    desc: "Programme de tampons personnalisé, zéro papier, zéro app à installer.",
+    desc: "Fini les cartons perdus. Vos clients cumulent leurs points sur leur téléphone, reviennent plus souvent et dépensent plus.",
     href: "/fonctionnalites/carte-de-fidelite",
   },
   {
     emoji: "📅",
     title: "Réservations en ligne",
-    desc: "Vos clients réservent directement depuis votre site, 24h/24.",
+    desc: "Plus de temps perdu au téléphone. Vos clients réservent en autonomie, vous gérez tout depuis votre smartphone.",
     href: null,
   },
   {
     emoji: "🌐",
     title: "Site vitrine personnalisé",
-    desc: "Un site beau et rapide aux couleurs de votre enseigne, prêt en 5 minutes.",
+    desc: "Une page professionnelle aux couleurs de votre enseigne, visible sur Google, prête en 5 minutes.",
     href: "/fonctionnalites/site-vitrine",
   },
 ];
 
 const stats = [
-  { value: "500+", label: "commerces digitalisés" },
-  { value: "5 min", label: "pour tout configurer" },
-  { value: "0 app", label: "requise pour vos clients" },
+  { value: "500+", label: "commerces nous font confiance" },
+  { value: "+200%", label: "d\u2019avis Google en moyenne" },
+  { value: "0\u20AC", label: "pour démarrer, sans engagement" },
 ];
 
 const commerceTypes = [
@@ -57,6 +58,10 @@ const commerceTypes = [
 ];
 
 const faqs = [
+  {
+    q: "Est-ce que ça marche vraiment pour avoir plus d\u2019avis Google ?",
+    a: "Oui. Nos commerçants constatent en moyenne 3 à 5 fois plus d\u2019avis Google dans les 30 premiers jours. Le système de roulette de récompenses motive vos clients à laisser un avis — c\u2019est ludique et ça prend moins d\u2019une minute.",
+  },
   {
     q: "Faut-il des compétences techniques pour utiliser TocTocToc.boutique ?",
     a: "Non, aucune. L'interface est conçue pour les commerçants, pas les développeurs. Vous configurez votre commerce en quelques clics et votre site est en ligne en moins de 5 minutes.",
@@ -221,41 +226,33 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-24 text-center">
-        <span className="mb-4 inline-block rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-medium text-indigo-700">
-          Pour les commerces locaux
-        </span>
-        <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-slate-900 md:text-6xl">
-          Digitalisez votre commerce
-          <br />
-          <span className="text-indigo-600">en 5 minutes</span>
-        </h1>
-        <p className="mx-auto mb-10 max-w-2xl text-lg text-slate-500">
-          Carte de fidélité digitale, avis Google gamifiés, réservations en ligne et site vitrine
-          personnalisé — tout en un, sans aucune compétence technique, sans application à installer.
-        </p>
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <Link
-            href="/register"
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 font-semibold text-white shadow-lg hover:bg-indigo-700"
-          >
-            Commencer gratuitement <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Chiffres clés */}
-      <section className="bg-indigo-600 py-14">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid grid-cols-3 gap-8 text-center">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <div className="text-4xl font-black text-white md:text-5xl">{s.value}</div>
-                <div className="mt-1 text-sm font-medium text-indigo-200">{s.label}</div>
-              </div>
-            ))}
+      {/* Hero — tout visible sans scroll (100vh - nav) */}
+      <section className="relative flex h-[calc(100vh-65px)] flex-col overflow-hidden">
+        {/* Texte — centré verticalement dans sa moitié */}
+        <div className="relative z-10 flex flex-1 items-center justify-center px-6">
+          <div className="mx-auto max-w-6xl text-center">
+            <span className="mb-3 inline-block rounded-full bg-indigo-50/90 px-4 py-1.5 text-xs font-medium text-indigo-700 backdrop-blur-sm sm:text-sm">
+              Rejoint par 500+ commerces locaux
+            </span>
+            <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-4 sm:text-4xl md:mb-6 md:text-5xl lg:text-6xl">
+              Plus d&apos;avis Google,
+              <br />
+              <span className="text-indigo-600">plus de clients fidèles</span>
+            </h1>
+            <p className="mx-auto mb-4 max-w-2xl text-sm text-slate-600 sm:mb-6 sm:text-base md:mb-8 md:text-lg">
+              Vos clients laissent un avis Google en 30 secondes, cumulent leurs points de fidélité sans application, et réservent en ligne 24h/24.
+            </p>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-700 sm:px-8 sm:py-4 sm:text-base"
+            >
+              Essayer gratuitement <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
+        </div>
+        {/* Animation — prend tout l'espace restant */}
+        <div className="relative min-h-0 flex-1">
+          <HeroCanvas />
         </div>
       </section>
 
@@ -263,7 +260,7 @@ export default function HomePage() {
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">
-            Tout ce dont votre commerce a besoin
+            Des résultats concrets pour votre commerce
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => {
@@ -293,17 +290,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Demo interactive */}
-      <LandingDemoSection />
+      {/* Chiffres clés */}
+      <section className="bg-indigo-600 py-14">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            {stats.map((s) => (
+              <div key={s.label}>
+                <div className="text-4xl font-black text-white md:text-5xl">{s.value}</div>
+                <div className="mt-1 text-sm font-medium text-indigo-200">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Pour tous vos commerces */}
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
-            Pour tous vos commerces
+            Adapté à votre activité
           </h2>
           <p className="mb-10 text-center text-slate-500">
-            Boulangerie, restaurant, salon, pharmacie… TocTocToc.boutique s&apos;adapte à chaque type de commerce local.
+            Quel que soit votre commerce, TocTocToc.boutique s&apos;adapte à vos besoins spécifiques.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {commerceTypes.map((c) => {
@@ -325,6 +333,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Demo interactive */}
+      <LandingDemoSection />
+
       {/* Pricing */}
       <section className="py-20">
         <div className="mx-auto max-w-6xl px-6">
@@ -334,7 +345,7 @@ export default function HomePage() {
           <p className="mb-3 text-center text-slate-500">
             Sans engagement, résiliable à tout moment.
             <br />
-            Retour sur investissement garanti !
+            3 à 8x moins cher que la concurrence.
           </p>
           <div className="mx-auto mb-10 w-fit animate-pulse rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-center text-sm font-bold text-white shadow-lg">
             Offre de lancement -50% à vie — pour les 1000 premiers inscrits !

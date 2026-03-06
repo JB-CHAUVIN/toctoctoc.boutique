@@ -88,7 +88,7 @@ export function buildLetterHtml(
     claimUrl && claimQrDataUrl
       ? `
   <div class="claim-section">
-    <div class="claim-title">📲 Presque rien à faire : prenez possession de votre espace en 2 minutes !</div>
+    <div class="claim-title">📲 Activez votre espace en 2 minutes — c'est gratuit</div>
     <div class="claim-body">
       <div class="claim-qr">
         <img src="${claimQrDataUrl}" alt="QR Code activation" width="110" height="110" style="display:block;" />
@@ -96,9 +96,7 @@ export function buildLetterHtml(
       </div>
       <div class="claim-text">
         <p>
-          Scannez ce QR code avec votre smartphone (ou rendez-vous sur le lien ci-dessous)
-          pour <strong>créer votre compte gratuit</strong> et prendre possession de votre espace
-          <strong>${business.name}</strong> qui vous a été préparé.
+          Scannez ce QR code avec votre smartphone pour <strong>activer votre espace ${business.name}</strong> — c'est gratuit, sans engagement, et tout est déjà configuré pour vous.
         </p>
         <p style="margin-top:2mm; font-size:7.5pt; color:#64748b; word-break:break-all; font-family:'Courier New',monospace;">
           ${claimUrl}
@@ -654,7 +652,7 @@ export function buildLetterHtml(
         <img src="${appUrl}/logo.png" alt="" style="height:18px;width:18px;vertical-align:middle;border-radius:4px;display:inline-block;" />
         <span class="hero-brand">TocTocToc.boutique</span>
       </div>
-      <div class="hero-tagline">Digitalisation abordable pour les commerces locaux</div>
+      <div class="hero-tagline">Plus d'avis Google, plus de clients fidèles</div>
     </div>
   </div>
 
@@ -679,18 +677,18 @@ export function buildLetterHtml(
 
     <!-- HOOK BANNER -->
     <div class="hook-banner">
-      <div class="hook-question">Et si vous pouviez digitaliser ${business.name} en 5 minutes ?</div>
+      <div class="hook-question">Et si ${business.name} avait 50 avis Google de plus le mois prochain ?</div>
       <div class="hook-benefits">
         <div class="hook-benefit">
-          <div class="hook-benefit-title">⭐ Booster vos avis Google</div>
-          <div class="hook-benefit-desc">Grimpez en tête des recherches locales et attirez de nouveaux clients chaque jour</div>
+          <div class="hook-benefit-title">⭐ 3x plus d'avis Google</div>
+          <div class="hook-benefit-desc">Vos clients scannent, laissent un avis et tentent de gagner un cadeau. Votre note grimpe, votre visibilité explose.</div>
         </div>
         <div class="hook-benefit">
-          <div class="hook-benefit-title">🎯 Fidéliser vos clients</div>
-          <div class="hook-benefit-desc">Des clients qui reviennent, qui recommandent et qui dépensent plus à chaque visite</div>
+          <div class="hook-benefit-title">🎯 Des clients qui reviennent</div>
+          <div class="hook-benefit-desc">Carte de fidélité digitale sur leur téléphone. Fini les cartons perdus, bonjour la récurrence.</div>
         </div>
       </div>
-      <div class="hook-sub">Tout est déjà prêt pour vous — il ne reste qu'à activer.</div>
+      <div class="hook-sub">Tout est déjà configuré pour ${business.name} — il ne reste qu'à activer.</div>
     </div>
 
     <!-- BODY -->
@@ -698,25 +696,23 @@ export function buildLetterHtml(
       <p>Bonjour,</p>
 
       <p>
-        J'ai préparé un espace digital complet pour <span class="highlight">${business.name}</span> sur
-        <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi.
-        Vos clients scannent un simple QR code : ils laissent un avis Google et tentent de gagner une récompense, ou accèdent à leur carte de fidélité pour cumuler des points — le tout en quelques secondes, sans rien télécharger.
+        Savez-vous combien d'avis Google vous avez ? Et votre concurrent le plus proche ? Aujourd'hui, 9 clients sur 10 consultent les avis avant de choisir un commerce. J'ai préparé un système complet pour <span class="highlight">${business.name}</span> sur <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi. Vos clients scannent un simple QR code pour laisser un avis Google et tenter de gagner une récompense, ou pour accumuler leurs points de fidélité — le tout en quelques secondes, sans rien télécharger.
       </p>
 
       <!-- FEATURES -->
       <div class="features">
-        <div class="features-title">Ce que vous obtenez</div>
+        <div class="features-title">Les résultats concrets</div>
         <div class="features-grid">
           <div class="feature-item">
             <div class="feature-text">
-              <strong>⭐ Collecte d'avis Google</strong>
-              <span>Un système gamifié incite vos clients à laisser des avis — votre visibilité locale s'envole</span>
+              <strong>⭐ 3x plus d'avis Google</strong>
+              <span>Vos clients laissent un avis et jouent à la roulette pour gagner un cadeau. Votre note Google monte, vous apparaissez en tête des recherches locales.</span>
             </div>
           </div>
           <div class="feature-item">
             <div class="feature-text">
-              <strong>🎯 Carte de fidélité digitale</strong>
-              <span>Remplacez les cartons tamponnés par une carte numérique QR — zéro perte, zéro impression</span>
+              <strong>🎯 Des clients qui reviennent</strong>
+              <span>Carte de fidélité sur téléphone, tamponnage par QR code. Vos clients reviennent plus souvent et dépensent davantage.</span>
             </div>
           </div>
         </div>
@@ -736,13 +732,12 @@ export function buildLetterHtml(
 
       <!-- CARDS -->
       <div class="cards-section">
-        <div class="cards-title">📎 Inclus dans ce courrier</div>
+        <div class="cards-title">📎 Prêt à utiliser dès aujourd'hui</div>
         <div class="cards-desc">
-          J'ai joint à ce courrier des <strong>fiches imprimées</strong> (QR codes) que vous pouvez coller
-          directement dans votre commerce dès aujourd'hui — aucune manipulation technique requise :
+          Vous trouverez avec ce courrier des <strong>supports QR codes</strong> prêts à poser sur votre comptoir dès maintenant — aucune manipulation technique :
           <br/>
-          <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis, et tentent de gagner un cadeau<br/>
-          <strong>• Carte de fidélité</strong> — vos clients scannent à chaque visite pour accumuler des tampons
+          <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis Google, et jouent pour gagner un cadeau<br/>
+          <strong>• Carte de fidélité</strong> — vos clients scannent à chaque passage pour cumuler leurs points
         </div>
       </div>
 
@@ -750,7 +745,7 @@ export function buildLetterHtml(
 
     <!-- FOOTER (page 1) -->
     <div class="footer" style="margin-top:auto;">
-      <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
+      <span>TocTocToc.boutique — Plus d'avis Google, plus de clients fidèles</span>
       <span>page 1/2</span>
     </div>
 
@@ -773,7 +768,7 @@ export function buildLetterHtml(
         <div style="position:absolute;width:35mm;height:35mm;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-10mm;left:20mm;pointer-events:none;"></div>
         <div style="position:absolute;width:22mm;height:22mm;border-radius:50%;background:rgba(255,255,255,0.04);top:5mm;left:-5mm;pointer-events:none;"></div>
 
-        <div class="price-block-label">Le tarif le plus compétitif du marché</div>
+        <div class="price-block-label">3 à 8x moins cher que la concurrence</div>
 
         <div style="text-align:center;margin-bottom:3mm;">
           <span style="display:inline-block;background:linear-gradient(90deg,#f59e0b,#f97316);color:white;font-size:8pt;font-weight:800;padding:1.5mm 4mm;border-radius:20px;">
@@ -813,18 +808,14 @@ export function buildLetterHtml(
       </div>
 
       <p style="margin-top:3mm;">
-        Les solutions concurrentes dépassent généralement <strong>30 à 80€/mois</strong> pour des fonctionnalités équivalentes.
-        Chez TocTocToc.boutique, nous avons fait le choix d'être accessibles — parce que chaque commerce local mérite une présence digitale professionnelle.
+        Les solutions concurrentes coûtent entre <strong>30 et 80€/mois</strong>. Chez TocTocToc.boutique, on croit que chaque commerce local mérite des outils performants à un prix juste. C'est pourquoi nous proposons le système complet à partir de <strong>9€/mois</strong>, soit le prix d'un café par semaine.
       </p>
 
       ${claimSection}
 
       <!-- SOFT CLOSE -->
       <div class="soft-close">
-        Si cette proposition ne correspond pas à vos besoins actuels, pas d'inquiétude —
-        gardons simplement contact. Des nouvelles fonctionnalités arrivent régulièrement (e-commerce, standard téléphonique IA, gestion du personnel…)
-        et nous serions ravis de vous en informer le moment venu.
-        Votre espace reste disponible et vous attend.
+        Même si le moment n'est pas idéal, votre espace reste disponible. Et si un jour vous souhaitez booster vos avis Google ou fidéliser vos clients, tout sera prêt en un scan.
       </div>
 
       <p>
@@ -843,7 +834,7 @@ export function buildLetterHtml(
 
     <!-- FOOTER (page 2) -->
     <div class="footer">
-      <span>TocTocToc.boutique — La présence digitale accessible à tous les commerces</span>
+      <span>TocTocToc.boutique — Plus d'avis Google, plus de clients fidèles</span>
       <span>page 2/2</span>
     </div>
 
