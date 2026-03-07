@@ -91,6 +91,7 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
     logoBackground: business.logoBackground,
     googleRating: business.googleRating,
     googleReviewCount: business.googleReviewCount,
+    googleMapsUrl: business.googleMapsUrl,
   };
 
   return (

@@ -5,6 +5,7 @@ import { Copy, Check, Settings2, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProspectLetterButton } from "./prospect-letter";
 import { ProspectStepper } from "./prospect-stepper";
+import { RefreshGoogleButton } from "./refresh-google-button";
 
 const PAPER_TYPES = ["A4 200g", "A4 Photo"] as const;
 const PRINTABLE_SIZES = ["9.3 × 9.3 cm", "10 × 10 cm", "10 × 15 cm"] as const;
@@ -24,6 +25,7 @@ interface BusinessInfo {
   logoBackground?: string | null;
   googleRating?: number | null;
   googleReviewCount?: number | null;
+  googleMapsUrl?: string | null;
 }
 
 interface ProspectInfoData {
@@ -173,6 +175,11 @@ export function SetupPanel({
 
         <CopyButton url={reviewsUrl} label="Copier lien avis" />
         <CopyButton url={loyaltyUrl} label="Copier lien fidélité" />
+
+        <RefreshGoogleButton
+          businessId={businessId}
+          hasGoogleMapsUrl={!!business.googleMapsUrl}
+        />
 
         <button
           onClick={handleToggleProspected}

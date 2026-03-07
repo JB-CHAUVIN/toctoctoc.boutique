@@ -5,7 +5,6 @@ import { FileText, Loader2 } from "lucide-react";
 import QRCode from "qrcode";
 import { hexToRgb } from "@/lib/utils";
 import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
-import { renderSnapshot } from "@/components/landing/hero-animation/render-snapshot";
 
 interface BrandStyleData {
   primaryColor?: string;
@@ -41,6 +40,50 @@ interface Props {
   brandStyle?: BrandStyleData | null;
 }
 
+/** Generates inline SVG stars with partial fill for print HTML */
+function buildSvgStars(rating: number, size: number, emptyColor = "#D1D5DB"): string {
+  const starPath = "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z";
+  return Array.from({ length: 5 }, (_, i) => {
+    const fill = Math.max(0, Math.min(1, rating - i));
+    const id = `s${i}_${Math.random().toString(36).slice(2, 6)}`;
+    if (fill >= 1) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;"><path d="${starPath}" fill="#FBBC04" stroke="none"/></svg>`;
+    }
+    if (fill <= 0) {
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;"><path d="${starPath}" fill="${emptyColor}" stroke="none"/></svg>`;
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" style="display:inline-block;vertical-align:middle;">
+      <defs><linearGradient id="${id}"><stop offset="${Math.round(fill * 100)}%" stop-color="#FBBC04"/><stop offset="${Math.round(fill * 100)}%" stop-color="${emptyColor}"/></linearGradient></defs>
+      <path d="${starPath}" fill="url(#${id})" stroke="none"/></svg>`;
+  }).join("");
+}
+
+/** Builds an HTML mock of a Google Business panel */
+function buildGoogleMock(
+  name: string, rating: number, reviewCount: number, type: string | null,
+  address?: string | null, city?: string | null, zipCode?: string | null,
+): string {
+  const category = type ?? "Commerce local";
+  const addressLine = [address, [zipCode, city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  return `<div style="font-family:Arial,Roboto,sans-serif;background:#fff;border-radius:8px;border:1px solid #dadce0;overflow:hidden;font-size:8pt;line-height:1.4;">
+    <div style="padding:3mm 3.5mm 2.5mm;">
+      <div style="font-size:12pt;font-weight:400;color:#202124;margin-bottom:1mm;">${name}</div>
+      <div style="display:flex;align-items:center;gap:1.5mm;margin-bottom:1mm;">
+        <span style="font-size:9pt;font-weight:600;color:#202124;">${rating.toFixed(1)}</span>
+        ${buildSvgStars(rating, 11, "#dadce0")}
+        <span style="font-size:8pt;color:#70757a;">(${reviewCount.toLocaleString("fr-FR")} avis)</span>
+      </div>
+      <div style="font-size:8pt;color:#70757a;">${category} · <span style="color:#188038;font-weight:500;">Ouvert</span></div>${addressLine ? `
+      <div style="font-size:8pt;color:#70757a;margin-top:0.5mm;">${addressLine}</div>` : ""}
+    </div>
+    <div style="border-top:1px solid #dadce0;display:flex;text-align:center;font-size:7.5pt;color:#1a73e8;font-weight:500;">
+      <div style="flex:1;padding:2mm 0;border-right:1px solid #dadce0;">Itinéraire</div>
+      <div style="flex:1;padding:2mm 0;border-right:1px solid #dadce0;">Enregistrer</div>
+      <div style="flex:1;padding:2mm 0;">Partager</div>
+    </div>
+  </div>`;
+}
+
 export function buildLetterHtml(
   business: BusinessInfo,
   businessId: string,
@@ -50,8 +93,6 @@ export function buildLetterHtml(
   theme: PrintThemeId = "gradient",
   brandStyle?: BrandStyleData | null,
   showAvatar = true,
-  beforeImageUrl?: string | null,
-  afterImageUrl?: string | null,
 ): string {
   const today = new Date().toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -90,30 +131,31 @@ export function buildLetterHtml(
     .join("");
 
   const hasGoogleData = business.googleRating != null && business.googleReviewCount != null;
+  const beforeRating = hasGoogleData ? business.googleRating! : 3.2;
+  const beforeCount = hasGoogleData ? business.googleReviewCount! : 12;
+  const afterRating = 4.9;
+  const afterCount = hasGoogleData ? business.googleReviewCount! * 2 : 142;
   const beforeCaption = hasGoogleData
     ? (business.googleRating! >= 4
-      ? `${business.googleRating!.toFixed(1)}★ avec ${business.googleReviewCount} avis — c'est bien, mais…`
-      : `${business.googleRating!.toFixed(1)}★ avec ${business.googleReviewCount} avis`)
+      ? `Votre fiche est bien notée, mais imaginez avec le double d'avis…`
+      : `${business.googleRating!.toFixed(1)}★ avec seulement ${business.googleReviewCount} avis`)
     : "Peu d'avis, peu de visibilité";
-  const afterReviewCount = hasGoogleData ? business.googleReviewCount! * 2 : 142;
-  const afterCaption = `4.9★, ${afterReviewCount} avis, clients fidèles`;
+  const afterCaption = `${afterRating}★ et ${afterCount} avis — <strong><u>vous dominez la recherche locale</u></strong>`;
 
-  const beforeAfterSection = beforeImageUrl && afterImageUrl
-    ? `
+  const beforeAfterSection = `
   <div class="before-after">
     <div class="ba-col">
       <div class="ba-label ba-label-before">Aujourd'hui</div>
-      <img src="${beforeImageUrl}" alt="Avant TocTocToc" class="ba-img" />
+      ${buildGoogleMock(business.name, beforeRating, beforeCount, business.businessType, business.address, business.city, business.zipCode)}
       <div class="ba-caption">${beforeCaption}</div>
     </div>
     <div class="ba-arrow">→</div>
     <div class="ba-col">
       <div class="ba-label ba-label-after">Avec TocTocToc</div>
-      <img src="${afterImageUrl}" alt="Après TocTocToc" class="ba-img" />
+      ${buildGoogleMock(business.name, afterRating, afterCount, business.businessType, business.address, business.city, business.zipCode)}
       <div class="ba-caption">${afterCaption}</div>
     </div>
-  </div>`
-    : "";
+  </div>`;
 
   const claimSection =
     claimUrl && claimQrDataUrl
@@ -588,7 +630,7 @@ export function buildLetterHtml(
 
   .ba-col {
     flex: 1;
-    text-align: center;
+    text-align: left;
   }
 
   .ba-label {
@@ -603,20 +645,13 @@ export function buildLetterHtml(
   }
 
   .ba-label-before {
-    background: #fef2f2;
-    color: #dc2626;
+    background: #f1f5f9;
+    color: #64748b;
   }
 
   .ba-label-after {
     background: #f0fdf4;
     color: #16a34a;
-  }
-
-  .ba-img {
-    width: 100%;
-    border-radius: 8px;
-    border: 1.5px solid #e2e8f0;
-    display: block;
   }
 
   .ba-caption {
@@ -688,8 +723,8 @@ export function buildLetterHtml(
     <!-- HOOK BANNER -->
     <div class="hook-banner">${business.googleRating != null && business.googleReviewCount != null ? `
       <div style="text-align:center;margin-bottom:3mm;">
-        <span style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:1.5mm 5mm;font-size:9pt;color:#fff;font-weight:600;">
-          Votre note aujourd'hui : ${"★".repeat(Math.floor(business.googleRating))}${business.googleRating % 1 >= 0.3 ? "½" : ""} ${business.googleRating.toFixed(1)}/5 (${business.googleReviewCount} avis)
+        <span style="display:inline-flex;align-items:center;gap:2mm;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:1.5mm 5mm;font-size:9pt;color:#fff;font-weight:600;">
+          Votre note aujourd'hui : ${buildSvgStars(business.googleRating, 14, "#fff")} ${business.googleRating.toFixed(1)}/5 (${business.googleReviewCount} avis)
         </span>
       </div>` : ""}
       <div class="hook-question">Et si ${business.name} avait 50 avis Google de plus le mois prochain ?</div>
@@ -874,16 +909,7 @@ export function ProspectLetterButton({
         });
       }
 
-      // Generate before/after snapshots from the hero animation
-      const snapshotOpts = {
-        shopName: business.name,
-        rating: business.googleRating,
-        reviewCount: business.googleReviewCount,
-      };
-      const beforeImg = renderSnapshot("before", 600, 400, snapshotOpts);
-      const afterImg = renderSnapshot("after", 600, 400, snapshotOpts);
-
-      const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl, theme, brandStyle, true, beforeImg, afterImg);
+      const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl, theme, brandStyle);
       const win = window.open("", "_blank", "width=900,height=1100");
       if (!win) return;
       win.document.write(html);
