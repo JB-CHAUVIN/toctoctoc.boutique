@@ -39,7 +39,7 @@ export function BatchProspectClient({ businesses, appUrl }: Props) {
         tractTheme: "gradient",
         supportTheme: "gradient",
         showAvatar: true,
-        cardVariant: "qr",
+        cardVariant: "nfc",
       };
     });
     setConfigs(newConfigs);

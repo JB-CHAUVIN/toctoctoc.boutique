@@ -63,7 +63,7 @@ function buildGoogleMock(
   name: string, rating: number, reviewCount: number, type: string | null,
   address?: string | null, city?: string | null, zipCode?: string | null,
 ): string {
-  const category = type ?? "Commerce local";
+  const category = (type && type !== "Autre") ? type : "Commerce local";
   const addressLine = [address, [zipCode, city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   return `<div style="font-family:Arial,Roboto,sans-serif;background:#fff;border-radius:8px;border:1px solid #dadce0;overflow:hidden;font-size:8pt;line-height:1.4;">
     <div style="padding:3mm 3.5mm 2.5mm;">

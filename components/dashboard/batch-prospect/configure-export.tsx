@@ -15,6 +15,7 @@ import {
 import { ThemeButtons } from "./theme-buttons";
 import { TractPreview } from "./tract-preview";
 import { SupportCardCapture, SUPPORT_CARD_W, SUPPORT_CARD_H } from "./support-card-capture";
+import { SupportCardVerso } from "./support-card-verso";
 import {
   hasModule,
   getCard,
@@ -50,6 +51,9 @@ export function ConfigureAndExport({
   const captureRefs = useRef<
     Record<string, { reviews: HTMLDivElement | null; loyalty: HTMLDivElement | null }>
   >({});
+  const versoRefs = useRef<
+    Record<string, { reviews: HTMLDivElement | null; loyalty: HTMLDivElement | null }>
+  >({});
 
   const getRefSetter = useCallback(
     (businessId: string, type: "reviews" | "loyalty") => {
@@ -58,6 +62,18 @@ export function ConfigureAndExport({
           captureRefs.current[businessId] = { reviews: null, loyalty: null };
         }
         captureRefs.current[businessId][type] = el;
+      };
+    },
+    [],
+  );
+
+  const getVersoRefSetter = useCallback(
+    (businessId: string, type: "reviews" | "loyalty") => {
+      return (el: HTMLDivElement | null) => {
+        if (!versoRefs.current[businessId]) {
+          versoRefs.current[businessId] = { reviews: null, loyalty: null };
+        }
+        versoRefs.current[businessId][type] = el;
       };
     },
     [],
@@ -213,16 +229,25 @@ export function ConfigureAndExport({
 
       for (const business of businesses) {
         const refs = captureRefs.current[business.id];
+        const vRefs = versoRefs.current[business.id];
         if (!refs) continue;
         const slug = business.slug || business.name.toLowerCase().replace(/\s+/g, "-");
 
         if (hasModule(business, "REVIEWS") && refs.reviews) {
           const png = await toPng(refs.reviews, captureOpts);
           zip.file(`${slug}-avis.png`, png.split(",")[1], { base64: true });
+          if (vRefs?.reviews) {
+            const versoPng = await toPng(vRefs.reviews, captureOpts);
+            zip.file(`${slug}-avis-verso.png`, versoPng.split(",")[1], { base64: true });
+          }
         }
         if (hasModule(business, "LOYALTY") && refs.loyalty) {
           const png = await toPng(refs.loyalty, captureOpts);
           zip.file(`${slug}-fidelite.png`, png.split(",")[1], { base64: true });
+          if (vRefs?.loyalty) {
+            const versoPng = await toPng(vRefs.loyalty, captureOpts);
+            zip.file(`${slug}-fidelite-verso.png`, versoPng.split(",")[1], { base64: true });
+          }
         }
       }
 
@@ -374,10 +399,16 @@ export function ConfigureAndExport({
         return (
           <div key={`capture-${b.id}`}>
             {hasModule(b, "REVIEWS") && (
-              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} />
+              <>
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} />
+                <SupportCardVerso businessName={b.name} cardType="reviews" refSetter={getVersoRefSetter(b.id, "reviews")} />
+              </>
             )}
             {hasModule(b, "LOYALTY") && (
-              <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} />
+              <>
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} />
+                <SupportCardVerso businessName={b.name} cardType="loyalty" refSetter={getVersoRefSetter(b.id, "loyalty")} />
+              </>
             )}
           </div>
         );
