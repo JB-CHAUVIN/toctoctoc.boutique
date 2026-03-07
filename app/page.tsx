@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { LandingDemoSection } from "@/components/landing/demo-section";
-import { HeroCanvas } from "@/components/landing/hero-canvas";
+import { HeroVideo } from "@/components/landing/hero-video";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -226,33 +226,31 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero — tout visible sans scroll (100vh - nav) */}
-      <section className="relative flex h-[calc(100vh-65px)] flex-col overflow-hidden">
-        {/* Texte — centré verticalement dans sa moitié */}
-        <div className="relative z-10 flex flex-1 items-center justify-center px-6">
-          <div className="mx-auto max-w-6xl text-center">
-            <span className="mb-3 inline-block rounded-full bg-indigo-50/90 px-4 py-1.5 text-xs font-medium text-indigo-700 backdrop-blur-sm sm:text-sm">
-              Rejoint par 500+ commerces locaux
-            </span>
-            <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-4 sm:text-4xl md:mb-6 md:text-5xl lg:text-6xl">
-              Plus d&apos;avis Google,
-              <br />
-              <span className="text-indigo-600">plus de clients fidèles</span>
-            </h1>
-            <p className="mx-auto mb-4 max-w-2xl text-sm text-slate-600 sm:mb-6 sm:text-base md:mb-8 md:text-lg">
-              Vos clients laissent un avis Google en 30 secondes, cumulent leurs points de fidélité sans application, et réservent en ligne 24h/24.
-            </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-700 sm:px-8 sm:py-4 sm:text-base"
-            >
-              Essayer gratuitement <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-        {/* Animation — prend tout l'espace restant */}
-        <div className="relative min-h-0 flex-1">
-          <HeroCanvas />
+      {/* Hero — vidéo en arrière-plan, texte centré par-dessus */}
+      <section className="relative flex h-[calc(100vh-65px)] items-center justify-center overflow-hidden">
+        {/* Vidéo background */}
+        <HeroVideo />
+        {/* Overlay gradient pour lisibilité du texte */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-white/80 via-white/50 to-white/80" />
+        {/* Contenu texte */}
+        <div className="relative z-10 px-6 text-center">
+          <span className="mb-3 inline-block rounded-full bg-indigo-50/90 px-4 py-1.5 text-xs font-medium text-indigo-700 backdrop-blur-sm sm:text-sm">
+            Rejoint par 500+ commerces locaux
+          </span>
+          <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-4 sm:text-4xl md:mb-6 md:text-5xl lg:text-6xl">
+            Plus d&apos;avis Google,
+            <br />
+            <span className="text-indigo-600">plus de clients fidèles</span>
+          </h1>
+          <p className="mx-auto mb-4 max-w-2xl text-sm text-slate-600 sm:mb-6 sm:text-base md:mb-8 md:text-lg">
+            Vos clients laissent un avis Google en 30 secondes, cumulent leurs points de fidélité sans application, et réservent en ligne 24h/24.
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-700 sm:px-8 sm:py-4 sm:text-base"
+          >
+            Essayer gratuitement <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
