@@ -53,6 +53,8 @@ export function TractPreview({
           accentColor: business.accentColor,
           logoUrl: business.logoUrl,
           logoBackground: business.logoBackground,
+          googleRating: business.googleRating,
+          googleReviewCount: business.googleReviewCount,
         },
         business.id,
         appUrl,

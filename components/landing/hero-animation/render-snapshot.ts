@@ -3,6 +3,12 @@ import { drawSky, drawGridPattern, drawGround, drawBackgroundBuildings, drawShop
 import { drawCharacter, drawMerchant } from "./draw-characters";
 import { drawStars, drawParticles, drawFloatingTexts } from "./draw-effects";
 
+export interface SnapshotOptions {
+  shopName?: string;
+  rating?: number | null;
+  reviewCount?: number | null;
+}
+
 interface SnapshotState {
   time: number;
   rating: number;
@@ -11,24 +17,28 @@ interface SnapshotState {
   shopGlow: number;
   prosperity: number;
   characters: Character[];
+  shopName?: string;
 }
 
-function buildBeforeState(): SnapshotState {
+function buildBeforeState(opts?: SnapshotOptions): SnapshotState {
+  const rating = opts?.rating ?? 2.0;
+  const reviewCount = opts?.reviewCount ?? 2;
   return {
     time: 0.5,
-    rating: 2.0,
-    reviewCount: 2,
-    merchantMood: 0.1,
+    rating,
+    reviewCount,
+    merchantMood: rating >= 4 ? 0.4 : 0.1,
     shopGlow: 0,
     prosperity: 0,
     characters: [],
+    shopName: opts?.shopName,
   };
 }
 
-function buildAfterState(): SnapshotState {
+function buildAfterState(opts?: SnapshotOptions): SnapshotState {
   const styles = PERSON_STYLES;
+  const beforeCount = opts?.reviewCount ?? 2;
   const characters: Character[] = [
-    // A few customers near the shop in various states
     {
       x: SCENE.QR_X - 15, y: SCENE.GROUND_Y, targetX: SCENE.QR_X,
       speed: 80, state: "celebrating", stateTime: 0.5, hasPhone: true,
@@ -58,16 +68,17 @@ function buildAfterState(): SnapshotState {
   return {
     time: 15,
     rating: 4.9,
-    reviewCount: 142,
+    reviewCount: beforeCount * 2,
     merchantMood: 1,
     shopGlow: 1,
     prosperity: 1,
     characters,
+    shopName: opts?.shopName,
   };
 }
 
 function renderState(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, state: SnapshotState) {
-  const { time, rating, reviewCount, merchantMood, shopGlow, prosperity, characters } = state;
+  const { time, rating, reviewCount, merchantMood, shopGlow, prosperity, characters, shopName } = state;
 
   // Zoom on the shop area (like mobile view)
   const visibleW = 550;
@@ -85,7 +96,7 @@ function renderState(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, s
   drawGridPattern(ctx, time);
   drawBackgroundBuildings(ctx, time);
   drawGround(ctx);
-  drawShop(ctx, shopGlow, time, prosperity);
+  drawShop(ctx, shopGlow, time, prosperity, shopName);
   drawQRStand(ctx);
   drawMerchant(
     ctx,
@@ -107,14 +118,14 @@ function renderState(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, s
 }
 
 /** Renders a "before" or "after" snapshot of the hero animation to a data URL. */
-export function renderSnapshot(type: "before" | "after", width = 600, height = 400): string {
+export function renderSnapshot(type: "before" | "after", width = 600, height = 400, opts?: SnapshotOptions): string {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
 
-  const state = type === "before" ? buildBeforeState() : buildAfterState();
+  const state = type === "before" ? buildBeforeState(opts) : buildAfterState(opts);
   renderState(canvas, ctx, state);
 
   return canvas.toDataURL("image/png");

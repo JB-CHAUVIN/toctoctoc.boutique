@@ -29,6 +29,8 @@ interface BusinessInfo {
   accentColor: string;
   logoUrl?: string | null;
   logoBackground?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
 }
 
 interface Props {
@@ -87,19 +89,28 @@ export function buildLetterHtml(
     .map((l) => `<div>${l}</div>`)
     .join("");
 
+  const hasGoogleData = business.googleRating != null && business.googleReviewCount != null;
+  const beforeCaption = hasGoogleData
+    ? (business.googleRating! >= 4
+      ? `${business.googleRating!.toFixed(1)}★ avec ${business.googleReviewCount} avis — c'est bien, mais…`
+      : `${business.googleRating!.toFixed(1)}★ avec ${business.googleReviewCount} avis`)
+    : "Peu d'avis, peu de visibilité";
+  const afterReviewCount = hasGoogleData ? business.googleReviewCount! * 2 : 142;
+  const afterCaption = `4.9★, ${afterReviewCount} avis, clients fidèles`;
+
   const beforeAfterSection = beforeImageUrl && afterImageUrl
     ? `
   <div class="before-after">
     <div class="ba-col">
-      <div class="ba-label ba-label-before">Avant</div>
+      <div class="ba-label ba-label-before">Aujourd'hui</div>
       <img src="${beforeImageUrl}" alt="Avant TocTocToc" class="ba-img" />
-      <div class="ba-caption">Peu d'avis, peu de visibilité</div>
+      <div class="ba-caption">${beforeCaption}</div>
     </div>
     <div class="ba-arrow">→</div>
     <div class="ba-col">
-      <div class="ba-label ba-label-after">Après</div>
+      <div class="ba-label ba-label-after">Avec TocTocToc</div>
       <img src="${afterImageUrl}" alt="Après TocTocToc" class="ba-img" />
-      <div class="ba-caption">4.9★, 142 avis, clients fidèles</div>
+      <div class="ba-caption">${afterCaption}</div>
     </div>
   </div>`
     : "";
@@ -675,7 +686,12 @@ export function buildLetterHtml(
     </div>
 
     <!-- HOOK BANNER -->
-    <div class="hook-banner">
+    <div class="hook-banner">${business.googleRating != null && business.googleReviewCount != null ? `
+      <div style="text-align:center;margin-bottom:3mm;">
+        <span style="display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:1.5mm 5mm;font-size:9pt;color:#fff;font-weight:600;">
+          Votre note aujourd'hui : ${"★".repeat(Math.floor(business.googleRating))}${business.googleRating % 1 >= 0.3 ? "½" : ""} ${business.googleRating.toFixed(1)}/5 (${business.googleReviewCount} avis)
+        </span>
+      </div>` : ""}
       <div class="hook-question">Et si ${business.name} avait 50 avis Google de plus le mois prochain ?</div>
       <div class="hook-benefits">
         <div class="hook-benefit">
@@ -698,7 +714,9 @@ export function buildLetterHtml(
       <p>Bonjour,</p>
 
       <p>
-        Savez-vous combien d'avis Google vous avez ? Et votre concurrent le plus proche ? Aujourd'hui, 9 clients sur 10 consultent les avis avant de choisir un commerce. J'ai préparé un système complet pour <span class="highlight">${business.name}</span> sur <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi. Vos clients scannent un simple QR code pour laisser un avis Google et tenter de gagner une récompense, ou pour accumuler leurs points de fidélité — le tout en quelques secondes, sans rien télécharger.
+        ${business.googleRating != null && business.googleReviewCount != null
+          ? `Vous avez actuellement <strong>${business.googleRating.toFixed(1)}★</strong> avec <strong>${business.googleReviewCount} avis</strong> sur Google. C'est ${business.googleRating >= 4.5 ? "excellent" : business.googleRating >= 4 ? "bien" : "un bon début"} — mais imaginez l'impact avec 50 avis de plus.`
+          : `Savez-vous combien d'avis Google vous avez ? Et votre concurrent le plus proche ?`} Aujourd'hui, 9 clients sur 10 consultent les avis avant de choisir un commerce. J'ai préparé un système complet pour <span class="highlight">${business.name}</span> sur <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi. Vos clients scannent un simple QR code pour laisser un avis Google et tenter de gagner une récompense, ou pour accumuler leurs points de fidélité — le tout en quelques secondes, sans rien télécharger.
       </p>
 
       <ul style="margin:0 0 4mm 4mm;padding-left:4mm;font-size:10pt;color:#334155;line-height:1.7;">
@@ -857,8 +875,13 @@ export function ProspectLetterButton({
       }
 
       // Generate before/after snapshots from the hero animation
-      const beforeImg = renderSnapshot("before", 600, 400);
-      const afterImg = renderSnapshot("after", 600, 400);
+      const snapshotOpts = {
+        shopName: business.name,
+        rating: business.googleRating,
+        reviewCount: business.googleReviewCount,
+      };
+      const beforeImg = renderSnapshot("before", 600, 400, snapshotOpts);
+      const afterImg = renderSnapshot("after", 600, 400, snapshotOpts);
 
       const html = buildLetterHtml(business, businessId, appUrl, claimUrl, claimQrDataUrl, theme, brandStyle, true, beforeImg, afterImg);
       const win = window.open("", "_blank", "width=900,height=1100");

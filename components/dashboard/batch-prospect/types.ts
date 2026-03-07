@@ -20,6 +20,8 @@ export interface BusinessData {
   accentColor: string;
   logoUrl: string | null;
   logoBackground: string | null;
+  googleRating: number | null;
+  googleReviewCount: number | null;
   claimToken: string | null;
   prospectedAt: string | null;
   brandStyle: Record<string, unknown> | null;

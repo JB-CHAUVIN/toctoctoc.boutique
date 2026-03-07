@@ -89,6 +89,8 @@ export default async function BusinessOverviewPage({ params }: { params: { busin
     accentColor: business.accentColor,
     logoUrl: business.logoUrl,
     logoBackground: business.logoBackground,
+    googleRating: business.googleRating,
+    googleReviewCount: business.googleReviewCount,
   };
 
   return (

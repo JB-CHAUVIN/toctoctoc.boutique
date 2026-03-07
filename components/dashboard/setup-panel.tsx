@@ -22,6 +22,8 @@ interface BusinessInfo {
   accentColor: string;
   logoUrl?: string | null;
   logoBackground?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
 }
 
 interface ProspectInfoData {

@@ -86,7 +86,8 @@ export function drawShop(
   ctx: CanvasRenderingContext2D,
   glow: number,
   time: number,
-  prosperity: number
+  prosperity: number,
+  shopName?: string,
 ) {
   const sx = SCENE.SHOP_X;
   const sw = SCENE.SHOP_W;
@@ -132,9 +133,11 @@ export function drawShop(
   roundRect(ctx, sx + sw / 2 - signW / 2, st + 8, signW, signH, 4);
   ctx.fill();
   ctx.fillStyle = COLORS.signText;
-  ctx.font = "600 10px 'Plus Jakarta Sans', sans-serif";
+  const displayName = (shopName ?? "MON COMMERCE").toUpperCase();
+  const fontSize = displayName.length > 16 ? 7 : displayName.length > 12 ? 8.5 : 10;
+  ctx.font = `600 ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("MON COMMERCE", sx + sw / 2, st + 22);
+  ctx.fillText(displayName, sx + sw / 2, st + 22, signW - 10);
 
   // Windows
   drawWindow(ctx, sx + 20, st + 42, 50, 38);

@@ -34,6 +34,8 @@ export default async function BatchProspectPage() {
       accentColor: true,
       logoUrl: true,
       logoBackground: true,
+      googleRating: true,
+      googleReviewCount: true,
       claimToken: true,
       prospectedAt: true,
       brandStyle: true,
