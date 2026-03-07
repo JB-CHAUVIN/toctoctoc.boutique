@@ -77,6 +77,34 @@ export default async function ReviewsDashboardPage({ params }: { params: { busin
         </Link>
       </div>
 
+      {/* Note Google actuelle */}
+      {business.googleRating != null && business.googleReviewCount != null && (
+        <div className="mb-6 rounded-2xl border border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 p-5">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: 5 }, (_, i) => {
+                const full = i < Math.floor(business.googleRating!);
+                const half = !full && i === Math.floor(business.googleRating!) && business.googleRating! - Math.floor(business.googleRating!) >= 0.3;
+                return (
+                  <Star
+                    key={i}
+                    className={`h-6 w-6 ${full || half ? "fill-amber-400 text-amber-400" : "text-slate-200"}`}
+                  />
+                );
+              })}
+            </div>
+            <div>
+              <p className="text-lg font-bold text-slate-900">
+                {business.googleRating.toFixed(1)}<span className="text-sm font-normal text-slate-400">/5</span>
+              </p>
+              <p className="text-sm text-slate-500">
+                Votre note Google aujourd&apos;hui ({business.googleReviewCount} avis)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatsCard label="Avis initiés" value={business._count.reviews} icon="📝" color="indigo" />

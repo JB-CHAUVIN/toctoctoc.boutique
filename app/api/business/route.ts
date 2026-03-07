@@ -76,6 +76,8 @@ const createBusinessSchema = z.object({
   logoUrl: z.string().optional(),
   logoBackground: z.string().optional(),
   brandStyle: z.any().optional(),
+  googleRating: z.number().min(0).max(5).nullable().optional(),
+  googleReviewCount: z.number().int().min(0).nullable().optional(),
 });
 
 export async function GET() {
@@ -140,7 +142,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, reviewUrl, ...rest } = parsed.data;
+    const { name, reviewUrl, googleRating, googleReviewCount, ...rest } = parsed.data;
 
     // Générer un slug unique
     let slug = slugify(name);
@@ -152,6 +154,8 @@ export async function POST(req: Request) {
         name,
         slug,
         ...rest,
+        ...(googleRating != null && { googleRating }),
+        ...(googleReviewCount != null && { googleReviewCount }),
         isPublished: true,
         userId: session.user.id,
         // Admin crée un prospect → claimToken auto-généré

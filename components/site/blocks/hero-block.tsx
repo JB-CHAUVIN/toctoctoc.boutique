@@ -12,8 +12,38 @@ interface HeroBlockProps {
     secondaryColor: string;
     accentColor: string;
     slug: string;
+    googleRating: number | null;
+    googleReviewCount: number | null;
   };
   hasBooking: boolean;
+}
+
+function GoogleRatingBadge({ rating, count, variant }: { rating: number; count: number; variant: "light" | "dark" }) {
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.3;
+  const stars = Array.from({ length: 5 }, (_, i) => {
+    if (i < fullStars) return "full";
+    if (i === fullStars && hasHalf) return "half";
+    return "empty";
+  });
+
+  const isDark = variant === "dark";
+
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium backdrop-blur-sm ${
+      isDark ? "bg-white/15 text-white" : "bg-black/5 text-slate-700"
+    }`}>
+      <div className="flex items-center gap-0.5">
+        {stars.map((type, i) => (
+          <svg key={i} className="h-4 w-4" viewBox="0 0 20 20" fill={type === "empty" ? "none" : "#facc15"} stroke={type === "empty" ? (isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.2)") : "none"}>
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        ))}
+      </div>
+      <span className="font-bold">{rating.toFixed(1)}</span>
+      <span className={isDark ? "text-white/60" : "text-slate-400"}>({count} avis)</span>
+    </div>
+  );
 }
 
 export function HeroBlock({ content, business, hasBooking }: HeroBlockProps) {
@@ -60,6 +90,11 @@ export function HeroBlock({ content, business, hasBooking }: HeroBlockProps) {
               </Link>
             </div>
           )}
+          {business.googleRating && business.googleReviewCount ? (
+            <div className={`mt-6 ${isLeft ? "" : "flex justify-center"}`}>
+              <GoogleRatingBadge rating={business.googleRating} count={business.googleReviewCount} variant="dark" />
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -110,6 +145,15 @@ export function HeroBlock({ content, business, hasBooking }: HeroBlockProps) {
             </Link>
           </div>
         )}
+        {business.googleRating && business.googleReviewCount ? (
+          <div className={`mt-6 ${!isLeft ? "flex justify-center" : ""}`}>
+            <GoogleRatingBadge
+              rating={business.googleRating}
+              count={business.googleReviewCount}
+              variant={contrastColor(business.primaryColor) === "#ffffff" ? "dark" : "light"}
+            />
+          </div>
+        ) : null}
       </div>
     </section>
   );

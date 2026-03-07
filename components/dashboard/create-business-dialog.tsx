@@ -54,6 +54,8 @@ export interface BusinessFormValues {
   logoUrl: string;
   logoBackground: string;
   brandStyle: BrandStyleData | null;
+  googleRating: number | null;
+  googleReviewCount: number | null;
 }
 
 const DEFAULT_VALUES: BusinessFormValues = {
@@ -73,6 +75,8 @@ const DEFAULT_VALUES: BusinessFormValues = {
   logoUrl: "",
   logoBackground: "",
   brandStyle: null,
+  googleRating: null,
+  googleReviewCount: null,
 };
 
 interface Props {
@@ -253,6 +257,8 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
         apply("city", d.city, "Ville"); apply("zipCode", d.zipCode, "Code postal");
         apply("phone", d.phone, "Téléphone"); apply("website", d.website, "Site web");
         apply("googleMapsUrl", d.googleMapsUrl, "Lien Maps"); apply("reviewUrl", d.reviewUrl, "Lien avis");
+        if (d.googleRating != null) next.googleRating = Number(d.googleRating);
+        if (d.googleReviewCount != null) next.googleReviewCount = Number(d.googleReviewCount);
         return next;
       });
       const hasData = Object.values(d).some(Boolean);
@@ -397,6 +403,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
                       const LABELS: Record<string, string> = {
                         name: "Nom", businessType: "Type", address: "Adresse", city: "Ville",
                         zipCode: "CP", phone: "Tél", website: "Site", googleMapsUrl: "Maps", description: "Desc",
+                        googleRating: "Note", googleReviewCount: "Avis",
                       };
                       const entries = Object.entries(LABELS)
                         .map(([key, label]) => ({ key, label, value: googleResult[key] }))

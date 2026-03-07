@@ -43,6 +43,8 @@ interface Business {
   facebookUrl: string | null;
   instagramUrl: string | null;
   googleMapsUrl: string | null;
+  googleRating: number | null;
+  googleReviewCount: number | null;
 }
 
 interface BlockRendererProps {

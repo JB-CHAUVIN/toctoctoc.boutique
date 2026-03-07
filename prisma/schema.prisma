@@ -154,6 +154,10 @@ model Business {
   // Brand style (extracted from website)
   brandStyle Json?
 
+  // Google Places
+  googleRating      Float?
+  googleReviewCount Int?
+
   // Réseaux sociaux
   facebookUrl  String?
   instagramUrl String?

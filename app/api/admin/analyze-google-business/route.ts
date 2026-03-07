@@ -107,7 +107,7 @@ async function fetchViaPlacesAPI(query: string, originalUrl: string, coords?: { 
   }
 
   // Place Details → champs utiles
-  const fields = "name,formatted_address,address_components,formatted_phone_number,website,url,types,place_id";
+  const fields = "name,formatted_address,address_components,formatted_phone_number,website,url,types,place_id,rating,user_ratings_total";
   const detailResp = await fetch(
     `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}&language=fr`,
   );
@@ -139,15 +139,17 @@ async function fetchViaPlacesAPI(query: string, originalUrl: string, coords?: { 
   console.log(`[Google/Places]   types Google : ${types.slice(0, 5).join(", ")} → businessType : ${businessType}`);
 
   return {
-    name:          place.name ?? null,
+    name:              place.name ?? null,
     businessType,
     address,
     city,
     zipCode,
-    phone:         place.formatted_phone_number ?? null,
-    website:       place.website ?? null,
-    googleMapsUrl: place.url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
-    reviewUrl:     `https://search.google.com/local/writereview?placeid=${placeId}`,
+    phone:             place.formatted_phone_number ?? null,
+    website:           place.website ?? null,
+    googleMapsUrl:     place.url ?? `https://www.google.com/maps/place/?q=place_id:${placeId}`,
+    reviewUrl:         `https://search.google.com/local/writereview?placeid=${placeId}`,
+    googleRating:      place.rating ?? null,
+    googleReviewCount: place.user_ratings_total ?? null,
   };
 }
 
