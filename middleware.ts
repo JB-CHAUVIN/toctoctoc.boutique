@@ -4,6 +4,9 @@ import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
+// Paths to exclude from page view tracking (prefixes)
+const TRACKING_EXCLUDE = ["/api", "/_next", "/favicon.ico"];
+
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
@@ -21,6 +24,26 @@ export default auth((req) => {
   // Si déjà connecté et on accède à login/register → dashboard
   if (isAuthRoute && isLoggedIn) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl.origin));
+  }
+
+  // Page view tracking (fire-and-forget)
+  const shouldTrack = !TRACKING_EXCLUDE.some((p) => nextUrl.pathname.startsWith(p));
+  if (shouldTrack) {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      undefined;
+
+    fetch(`${nextUrl.origin}/api/log/pageview`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pathname: nextUrl.pathname,
+        ip,
+        userAgent: req.headers.get("user-agent") || undefined,
+        referer: req.headers.get("referer") || undefined,
+      }),
+    }).catch(() => {});
   }
 
   const requestHeaders = new Headers(req.headers);

@@ -6,6 +6,7 @@ import { BusinessStatsSection } from "./business-stats";
 import { BusinessSearch } from "./business-search";
 import { ProspectStepperGlobal } from "@/components/dashboard/prospect-stepper";
 import { batchGetProspectData, computeProspectStep, PROSPECT_STEPS } from "@/lib/prospect-steps";
+import { VISITOR_TYPE_LABELS, type VisitorType } from "@/lib/visitor-type";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -161,6 +162,39 @@ export default async function AdminStatsPage({
   }
 
   // ── Global stats ──
+  // ── Page view stats ──
+  const [pageviewsByPath, recentPageviews, totalPageviews, visitorTypeCounts] = await Promise.all([
+    prisma.$queryRaw<Array<{ pathname: string; count: bigint }>>`
+      SELECT JSON_UNQUOTE(JSON_EXTRACT(meta, '$.pathname')) AS pathname, COUNT(*) AS count
+      FROM Log WHERE action = 'pageview'
+      GROUP BY pathname ORDER BY count DESC LIMIT 20
+    `,
+    prisma.log.findMany({
+      where: { action: "pageview" },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: { id: true, meta: true, createdAt: true },
+    }),
+    prisma.log.count({ where: { action: "pageview" } }),
+    prisma.$queryRaw<Array<{ visitorType: string; count: bigint }>>`
+      SELECT COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.visitorType')), 'human') AS visitorType,
+             COUNT(*) AS count
+      FROM Log WHERE action = 'pageview'
+      GROUP BY visitorType ORDER BY count DESC
+    `,
+  ]);
+
+  const topPages = pageviewsByPath.map((r) => ({
+    pathname: r.pathname,
+    count: Number(r.count),
+  }));
+
+  const visitorBreakdown = visitorTypeCounts.map((r) => ({
+    type: r.visitorType as VisitorType,
+    count: Number(r.count),
+  }));
+
+  // ── Global stats ──
   const [
     totalBusinesses,
     prospectedBusinesses,
@@ -196,6 +230,7 @@ export default async function AdminStatsPage({
       take: 100,
     }),
     prisma.log.findMany({
+      where: { action: { not: "pageview" } },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
@@ -276,6 +311,137 @@ export default async function AdminStatsPage({
       {businessStats && (
         <BusinessStatsSection stats={businessStats} actionIcons={ACTION_ICONS} />
       )}
+
+      {/* ── Trafic pages ── */}
+      <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+          Trafic pages
+          <span className="ml-2 text-sm font-normal text-slate-400">
+            ({totalPageviews} vues totales)
+          </span>
+        </h2>
+
+        {/* Visitor type breakdown */}
+        {visitorBreakdown.length > 0 && (
+          <div className="mb-6 flex flex-wrap gap-3">
+            {visitorBreakdown.map((v) => {
+              const info = VISITOR_TYPE_LABELS[v.type] ?? VISITOR_TYPE_LABELS.other_bot;
+              const pct = totalPageviews > 0 ? Math.round((v.count / totalPageviews) * 100) : 0;
+              return (
+                <div
+                  key={v.type}
+                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-4 py-2"
+                >
+                  <span className="text-lg">{info.emoji}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {v.count} <span className="text-xs font-normal text-slate-400">({pct}%)</span>
+                    </p>
+                    <p className="text-xs text-slate-500">{info.label}</p>
+                  </div>
+                  <div className={`h-2 w-2 rounded-full ${info.color}`} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Top pages */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Pages les plus visitées
+            </h3>
+            {topPages.length === 0 ? (
+              <p className="text-sm text-slate-500">Aucune donnée.</p>
+            ) : (
+              <div className="space-y-2">
+                {topPages.map((p, i) => {
+                  const pct = Math.round((p.count / topPages[0].count) * 100);
+                  return (
+                    <div key={p.pathname} className="flex items-center gap-3">
+                      <span className="w-6 text-right text-xs font-medium text-slate-400">
+                        {i + 1}.
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="truncate font-mono text-slate-700">
+                            {p.pathname}
+                          </span>
+                          <span className="ml-2 font-bold text-slate-900">
+                            {p.count}
+                          </span>
+                        </div>
+                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-indigo-500 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Recent page views */}
+          <div>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Visites récentes
+            </h3>
+            {recentPageviews.length === 0 ? (
+              <p className="text-sm text-slate-500">Aucune visite enregistrée.</p>
+            ) : (
+              <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                {recentPageviews.map((pv) => {
+                  const meta = pv.meta as Record<string, unknown> | null;
+                  const pathname = meta?.pathname as string;
+                  const ip = meta?.ip as string | undefined;
+                  const vType = (meta?.visitorType as VisitorType) ?? "human";
+                  const vInfo = VISITOR_TYPE_LABELS[vType] ?? VISITOR_TYPE_LABELS.other_bot;
+                  return (
+                    <div
+                      key={pv.id}
+                      className="flex items-center gap-3 rounded-lg px-3 py-1.5 hover:bg-slate-50"
+                    >
+                      <span className="text-base">{vInfo.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate font-mono text-xs font-medium text-slate-700">
+                            {pathname}
+                          </span>
+                          <span
+                            className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white ${vInfo.color}`}
+                          >
+                            {vInfo.label}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {formatDate(pv.createdAt)}
+                          </span>
+                        </div>
+                        {ip && (
+                          <div className="text-xs text-slate-400">
+                            <a
+                              href={`https://whatismyipaddress.com/ip/${ip}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 underline hover:text-indigo-800"
+                            >
+                              {ip}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* ── Global KPIs ── */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
