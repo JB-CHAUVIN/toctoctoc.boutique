@@ -235,8 +235,8 @@ export function ConfigureAndExport({
         if (!refs) continue;
 
         for (const type of ["reviews", "loyalty"] as const) {
-          const module = type === "reviews" ? "REVIEWS" : "LOYALTY";
-          if (!hasModule(business, module) || !refs[type]) continue;
+          const modType = type === "reviews" ? "REVIEWS" : "LOYALTY";
+          if (!hasModule(business, modType) || !refs[type]) continue;
 
           const rectoPng = await toPng(refs[type]!, captureOpts);
           rectoImages.push(rectoPng);
