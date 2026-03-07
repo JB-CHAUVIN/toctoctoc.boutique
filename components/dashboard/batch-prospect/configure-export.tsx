@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ArrowLeft, FileText, ImageDown, Loader2 } from "lucide-react";
 import { toPng } from "html-to-image";
-import JSZip from "jszip";
+import { jsPDF } from "jspdf";
 import toast from "react-hot-toast";
 import type { PrintThemeId } from "@/lib/constants";
 import { buildLetterHtml } from "../prospect-letter";
@@ -207,10 +207,9 @@ export function ConfigureAndExport({
     }
   }
 
-  async function handleGenerateZip() {
+  async function handleGeneratePdfs() {
     setGeneratingZip(true);
     try {
-      const zip = new JSZip();
       // Wait for QR codes & images to render in hidden captures
       await new Promise((r) => setTimeout(r, 1500));
 
@@ -220,48 +219,53 @@ export function ConfigureAndExport({
         height: SUPPORT_CARD_H,
         cacheBust: true,
         skipAutoScale: true,
-        style: {
-          position: "static",
-          left: "0",
-          top: "0",
-        },
+        style: { position: "static", left: "0", top: "0" },
       };
+
+      // Card is 300x300px at 2x → physical ~93mm square. Use 100x100mm page.
+      const PAGE_W_MM = 100;
+      const PAGE_H_MM = 100;
+
+      const rectoImages: string[] = [];
+      const versoImages: string[] = [];
 
       for (const business of businesses) {
         const refs = captureRefs.current[business.id];
         const vRefs = versoRefs.current[business.id];
         if (!refs) continue;
-        const slug = business.slug || business.name.toLowerCase().replace(/\s+/g, "-");
 
-        if (hasModule(business, "REVIEWS") && refs.reviews) {
-          const png = await toPng(refs.reviews, captureOpts);
-          zip.file(`${slug}-avis.png`, png.split(",")[1], { base64: true });
-          if (vRefs?.reviews) {
-            const versoPng = await toPng(vRefs.reviews, captureOpts);
-            zip.file(`${slug}-avis-verso.png`, versoPng.split(",")[1], { base64: true });
-          }
-        }
-        if (hasModule(business, "LOYALTY") && refs.loyalty) {
-          const png = await toPng(refs.loyalty, captureOpts);
-          zip.file(`${slug}-fidelite.png`, png.split(",")[1], { base64: true });
-          if (vRefs?.loyalty) {
-            const versoPng = await toPng(vRefs.loyalty, captureOpts);
-            zip.file(`${slug}-fidelite-verso.png`, versoPng.split(",")[1], { base64: true });
+        for (const type of ["reviews", "loyalty"] as const) {
+          const module = type === "reviews" ? "REVIEWS" : "LOYALTY";
+          if (!hasModule(business, module) || !refs[type]) continue;
+
+          const rectoPng = await toPng(refs[type]!, captureOpts);
+          rectoImages.push(rectoPng);
+
+          if (vRefs?.[type]) {
+            const versoPng = await toPng(vRefs[type]!, captureOpts);
+            versoImages.push(versoPng);
           }
         }
       }
 
-      const blob = await zip.generateAsync({ type: "blob" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `supports-terrain-${new Date().toISOString().slice(0, 10)}.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("ZIP des supports telecharge");
+      const buildPdf = (images: string[], filename: string) => {
+        if (images.length === 0) return;
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [PAGE_W_MM, PAGE_H_MM] });
+        images.forEach((img, i) => {
+          if (i > 0) pdf.addPage([PAGE_W_MM, PAGE_H_MM], "landscape");
+          pdf.addImage(img, "PNG", 0, 0, PAGE_W_MM, PAGE_H_MM);
+        });
+        pdf.save(filename);
+      };
+
+      const dateSuffix = new Date().toISOString().slice(0, 10);
+      buildPdf(rectoImages, `supports-recto-${dateSuffix}.pdf`);
+      buildPdf(versoImages, `supports-verso-${dateSuffix}.pdf`);
+
+      toast.success("PDFs des supports telecharges");
     } catch (err) {
-      console.error("[BATCH-ZIP]", err);
-      toast.error("Erreur lors de la generation du ZIP");
+      console.error("[BATCH-PDF]", err);
+      toast.error("Erreur lors de la generation des PDFs");
     } finally {
       setGeneratingZip(false);
     }
@@ -425,15 +429,15 @@ export function ConfigureAndExport({
           {generatingTracts ? "Generation..." : `Imprimer ${businesses.length} tract${businesses.length > 1 ? "s" : ""}`}
         </button>
         <button
-          onClick={handleGenerateZip}
+          onClick={handleGeneratePdfs}
           disabled={generatingZip}
           className="flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
         >
           {generatingZip ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageDown className="h-4 w-4" />}
-          {generatingZip ? "Generation..." : "Telecharger supports (.zip)"}
+          {generatingZip ? "Generation..." : "Telecharger supports (.pdf)"}
         </button>
         <span className="text-xs text-slate-400">
-          Les tracts s&apos;impriment via la boite de dialogue du navigateur (Enregistrer en PDF). Les supports sont telecharges dans un fichier ZIP.
+          Les tracts s&apos;impriment via la boite de dialogue du navigateur. Les supports sont telecharges en 2 PDFs (recto + verso).
         </span>
       </div>
     </div>
