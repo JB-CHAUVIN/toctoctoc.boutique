@@ -133,6 +133,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
   const [analyzingWebsite, setAnalyzingWebsite] = useState(false);
   const [websiteAnalyzed, setWebsiteAnalyzed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [secondaryTouched, setSecondaryTouched] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -145,6 +146,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       setLogoPreview(null);
       setGoogleResult(null);
       setWebsiteAnalyzed(false);
+      setSecondaryTouched(false);
       setShowAdvanced(!!isAdmin);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -157,7 +159,13 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
   }, [open, onClose]);
 
   function set(key: keyof BusinessFormValues, value: string) {
-    setForm((f) => ({ ...f, [key]: value }));
+    if (key === "secondaryColor") setSecondaryTouched(true);
+    setForm((f) => ({
+      ...f,
+      [key]: value,
+      // Sync secondary to primary when primary changes and secondary hasn't been manually touched
+      ...(key === "primaryColor" && !secondaryTouched && { secondaryColor: value }),
+    }));
   }
 
   async function fileToBase64(file: File) {

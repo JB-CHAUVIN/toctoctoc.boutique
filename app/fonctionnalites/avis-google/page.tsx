@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle, QrCode, Star, Gift } from "lucide-react";
+import { ArrowRight, CheckCircle, ChevronDown, QrCode, Star, Gift } from "lucide-react";
 import type { Metadata } from "next";
 import { REVIEWS_TYPES } from "@/lib/seo-data";
+import { FeatureNav } from "@/components/landing/feature-nav";
+import { FeatureFooter } from "@/components/landing/feature-footer";
 
 export const metadata: Metadata = {
   title: "Boostez vos avis Google avec la gamification",
@@ -116,21 +118,7 @@ export default function AvisGooglePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-1.5">
-            <span className="text-xl font-bold text-indigo-600">TocTocToc</span>
-            <span className="text-xl font-bold text-slate-400">.boutique</span>
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            Essai gratuit
-          </Link>
-        </div>
-      </nav>
+      <FeatureNav />
 
       {/* Breadcrumb */}
       <div className="mx-auto max-w-6xl px-6 pt-4 text-sm text-slate-400">
@@ -322,8 +310,9 @@ export default function AvisGooglePage() {
                 key={i}
                 className="group rounded-2xl border border-slate-200 bg-white px-6 py-4"
               >
-                <summary className="cursor-pointer list-none font-semibold text-slate-900 group-open:text-indigo-600">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900 group-open:text-indigo-600 [&::-webkit-details-marker]:hidden">
                   {faq.q}
+                  <ChevronDown className="ml-3 h-5 w-5 flex-shrink-0 text-slate-400 transition-transform group-open:rotate-180 group-open:text-indigo-500" />
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-slate-500">{faq.a}</p>
               </details>
@@ -350,15 +339,7 @@ export default function AvisGooglePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-400">
-        <div className="flex justify-center gap-4">
-          <Link href="/" className="hover:text-indigo-600">Accueil</Link>
-          <Link href="/fonctionnalites/carte-de-fidelite" className="hover:text-indigo-600">Fidélité</Link>
-          <Link href="/fonctionnalites/site-vitrine" className="hover:text-indigo-600">Site vitrine</Link>
-          <Link href="/register" className="hover:text-indigo-600">Inscription</Link>
-        </div>
-      </footer>
+      <FeatureFooter />
     </div>
   );
 }

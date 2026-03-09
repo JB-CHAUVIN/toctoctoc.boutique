@@ -35,10 +35,11 @@ export function BatchProspectClient({ businesses, appUrl }: Props) {
   function handleContinue() {
     const newConfigs: Record<string, BusinessConfig> = {};
     selected.forEach((id) => {
+      const biz = businesses.find((b) => b.id === id);
       newConfigs[id] = configs[id] ?? {
         tractTheme: "gradient",
         supportTheme: "gradient",
-        showAvatar: true,
+        showAvatar: !!biz?.logoUrl,
         cardVariant: "nfc",
       };
     });
