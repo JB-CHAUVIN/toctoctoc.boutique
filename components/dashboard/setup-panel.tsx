@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Settings2, ChevronDown } from "lucide-react";
+import { Copy, Check, Settings2, ChevronDown, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProspectLetterButton } from "./prospect-letter";
 import { ProspectStepper } from "./prospect-stepper";
@@ -175,6 +175,18 @@ export function SetupPanel({
 
         <CopyButton url={reviewsUrl} label="Copier lien avis" />
         <CopyButton url={loyaltyUrl} label="Copier lien fidélité" />
+
+        {business.googleMapsUrl && (
+          <a
+            href={business.googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            Google Maps
+          </a>
+        )}
 
         <RefreshGoogleButton
           businessId={businessId}

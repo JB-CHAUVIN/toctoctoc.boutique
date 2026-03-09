@@ -557,6 +557,17 @@ model PrintOrder {
 }
 
 // ─────────────────────────────────────────
+// IPs EXCLUES DES STATS
+// ─────────────────────────────────────────
+
+model ExcludedIp {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  label     String?  // ex: "Mon IP bureau", "Mon IP maison"
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────
 // LOGS
 // ─────────────────────────────────────────
 

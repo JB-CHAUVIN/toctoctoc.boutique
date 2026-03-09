@@ -7,6 +7,8 @@ import { BusinessSearch } from "./business-search";
 import { ProspectStepperGlobal } from "@/components/dashboard/prospect-stepper";
 import { batchGetProspectData, computeProspectStep, PROSPECT_STEPS } from "@/lib/prospect-steps";
 import { VISITOR_TYPE_LABELS, type VisitorType } from "@/lib/visitor-type";
+import { IpClickable } from "@/components/dashboard/ip-clickable";
+import { ExcludedIpsPanel } from "@/components/dashboard/excluded-ips-panel";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -52,6 +54,12 @@ export default async function AdminStatsPage({
     select: { role: true },
   });
   if (user?.role !== "ADMIN") redirect("/dashboard");
+
+  // Fetch excluded IPs
+  const excludedIpRecords = await prisma.excludedIp.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  const excludedIps = excludedIpRecords.map((r) => r.ip);
 
   // Fetch all businesses for the selector
   const allBusinesses = await prisma.business.findMany({
@@ -163,30 +171,46 @@ export default async function AdminStatsPage({
 
   // ── Global stats ──
   // ── Page view stats ──
+  // SQL condition to exclude admin IPs
+  const ipExcludeCondition = excludedIps.length > 0
+    ? `AND (JSON_UNQUOTE(JSON_EXTRACT(meta, '$.ip')) NOT IN (${excludedIps.map(() => "?").join(",")}) OR JSON_EXTRACT(meta, '$.ip') IS NULL)`
+    : "";
+
   const [pageviewsByPath, recentPageviews, totalPageviews, visitorTypeCounts] = await Promise.all([
-    prisma.$queryRaw<Array<{ pathname: string; count: bigint }>>`
-      SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.pathname')) AS CHAR) AS pathname, COUNT(*) AS count
-      FROM Log WHERE action = 'pageview'
-      GROUP BY pathname ORDER BY count DESC LIMIT 20
-    `,
-    prisma.log.findMany({
-      where: { action: "pageview" },
-      orderBy: { createdAt: "desc" },
-      take: 30,
-      select: { id: true, meta: true, createdAt: true },
-    }),
-    prisma.log.count({ where: { action: "pageview" } }),
-    prisma.$queryRaw<Array<{ visitorType: string; count: bigint }>>`
-      SELECT COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.visitorType')) AS CHAR), 'human') AS visitorType,
-             COUNT(*) AS count
-      FROM Log WHERE action = 'pageview'
-      GROUP BY visitorType ORDER BY count DESC
-    `,
+    prisma.$queryRawUnsafe<Array<{ pathname: string; count: bigint }>>(
+      `SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.pathname')) AS CHAR) AS pathname, COUNT(*) AS count
+       FROM Log WHERE action = 'pageview' ${ipExcludeCondition}
+       GROUP BY pathname ORDER BY count DESC LIMIT 20`,
+      ...excludedIps
+    ),
+    prisma.$queryRawUnsafe<Array<{ id: string; meta: string; createdAt: Date }>>(
+      `SELECT id, meta, createdAt FROM Log WHERE action = 'pageview' ${ipExcludeCondition}
+       ORDER BY createdAt DESC LIMIT 30`,
+      ...excludedIps
+    ),
+    prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      `SELECT COUNT(*) as count FROM Log WHERE action = 'pageview' ${ipExcludeCondition}`,
+      ...excludedIps
+    ).then((r) => Number(r[0]?.count ?? 0)),
+    prisma.$queryRawUnsafe<Array<{ visitorType: string; count: bigint }>>(
+      `SELECT COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.visitorType')) AS CHAR), 'human') AS visitorType,
+              COUNT(*) AS count
+       FROM Log WHERE action = 'pageview' ${ipExcludeCondition}
+       GROUP BY visitorType ORDER BY count DESC`,
+      ...excludedIps
+    ),
   ]);
 
   const topPages = pageviewsByPath.map((r) => ({
     pathname: r.pathname,
     count: Number(r.count),
+  }));
+
+  // Parse raw pageview results
+  const parsedPageviews = recentPageviews.map((pv) => ({
+    id: pv.id,
+    meta: typeof pv.meta === "string" ? JSON.parse(pv.meta) : pv.meta,
+    createdAt: pv.createdAt,
   }));
 
   const visitorBreakdown = visitorTypeCounts.map((r) => ({
@@ -204,7 +228,7 @@ export default async function AdminStatsPage({
     claimFormSubmitted,
     claimSuccessCount,
     prospects,
-    recentLogs,
+    recentLogsRaw,
   ] = await Promise.all([
     prisma.business.count({ where: { deletedAt: null } }),
     prisma.business.count({ where: { claimToken: { not: null }, deletedAt: null } }),
@@ -235,6 +259,13 @@ export default async function AdminStatsPage({
       take: 50,
     }),
   ]);
+
+  // Filter out excluded IPs from recent logs
+  const recentLogs = recentLogsRaw.filter((log) => {
+    const meta = log.meta as Record<string, unknown> | null;
+    const ip = meta?.ip as string | undefined;
+    return !ip || !excludedIps.includes(ip);
+  });
 
   // Build prospect status map from logs
   const prospectIds = prospects.map((p) => p.id);
@@ -391,11 +422,11 @@ export default async function AdminStatsPage({
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
               Visites récentes
             </h3>
-            {recentPageviews.length === 0 ? (
+            {parsedPageviews.length === 0 ? (
               <p className="text-sm text-slate-500">Aucune visite enregistrée.</p>
             ) : (
               <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                {recentPageviews.map((pv) => {
+                {parsedPageviews.map((pv) => {
                   const meta = pv.meta as Record<string, unknown> | null;
                   const pathname = meta?.pathname as string;
                   const ip = meta?.ip as string | undefined;
@@ -423,14 +454,7 @@ export default async function AdminStatsPage({
                         </div>
                         {ip && (
                           <div className="text-xs text-slate-400">
-                            <a
-                              href={`https://whatismyipaddress.com/ip/${ip}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-indigo-600 underline hover:text-indigo-800"
-                            >
-                              {ip}
-                            </a>
+                            <IpClickable ip={ip} excludedIps={excludedIps} />
                           </div>
                         )}
                       </div>
@@ -441,6 +465,18 @@ export default async function AdminStatsPage({
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── IPs exclues ── */}
+      <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
+        <ExcludedIpsPanel
+          initialIps={excludedIpRecords.map((r) => ({
+            id: r.id,
+            ip: r.ip,
+            label: r.label,
+            createdAt: r.createdAt.toISOString(),
+          }))}
+        />
       </div>
 
       {/* ── Global KPIs ── */}
@@ -502,14 +538,7 @@ export default async function AdminStatsPage({
                               return (
                                 <span key={k}>
                                   {k}:{" "}
-                                  <a
-                                    href={`https://whatismyipaddress.com/ip/${strVal}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-indigo-600 underline hover:text-indigo-800"
-                                  >
-                                    {strVal}
-                                  </a>
+                                  <IpClickable ip={strVal} excludedIps={excludedIps} />
                                 </span>
                               );
                             }
