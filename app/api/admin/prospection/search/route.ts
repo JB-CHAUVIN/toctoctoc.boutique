@@ -64,6 +64,7 @@ function mapGoogleTypes(types: string[]): string | null {
 
 const schema = z.object({
   streetName: z.string().min(2).max(200),
+  refresh: z.boolean().optional(),
 });
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
@@ -212,6 +213,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
 
   const rawInput = parsed.data.streetName.trim();
+  const isRefresh = parsed.data.refresh === true;
 
   // ── 1. Google Geocoding → nom canonique + centre + viewport ──
   const geo = await geocodeStreet(rawInput);
@@ -326,15 +328,38 @@ export async function POST(req: Request) {
     create: { name: canonicalName, city: "Paris", geometry: geometry ?? undefined },
   });
 
-  // ── 5. Créer les ProspectLeads (éviter doublons par place_id) ──
-  const existingPlaceIds = new Set(
-    (
-      await prisma.prospectLead.findMany({
-        where: { streetId: street.id, osmId: { not: null } },
-        select: { osmId: true },
-      })
-    ).map((l: { osmId: string | null }) => l.osmId)
-  );
+  // ── 4b. Refresh : sauvegarder associations existantes + supprimer les leads non associés ──
+  // Map osmId → { businessId, status } pour ré-associer après re-fetch
+  const previousAssociations = new Map<string, { businessId: string; status: string }>();
+
+  if (isRefresh) {
+    const existingLeads = await prisma.prospectLead.findMany({
+      where: { streetId: street.id },
+      select: { id: true, osmId: true, businessId: true, status: true },
+    });
+
+    // Sauvegarder les associations (leads convertis avec businessId)
+    for (const lead of existingLeads) {
+      if (lead.osmId && lead.businessId) {
+        previousAssociations.set(lead.osmId, { businessId: lead.businessId, status: lead.status });
+      }
+    }
+
+    // Supprimer tous les leads (on va tout recréer)
+    await prisma.prospectLead.deleteMany({ where: { streetId: street.id } });
+  }
+
+  // ── 5. Créer les ProspectLeads ──
+  const existingPlaceIds = isRefresh
+    ? new Set<string>() // En refresh, on recrée tout
+    : new Set(
+        (
+          await prisma.prospectLead.findMany({
+            where: { streetId: street.id, osmId: { not: null } },
+            select: { osmId: true },
+          })
+        ).map((l: { osmId: string | null }) => l.osmId)
+      );
 
   const leadsToCreate = relevantPlaces
     .filter((p) => !existingPlaceIds.has(`g:${p.place_id}`))
@@ -342,10 +367,14 @@ export async function POST(req: Request) {
       const businessType = mapGoogleTypes(p.types);
       const address = p.vicinity ?? p.formatted_address ?? null;
       const googleMapsUrl = `https://www.google.com/maps/place/?q=place_id:${p.place_id}`;
+      const osmId = `g:${p.place_id}`;
+
+      // Ré-associer si le lead était précédemment converti
+      const prev = previousAssociations.get(osmId);
 
       return {
         streetId: street.id,
-        osmId: `g:${p.place_id}`,
+        osmId,
         name: p.name,
         address,
         lat: p.geometry.location.lat,
@@ -356,6 +385,7 @@ export async function POST(req: Request) {
         reviewCount: p.user_ratings_total ?? null,
         phone: null,
         website: null,
+        ...(prev ? { status: prev.status as "CONVERTED", businessId: prev.businessId, contactedAt: new Date() } : {}),
       };
     });
 
@@ -368,9 +398,14 @@ export async function POST(req: Request) {
     include: { leads: { orderBy: { createdAt: "asc" } } },
   });
 
+  const reassociatedCount = leadsToCreate.filter((l) => l.businessId).length;
+
   return NextResponse.json({
     success: true,
     data: fullStreet,
-    meta: { newLeadsCount: leadsToCreate.length },
+    meta: {
+      newLeadsCount: leadsToCreate.length,
+      ...(isRefresh ? { refreshed: true, reassociatedCount } : {}),
+    },
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Search, Loader2, TrendingUp, Route, Users, Star } from "lucide-react";
+import { MapPin, Search, Loader2, TrendingUp, Route, Users, Star, RefreshCw, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import { StreetPanel } from "./street-panel";
 
@@ -199,17 +199,16 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, streets, maxRating, drawStreet]);
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const name = searchValue.trim();
-    if (!name) return;
+  // Refresh modal state
+  const [refreshModal, setRefreshModal] = useState<{ streetName: string; existing: ProspectStreet } | null>(null);
 
+  async function doSearch(streetName: string, refresh = false) {
     setIsSearching(true);
     try {
       const res = await fetch("/api/admin/prospection/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ streetName: name }),
+        body: JSON.stringify({ streetName, refresh }),
       });
       const json = await res.json();
       if (!res.ok) { toast.error(json.error ?? "Erreur"); return; }
@@ -234,12 +233,34 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         );
       }
 
-      const count = json.meta?.newLeadsCount ?? 0;
-      toast.success(`${newStreet.name} : ${count} nouveau${count !== 1 ? "x" : ""} lead${count !== 1 ? "s" : ""} trouvé${count !== 1 ? "s" : ""}`);
+      if (refresh) {
+        const reassoc = json.meta?.reassociatedCount ?? 0;
+        const total = json.meta?.newLeadsCount ?? 0;
+        toast.success(`${newStreet.name} rafraîchie : ${total} lead${total !== 1 ? "s" : ""}${reassoc > 0 ? `, ${reassoc} ré-associé${reassoc !== 1 ? "s" : ""}` : ""}`);
+      } else {
+        const count = json.meta?.newLeadsCount ?? 0;
+        toast.success(`${newStreet.name} : ${count} nouveau${count !== 1 ? "x" : ""} lead${count !== 1 ? "s" : ""} trouvé${count !== 1 ? "s" : ""}`);
+      }
     } catch {
       toast.error("Erreur réseau");
     } finally {
       setIsSearching(false);
+    }
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const name = searchValue.trim();
+    if (!name) return;
+
+    // Vérifier si la rue existe déjà (comparaison souple)
+    const nameLower = name.toLowerCase();
+    const existing = streets.find((s) => s.name.toLowerCase().includes(nameLower) || nameLower.includes(s.name.toLowerCase()));
+
+    if (existing) {
+      setRefreshModal({ streetName: name, existing });
+    } else {
+      doSearch(name);
     }
   }
 
@@ -369,6 +390,47 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
           }}
         />
       </div>
+
+      {/* Modal de confirmation refresh */}
+      {refreshModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <h3 className="text-base font-semibold text-slate-900">Rue déjà prospectée</h3>
+            </div>
+            <p className="mb-1 text-sm text-slate-600">
+              <span className="font-medium">{refreshModal.existing.name}</span> contient{" "}
+              {refreshModal.existing.leads.length} lead{refreshModal.existing.leads.length !== 1 ? "s" : ""}.
+            </p>
+            <p className="mb-5 text-sm text-slate-500">
+              Rafraîchir va supprimer le tracé et tous les leads non associés à un commerce, puis re-chercher sur Google.
+              Les leads déjà convertis seront ré-associés automatiquement.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRefreshModal(null)}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  const name = refreshModal.streetName;
+                  setRefreshModal(null);
+                  doSearch(name, true);
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-700"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Rafraîchir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
