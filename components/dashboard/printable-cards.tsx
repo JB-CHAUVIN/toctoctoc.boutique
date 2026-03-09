@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import { Download, ChevronLeft, ChevronRight, ChevronDown, Printer, Palette, Lock } from "lucide-react";
 import { contrastColor, safeGradientEnd } from "@/lib/utils";
 import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
+import { PrintCardGoogle } from "./print-card-google";
 
 export interface BrandStyleData {
   // Colors
@@ -70,7 +71,7 @@ interface Props {
   brandStyle?: BrandStyleData | null;
 }
 
-interface ThemeStyles {
+export interface ThemeStyles {
   bg: string;
   textColor: string;
   subtextColor: string;
@@ -142,6 +143,28 @@ export function getThemeStyles(
         decorativeCircle1: "rgba(255,255,255,0.08)",
         decorativeCircle2: "rgba(255,255,255,0.05)",
       };
+    case "google": {
+      const gEnd = safeGradientEnd(primaryColor, secondaryColor);
+      return {
+        bg: `linear-gradient(160deg, ${primaryColor} 0%, ${gEnd} 100%)`,
+        textColor: contrastColor(primaryColor),
+        subtextColor: contrastColor(primaryColor) === "#fff"
+          ? "rgba(255,255,255,0.7)"
+          : "rgba(0,0,0,0.5)",
+        badgeBg: accentColor,
+        badgeColor: contrastColor(accentColor),
+        fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+        qrBoxBg: "#fff",
+        qrBoxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        qrLabelColor: "#64748b",
+        nfcBoxBg: "#f8fafc",
+        nfcBoxBorder: "1.5px solid #e2e8f0",
+        nfcTextColor: "#334155",
+        footerColor: "#94a3b8",
+        decorativeCircle1: "transparent",
+        decorativeCircle2: "transparent",
+      };
+    }
     case "custom": {
       const bp = brandStyle?.primaryColor || primaryColor;
       const bs = brandStyle?.secondaryColor || secondaryColor;
@@ -561,6 +584,7 @@ export function PrintCard({
   themeStyles,
   brandStyle,
   showAvatar = true,
+  theme,
 }: {
   card: CardDef;
   businessName: string;
@@ -578,7 +602,29 @@ export function PrintCard({
   themeStyles?: ThemeStyles;
   brandStyle?: BrandStyleData | null;
   showAvatar?: boolean;
+  theme?: PrintThemeId;
 }) {
+  // Delegate to google-specific layout
+  if (theme === "google" && themeStyles) {
+    return (
+      <PrintCardGoogle
+        card={card}
+        businessName={businessName}
+        primaryColor={primaryColor}
+        qrDataUrl={qrDataUrl}
+        logoB64={logoB64}
+        businessLogoB64={businessLogoB64}
+        businessLogoUrl={businessLogoUrl}
+        logoBackground={logoBackground}
+        style={style}
+        cardW={cardW}
+        cardH={cardH}
+        themeStyles={themeStyles}
+        showAvatar={showAvatar}
+      />
+    );
+  }
+
   const isReviews = card.type === "reviews";
   const isSquare = cardH <= cardW;
   const initial = businessName[0]?.toUpperCase() ?? "?";
@@ -948,6 +994,7 @@ function CardStack({
   themeStyles,
   brandStyle,
   showAvatar = true,
+  theme,
 }: {
   cards: CardDef[];
   businessName: string;
@@ -963,6 +1010,7 @@ function CardStack({
   themeStyles?: ThemeStyles;
   brandStyle?: BrandStyleData | null;
   showAvatar?: boolean;
+  theme?: PrintThemeId;
 }) {
   const [index, setIndex] = useState(0);
   const [sizeId, setSizeId] = useState<SizeId>("10x10");
@@ -1026,6 +1074,7 @@ function CardStack({
     themeStyles,
     brandStyle,
     showAvatar,
+    theme,
   };
 
   return (
@@ -1403,6 +1452,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
     themeStyles,
     brandStyle: normalizedBrandStyle,
     showAvatar,
+    theme,
   };
 
   return (
@@ -1475,6 +1525,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
           themeStyles,
           brandStyle: normalizedBrandStyle,
           showAvatar,
+          theme,
         };
         return (
           <>

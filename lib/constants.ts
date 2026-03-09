@@ -298,7 +298,7 @@ export const PRINT_PRODUCTS_MAP: Record<string, PrintProduct> = Object.fromEntri
 // THÈMES SUPPORTS IMPRIMABLES
 // ─────────────────────────────────────────
 
-export type PrintThemeId = "gradient" | "minimal" | "bold" | "custom";
+export type PrintThemeId = "gradient" | "minimal" | "bold" | "google" | "custom";
 
 export interface PrintTheme {
   id: PrintThemeId;
@@ -311,6 +311,7 @@ export const PRINT_THEMES: PrintTheme[] = [
   { id: "gradient", name: "TocTocToc", description: "Design actuel (dégradé primary → secondary)" },
   { id: "minimal", name: "Minimal", description: "Fond blanc, bordure colorée, texte sombre" },
   { id: "bold", name: "Bold", description: "Couleur primaire pleine, texte large" },
+  { id: "google", name: "Classique", description: "Style split haut/bas inspiré des plaques Google Avis" },
   { id: "custom", name: "Custom", description: "Charte graphique du commerce (couleurs + font du site web)", requiresBrandStyle: true },
 ];
 

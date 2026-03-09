@@ -134,8 +134,12 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
   const [websiteAnalyzed, setWebsiteAnalyzed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [secondaryTouched, setSecondaryTouched] = useState(false);
+  const [logoAiAnalysis, setLogoAiAnalysis] = useState(true);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Track whether auto-Google-fetch has already been triggered for this open
+  const googleAutoFetched = useRef(false);
 
   // Réinitialiser quand on ouvre avec de nouvelles valeurs
   useEffect(() => {
@@ -148,6 +152,18 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       setWebsiteAnalyzed(false);
       setSecondaryTouched(false);
       setShowAdvanced(!!isAdmin);
+      setLogoAiAnalysis(true);
+      googleAutoFetched.current = false;
+    }
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-fetch Google Business when dialog opens with a googleMapsUrl
+  useEffect(() => {
+    if (open && !googleAutoFetched.current && initialValues?.googleMapsUrl?.trim()) {
+      googleAutoFetched.current = true;
+      const url = initialValues.googleMapsUrl.trim();
+      const timer = setTimeout(() => handleGoogleAnalyze(url), 300);
+      return () => clearTimeout(timer);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -194,6 +210,12 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
         brandStyle: d,
       }));
       setWebsiteAnalyzed(true);
+
+      // If a logo was found on the website, upload it directly (no AI)
+      if (d.logoUrl && !form.logoUrl) {
+        uploadLogoFromUrl(d.logoUrl);
+      }
+
       toast.success(d.primaryColor ? `Couleurs extraites : ${d.primaryColor}` : "Analyse terminée (pas de couleurs trouvées)");
     } catch { toast.error("Erreur lors de l'analyse du site"); }
     finally { setAnalyzingWebsite(false); }
@@ -229,27 +251,69 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
     setLogoPreview(URL.createObjectURL(file));
     setAnalyzingLogo(true);
     try {
-      const { base64, mimeType } = await fileToBase64(file);
-      const res = await fetch("/api/admin/analyze-business-image", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType, mode: "logo" }),
-      });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Erreur génération logo"); return; }
-      setLogoPreview(data.data.logoUrl);
-      setForm((f) => ({ ...f, logoUrl: data.data.logoUrl, ...(data.data.logoBackground && { logoBackground: data.data.logoBackground }) }));
-      toast.success("Logo HD généré !");
-    } catch { toast.error("Erreur lors de la génération du logo"); }
+      if (logoAiAnalysis) {
+        // AI analysis: gpt-image-1 HD generation
+        const { base64, mimeType } = await fileToBase64(file);
+        const res = await fetch("/api/admin/analyze-business-image", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: base64, mimeType, mode: "logo" }),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast.error(data.error || "Erreur génération logo"); return; }
+        setLogoPreview(data.data.logoUrl);
+        setForm((f) => ({ ...f, logoUrl: data.data.logoUrl, ...(data.data.logoBackground && { logoBackground: data.data.logoBackground }) }));
+        toast.success("Logo HD généré !");
+      } else {
+        // Simple upload, no AI
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", "logos");
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) { toast.error(data.error || "Erreur upload logo"); return; }
+        setLogoPreview(data.url);
+        setForm((f) => ({ ...f, logoUrl: data.url }));
+        toast.success("Logo uploadé !");
+      }
+    } catch { toast.error("Erreur lors du traitement du logo"); }
     finally { setAnalyzingLogo(false); }
   }
 
-  async function handleGoogleAnalyze() {
-    if (!googleUrl.trim()) return;
+  /** Download a logo from an external URL and upload it locally (no AI) */
+  async function uploadLogoFromUrl(externalUrl: string) {
+    setAnalyzingLogo(true);
+    setLogoPreview(externalUrl);
+    setLogoAiAnalysis(false); // Logo from website → disable AI by default
+    try {
+      const res = await fetch(externalUrl);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const ext = externalUrl.match(/\.(png|jpg|jpeg|webp|svg|gif)/i)?.[1] || "png";
+      const file = new File([blob], `logo.${ext}`, { type: blob.type || `image/${ext}` });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "logos");
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await uploadRes.json();
+      if (!uploadRes.ok) { console.error("[LOGO_FROM_URL]", data.error); return; }
+      setLogoPreview(data.url);
+      setForm((f) => ({ ...f, logoUrl: data.url }));
+      toast.success("Logo récupéré du site web !");
+    } catch (e) {
+      console.error("[LOGO_FROM_URL]", e);
+    } finally {
+      setAnalyzingLogo(false);
+    }
+  }
+
+  async function handleGoogleAnalyze(urlOverride?: string) {
+    const targetUrl = urlOverride ?? googleUrl;
+    if (!targetUrl.trim()) return;
     setAnalyzingGoogle(true);
     try {
       const res = await fetch("/api/admin/analyze-google-business", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: googleUrl.trim() }),
+        body: JSON.stringify({ url: targetUrl.trim() }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Erreur analyse Google"); return; }
@@ -328,6 +392,52 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
             value={form.businessType} onChange={(e) => set("businessType", e.target.value)} />
 
           <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Description</label>
+            <textarea
+              placeholder="Description courte du commerce…"
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              rows={2}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+            />
+          </div>
+
+          {/* Website URL + analyze trigger */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Site web</label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://www.exemple.fr"
+                value={form.website}
+                onChange={(e) => set("website", e.target.value)}
+                className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+              />
+              {form.website.trim() && (
+                <button
+                  type="button"
+                  onClick={() => handleWebsiteAnalyze(form.website)}
+                  disabled={analyzingWebsite}
+                  title="Analyser le site web pour extraire la charte graphique"
+                  className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-600 transition hover:bg-violet-100 disabled:opacity-50"
+                >
+                  {analyzingWebsite ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+            </div>
+            {analyzingWebsite && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-violet-600">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Capture du site + extraction des couleurs…
+              </p>
+            )}
+          </div>
+
+          <div>
             <div className="mb-2 flex items-center gap-2">
               <label className="text-sm font-medium text-slate-700">Couleurs</label>
               {analyzingWebsite && (
@@ -385,10 +495,25 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
                     loading={analyzingAmbiance} loadingLabel="Analyse via gpt-4o…"
                     preview={ambiancePreview} icon={ImageIcon} onFile={handleAmbianceImage} />
 
-                  <ImageDropZone label="✂️  Logo déjà croppé" hint="Retourné en HD fond transparent via gpt-image-1"
-                    loading={analyzingLogo} loadingLabel="Génération HD via gpt-image-1…"
+                  <ImageDropZone
+                    label="✂️  Logo déjà croppé"
+                    hint={logoAiAnalysis ? "Retourné en HD fond transparent via gpt-image-1" : "Upload direct sans traitement IA"}
+                    loading={analyzingLogo}
+                    loadingLabel={logoAiAnalysis ? "Génération HD via gpt-image-1…" : "Upload en cours…"}
                     preview={logoPreview && !form.logoUrl ? logoPreview : form.logoUrl || null}
-                    icon={Crop} onFile={handleLogoImage} />
+                    icon={Crop} onFile={handleLogoImage}
+                  />
+                  <label className="-mt-3 flex items-center gap-2 text-xs text-slate-500">
+                    <button
+                      type="button"
+                      onClick={() => setLogoAiAnalysis((v) => !v)}
+                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${logoAiAnalysis ? "bg-violet-600" : "bg-slate-200"}`}
+                    >
+                      <span className={`inline-block h-2.5 w-2.5 rounded-full bg-white shadow-sm transition-transform ${logoAiAnalysis ? "translate-x-[14px]" : "translate-x-[3px]"}`} />
+                    </button>
+                    Analyse via IA
+                    {!logoAiAnalysis && <span className="text-slate-400">(upload direct)</span>}
+                  </label>
 
                   <div>
                     <p className="mb-1.5 text-xs font-medium text-slate-600">
@@ -401,7 +526,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
                         className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-400"
                         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleGoogleAnalyze(); } }} />
                       <Button type="button" size="sm" variant="outline" loading={analyzingGoogle}
-                        onClick={handleGoogleAnalyze} disabled={!googleUrl.trim()}>
+                        onClick={() => handleGoogleAnalyze()} disabled={!googleUrl.trim()}>
                         <Search className="h-3.5 w-3.5" />
                       </Button>
                     </div>

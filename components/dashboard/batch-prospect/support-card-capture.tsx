@@ -6,6 +6,7 @@ import {
   PrintCard,
   type BrandStyleData,
 } from "../printable-cards";
+import type { PrintThemeId } from "@/lib/constants";
 import { getCard } from "./helpers";
 import type { BusinessData, CardVariant } from "./types";
 
@@ -25,6 +26,7 @@ interface SupportCardCaptureProps {
   refSetter: (el: HTMLDivElement | null) => void;
   cardType: "reviews" | "loyalty";
   cardVariant: CardVariant;
+  theme?: PrintThemeId;
 }
 
 export function SupportCardCapture({
@@ -38,6 +40,7 @@ export function SupportCardCapture({
   refSetter,
   cardType,
   cardVariant,
+  theme,
 }: SupportCardCaptureProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
@@ -88,6 +91,7 @@ export function SupportCardCapture({
         themeStyles={themeStyles}
         brandStyle={brandStyle}
         showAvatar={showAvatar}
+        theme={theme}
       />
     </div>
   );
