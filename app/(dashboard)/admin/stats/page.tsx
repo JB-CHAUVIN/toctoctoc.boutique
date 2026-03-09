@@ -165,7 +165,7 @@ export default async function AdminStatsPage({
   // ── Page view stats ──
   const [pageviewsByPath, recentPageviews, totalPageviews, visitorTypeCounts] = await Promise.all([
     prisma.$queryRaw<Array<{ pathname: string; count: bigint }>>`
-      SELECT JSON_UNQUOTE(JSON_EXTRACT(meta, '$.pathname')) AS pathname, COUNT(*) AS count
+      SELECT CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.pathname')) AS CHAR) AS pathname, COUNT(*) AS count
       FROM Log WHERE action = 'pageview'
       GROUP BY pathname ORDER BY count DESC LIMIT 20
     `,
@@ -177,7 +177,7 @@ export default async function AdminStatsPage({
     }),
     prisma.log.count({ where: { action: "pageview" } }),
     prisma.$queryRaw<Array<{ visitorType: string; count: bigint }>>`
-      SELECT COALESCE(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.visitorType')), 'human') AS visitorType,
+      SELECT COALESCE(CAST(JSON_UNQUOTE(JSON_EXTRACT(meta, '$.visitorType')) AS CHAR), 'human') AS visitorType,
              COUNT(*) AS count
       FROM Log WHERE action = 'pageview'
       GROUP BY visitorType ORDER BY count DESC

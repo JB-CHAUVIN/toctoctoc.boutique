@@ -429,8 +429,10 @@ export default function HomePage() {
                 key={i}
                 className="group rounded-2xl border border-slate-200 bg-white px-6 py-4"
               >
-                <summary className="cursor-pointer list-none font-semibold text-slate-900 group-open:text-indigo-600">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900 group-open:text-indigo-600">
                   {faq.q}
+                  <span className="ml-3 flex-shrink-0 text-lg group-open:hidden">🗿</span>
+                  <span className="ml-3 hidden flex-shrink-0 text-lg group-open:inline">💩</span>
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-slate-500">{faq.a}</p>
               </details>
