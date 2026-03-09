@@ -7,9 +7,23 @@ const { auth } = NextAuth(authConfig);
 // Paths to exclude from page view tracking (prefixes)
 const TRACKING_EXCLUDE = ["/api", "/_next", "/favicon.ico"];
 
+// Honeypot paths targeted by vulnerability scanners (WordPress, phpMyAdmin, etc.)
+// Returns 410 Gone immediately — no tracking, no processing.
+const HONEYPOT_PATTERNS = [
+  "/wp-admin", "/wp-login", "/wp-content", "/wp-includes", "/wordpress",
+  "/xmlrpc.php", "/.env", "/phpmyadmin", "/pma", "/admin.php",
+  "/wp-config", "/backup", "/debug", "/.git",
+];
+
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
+
+  // Block vulnerability scanners immediately
+  const pathLower = nextUrl.pathname.toLowerCase();
+  if (HONEYPOT_PATTERNS.some((p) => pathLower.startsWith(p))) {
+    return new NextResponse(null, { status: 410 });
+  }
 
   // Routes protégées (dashboard)
   const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");

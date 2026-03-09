@@ -142,20 +142,20 @@ export function buildLetterHtml(
     : "Peu d'avis, peu de visibilité";
   const afterCaption = `${afterRating}★ et ${afterCount} avis — <strong><u>vous dominez la recherche locale</u></strong>`;
 
-  const beforeAfterSection = `
-  <div class="before-after">
-    <div class="ba-col">
-      <div class="ba-label ba-label-before">Aujourd'hui</div>
-      ${buildGoogleMock(business.name, beforeRating, beforeCount, business.businessType, business.address, business.city, business.zipCode)}
-      <div class="ba-caption">${beforeCaption}</div>
-    </div>
-    <div class="ba-arrow">→</div>
-    <div class="ba-col">
-      <div class="ba-label ba-label-after">Avec TocTocToc</div>
-      ${buildGoogleMock(business.name, afterRating, afterCount, business.businessType, business.address, business.city, business.zipCode)}
-      <div class="ba-caption">${afterCaption}</div>
-    </div>
-  </div>`;
+  const beforeAfterInline = `
+    <div class="before-after">
+      <div class="ba-col">
+        <div class="ba-label ba-label-before">Aujourd'hui</div>
+        ${buildGoogleMock(business.name, beforeRating, beforeCount, business.businessType, business.address, business.city, business.zipCode)}
+        <div class="ba-caption">${beforeCaption}</div>
+      </div>
+      <div class="ba-arrow">→</div>
+      <div class="ba-col">
+        <div class="ba-label ba-label-after">Avec TocTocToc</div>
+        ${buildGoogleMock(business.name, afterRating, afterCount, business.businessType, business.address, business.city, business.zipCode)}
+        <div class="ba-caption">${afterCaption}</div>
+      </div>
+    </div>`;
 
   const claimSection =
     claimUrl && claimQrDataUrl
@@ -366,38 +366,6 @@ export function buildLetterHtml(
     position: relative;
     z-index: 1;
     text-align: center;
-  }
-
-  .hook-benefits {
-    display: flex;
-    justify-content: center;
-    gap: 4mm;
-    margin-top: 3.5mm;
-    position: relative;
-    z-index: 1;
-  }
-
-  .hook-benefit {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 10px;
-    padding: 3mm 4mm;
-    flex: 1;
-    text-align: center;
-  }
-
-  .hook-benefit-title {
-    font-size: 9.5pt;
-    font-weight: 800;
-    color: #fff;
-    margin-bottom: 1mm;
-  }
-
-  .hook-benefit-desc {
-    font-size: 8.5pt;
-    color: rgba(255,255,255,0.85);
-    line-height: 1.35;
-    font-weight: 500;
   }
 
   .hook-sub {
@@ -618,14 +586,16 @@ export function buildLetterHtml(
     color: #94a3b8;
   }
 
-  /* ── BEFORE / AFTER ── */
+  /* ── BEFORE / AFTER (inside hook banner) ── */
   .before-after {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 3mm;
-    margin: 4mm 0;
+    margin: 4mm 0 2mm;
     break-inside: avoid;
     page-break-inside: avoid;
+    position: relative;
+    z-index: 1;
   }
 
   .ba-col {
@@ -645,29 +615,30 @@ export function buildLetterHtml(
   }
 
   .ba-label-before {
-    background: #f1f5f9;
-    color: #64748b;
+    background: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
   }
 
   .ba-label-after {
-    background: #f0fdf4;
-    color: #16a34a;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
   }
 
   .ba-caption {
     font-size: 7.5pt;
-    color: #64748b;
+    color: rgba(255,255,255,0.8);
     margin-top: 1.5mm;
     font-weight: 500;
   }
 
   .ba-arrow {
-    font-size: 20pt;
-    color: ${primary};
+    font-size: 22pt;
+    color: #fff;
     font-weight: 900;
     flex-shrink: 0;
     padding: 0 1mm;
-    margin-top: 6mm;
+    margin-top: 10mm;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.15);
   }
 </style>
 </head>
@@ -720,7 +691,7 @@ export function buildLetterHtml(
       </div>
     </div>
 
-    <!-- HOOK BANNER -->
+    <!-- HOOK BANNER + BEFORE/AFTER -->
     <div class="hook-banner">${business.googleRating != null && business.googleReviewCount != null ? `
       <div style="text-align:center;margin-bottom:3mm;">
         <span style="display:inline-flex;align-items:center;gap:2mm;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:1.5mm 5mm;font-size:9pt;color:#fff;font-weight:600;">
@@ -728,21 +699,9 @@ export function buildLetterHtml(
         </span>
       </div>` : ""}
       <div class="hook-question">Et si ${business.name} avait 50 avis Google de plus le mois prochain ?</div>
-      <div class="hook-benefits">
-        <div class="hook-benefit">
-          <div class="hook-benefit-title">⭐ 3x plus d'avis Google</div>
-          <div class="hook-benefit-desc">Vos clients scannent, laissent un avis et tentent de gagner un cadeau. Votre note grimpe, votre visibilité explose.</div>
-        </div>
-        <div class="hook-benefit">
-          <div class="hook-benefit-title">🎯 Des clients qui reviennent</div>
-          <div class="hook-benefit-desc">Carte de fidélité digitale sur leur téléphone. Fini les cartons perdus, bonjour la récurrence.</div>
-        </div>
-      </div>
-      <div class="hook-sub">Tout est déjà configuré pour ${business.name} — il ne reste qu'à activer.</div>
+      ${beforeAfterInline}
+      <div class="hook-sub"><strong><u>Tout est déjà configuré pour ${business.name} — il ne reste qu'à activer.</u></strong></div>
     </div>
-
-    <!-- BEFORE / AFTER -->
-    ${beforeAfterSection}
 
     <!-- BODY -->
     <div class="body">
