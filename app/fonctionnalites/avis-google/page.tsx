@@ -102,6 +102,20 @@ const faqJsonLd = {
   })),
 };
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Comment collecter plus d'avis Google avec la gamification",
+  description: "Mettez en place un QR code dans votre commerce pour collecter des avis Google automatiquement grâce à une roulette de récompenses.",
+  totalTime: "PT5M",
+  step: steps.map((s, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: s.title,
+    text: s.desc,
+  })),
+};
+
 export default function AvisGooglePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -116,6 +130,10 @@ export default function AvisGooglePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
 
       <FeatureNav />

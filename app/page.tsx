@@ -223,6 +223,21 @@ const faqJsonLd = {
   })),
 };
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Comment digitaliser votre commerce avec TocTocToc.boutique",
+  description:
+    "Mettez en place un QR code dans votre commerce pour collecter des avis Google, fidéliser vos clients et booster votre visibilité en 5 minutes.",
+  totalTime: "PT5M",
+  step: steps.map((s, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: s.title,
+    text: s.desc,
+  })),
+};
+
 /* ─────────────────── HELPER COMPONENTS ─────────────────── */
 
 function Stars({ rating, size = 16 }: { rating: number; size?: number }) {
@@ -282,6 +297,10 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
 
       {/* ── Nav ── */}

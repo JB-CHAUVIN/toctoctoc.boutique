@@ -95,6 +95,26 @@ export default async function LoyaltyTypePage({ params }: { params: Promise<Para
     })),
   };
 
+  const howToSteps = [
+    { name: "Configurez et imprimez", text: `Configurez votre programme en quelques minutes (tampons requis, récompense), puis imprimez votre QR code. Posez-le sur votre comptoir dans votre ${data.label.toLowerCase()}.` },
+    { name: "Vos clients scannent", text: "Un simple scan avec leur smartphone et votre client obtient sa carte de fidélité instantanément — sans app ni compte à créer." },
+    { name: "Tamponnez et récompensez", text: `Scannez la carte de votre client depuis votre smartphone pour ajouter un tampon. Après ${data.rewardThreshold}, la récompense est débloquée automatiquement.` },
+  ];
+
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `Comment mettre en place une carte de fidélité digitale dans votre ${data.label.toLowerCase()}`,
+    description: data.heroDesc,
+    totalTime: "PT5M",
+    step: howToSteps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+
   const otherTypes = LOYALTY_TYPES.filter((t) => t.slug !== type).slice(0, 6);
 
   return (
@@ -102,6 +122,7 @@ export default async function LoyaltyTypePage({ params }: { params: Promise<Para
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
 
       <FeatureNav />
 

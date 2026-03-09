@@ -106,6 +106,20 @@ const faqJsonLd = {
   })),
 };
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Comment mettre en place une carte de fidélité digitale dans votre commerce",
+  description: "Créez et déployez un programme de fidélité avec QR code en 5 minutes, sans application à installer.",
+  totalTime: "PT5M",
+  step: steps.map((s, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: s.title,
+    text: s.desc,
+  })),
+};
+
 export default function CarteDeFidelitePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -120,6 +134,10 @@ export default function CarteDeFidelitePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
 
       <FeatureNav />

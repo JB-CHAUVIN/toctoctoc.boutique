@@ -115,6 +115,20 @@ const faqJsonLd = {
   })),
 };
 
+const howToJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Comment créer un site vitrine pour votre commerce local",
+  description: "Créez un site web professionnel pour votre commerce en 3 étapes simples, sans compétences techniques.",
+  totalTime: "PT5M",
+  step: steps.map((s, i) => ({
+    "@type": "HowToStep",
+    position: i + 1,
+    name: s.title,
+    text: s.desc,
+  })),
+};
+
 export default function SiteVitrinePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -129,6 +143,10 @@ export default function SiteVitrinePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
       />
 
       <FeatureNav />

@@ -94,6 +94,26 @@ export default async function ReviewsTypePage({ params }: { params: Promise<Para
     })),
   };
 
+  const howToSteps = [
+    { name: "Imprimez votre plaque QR code", text: `Configurez vos récompenses depuis le tableau de bord, générez votre QR code et posez-le bien en vue dans votre ${data.label.toLowerCase()}.` },
+    { name: "Vos clients laissent leur avis", text: "Le scan redirige directement vers votre fiche Google Maps. En 10 secondes, votre client laisse son avis — zéro friction." },
+    { name: "La roulette récompense", text: `Après son avis, votre client tourne la roulette et peut gagner ${data.rewardExamples[0].toLowerCase()}. Il repart avec une bonne raison de revenir.` },
+  ];
+
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: `Comment collecter plus d'avis Google pour votre ${data.label.toLowerCase()}`,
+    description: data.heroDesc,
+    totalTime: "PT5M",
+    step: howToSteps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+
   const otherTypes = REVIEWS_TYPES.filter((t) => t.slug !== type).slice(0, 5);
 
   return (
@@ -101,6 +121,7 @@ export default async function ReviewsTypePage({ params }: { params: Promise<Para
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }} />
 
       <FeatureNav />
 
