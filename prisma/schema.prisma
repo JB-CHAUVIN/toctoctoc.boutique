@@ -615,6 +615,8 @@ model ProspectLead {
   phone         String?
   website       String?
   businessType  String?
+  rating        Float?
+  reviewCount   Int?
   status        ProspectLeadStatus @default(DISCOVERED)
   businessId    String?
   notes         String?            @db.Text

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Search, Loader2, TrendingUp, Route, Users } from "lucide-react";
+import { MapPin, Search, Loader2, TrendingUp, Route, Users, Star } from "lucide-react";
 import toast from "react-hot-toast";
 import { StreetPanel } from "./street-panel";
 
@@ -17,6 +17,8 @@ export interface ProspectLead {
   phone: string | null;
   website: string | null;
   businessType: string | null;
+  rating: number | null;
+  reviewCount: number | null;
   status: "DISCOVERED" | "CONTACTED" | "CONVERTED" | "DECLINED";
   businessId: string | null;
   notes: string | null;
@@ -83,9 +85,27 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
   const [searchValue, setSearchValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [maxRating, setMaxRating] = useState<number | null>(null);
 
-  const totalLeads = streets.reduce((acc, s) => acc + s.leads.length, 0);
-  const totalConverted = streets.reduce(
+  const RATING_OPTIONS = [
+    { value: null, label: "Toutes" },
+    { value: 4.5, label: "< 4.5 ★" },
+    { value: 4, label: "< 4 ★" },
+    { value: 3.5, label: "< 3.5 ★" },
+    { value: 3, label: "< 3 ★" },
+    { value: 0.1, label: "Sans note" },
+  ];
+
+  // Filtrer les leads par note
+  function filterLeads(leads: ProspectLead[]): ProspectLead[] {
+    if (maxRating === null) return leads;
+    if (maxRating === 0.1) return leads.filter((l) => l.rating == null);
+    return leads.filter((l) => l.rating != null && l.rating < maxRating);
+  }
+
+  const filteredStreets = streets.map((s) => ({ ...s, leads: filterLeads(s.leads) }));
+  const totalLeads = filteredStreets.reduce((acc, s) => acc + s.leads.length, 0);
+  const totalConverted = filteredStreets.reduce(
     (acc, s) => acc + s.leads.filter((l) => l.status === "CONVERTED").length,
     0
   );
@@ -175,8 +195,9 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
 
   useEffect(() => {
     if (!mapReady) return;
-    streets.forEach(drawStreet);
-  }, [mapReady, streets, drawStreet]);
+    filteredStreets.forEach(drawStreet);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, streets, maxRating, drawStreet]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -267,6 +288,20 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
             <span className="font-semibold text-slate-900">{totalConverted}</span>
             <span>convertis</span>
           </div>
+          <div className="flex items-center gap-1.5 text-slate-600">
+            <Star className="h-4 w-4 text-yellow-500" />
+            <select
+              value={maxRating === null ? "" : String(maxRating)}
+              onChange={(e) => setMaxRating(e.target.value === "" ? null : Number(e.target.value))}
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              {RATING_OPTIONS.map((opt) => (
+                <option key={String(opt.value)} value={opt.value === null ? "" : String(opt.value)}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -323,7 +358,7 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         </div>
 
         <StreetPanel
-          street={selectedStreet}
+          street={selectedStreet ? { ...selectedStreet, leads: filterLeads(selectedStreet.leads) } : null}
           highlightLead={highlightLead}
           onClose={() => { setSelectedStreet(null); setHighlightLead(null); }}
           onLeadUpdate={handleLeadUpdate}

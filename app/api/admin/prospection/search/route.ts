@@ -125,6 +125,7 @@ interface GooglePlace {
   geometry: { location: { lat: number; lng: number } };
   types: string[];
   rating?: number;
+  user_ratings_total?: number;
 }
 
 /** Text Search sur le nom de la rue — retourne les établissements que Google associe à cette adresse */
@@ -351,6 +352,8 @@ export async function POST(req: Request) {
         lng: p.geometry.location.lng,
         googleMapsUrl,
         businessType,
+        rating: p.rating ?? null,
+        reviewCount: p.user_ratings_total ?? null,
         phone: null,
         website: null,
       };

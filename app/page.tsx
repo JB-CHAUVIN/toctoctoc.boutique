@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, ChevronDown, Star } from "lucide-react";
 import { LandingDemoSection } from "@/components/landing/demo-section";
 import { HeroVideo } from "@/components/landing/hero-video";
 import type { Metadata } from "next";
@@ -8,6 +8,29 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   alternates: { canonical: "https://toctoctoc.boutique" },
 };
+
+/* ───────────────────────── DATA ───────────────────────── */
+
+const steps = [
+  {
+    num: "1",
+    title: "Posez le QR code",
+    desc: "Placez le support fourni sur votre comptoir. Aucune installation technique.",
+    emoji: "📲",
+  },
+  {
+    num: "2",
+    title: "Vos clients scannent",
+    desc: "Ils laissent un avis Google, tentent de gagner un cadeau ou cumulent leurs points de fidélité.",
+    emoji: "⭐",
+  },
+  {
+    num: "3",
+    title: "Votre commerce décolle",
+    desc: "Votre note Google monte, vos clients reviennent plus souvent, votre chiffre d'affaires suit.",
+    emoji: "🚀",
+  },
+];
 
 const features = [
   {
@@ -37,9 +60,27 @@ const features = [
 ];
 
 const stats = [
-  { value: "500+", label: "commerces nous font confiance" },
-  { value: "+200%", label: "d\u2019avis Google en moyenne" },
-  { value: "0\u20AC", label: "pour démarrer, sans engagement" },
+  { value: "×3", label: "plus d\u2019avis Google en moyenne" },
+  { value: "30s", label: "pour laisser un avis" },
+  { value: "0\u20AC", label: "pour démarrer" },
+];
+
+const testimonials = [
+  {
+    quote: "On est passés de 12 à 67 avis en 6 semaines. Les clients adorent la roulette, ils en parlent autour d\u2019eux.",
+    name: "Sophie M.",
+    role: "Salon de coiffure · Lyon",
+  },
+  {
+    quote: "La carte de fidélité digitale a remplacé nos cartons. Mes clients la montrent avec fierté à la caisse.",
+    name: "Marc D.",
+    role: "Boulangerie · Bordeaux",
+  },
+  {
+    quote: "En 5 minutes c\u2019était en ligne. Même moi qui suis nul en informatique, j\u2019ai tout compris.",
+    name: "Ahmed K.",
+    role: "Restaurant · Marseille",
+  },
 ];
 
 const commerceTypes = [
@@ -76,19 +117,19 @@ const faqs = [
   },
   {
     q: "Puis-je gérer plusieurs commerces ?",
-    a: "Oui. Le plan Starter inclut 1 commerce. Le plan Pro (19€/mois) permet de gérer jusqu'à 3 commerces depuis un seul compte. Le plan Enterprise offre un nombre illimité de commerces.",
+    a: "Oui. Le plan Starter inclut 1 commerce. Le plan Pro (19\u20AC/mois) permet de gérer jusqu\u2019à 3 commerces depuis un seul compte. Le plan Enterprise offre un nombre illimité de commerces.",
   },
   {
     q: "Comment fonctionne la carte de fidélité digitale ?",
-    a: "Chaque client obtient une carte avec un QR code unique. Pour tamponner, vous scannez son QR code depuis votre smartphone. Le tampon apparaît instantanément sur l'écran du client. Quand il atteint le seuil, la récompense est débloquée automatiquement.",
+    a: "Chaque client obtient une carte avec un QR code unique. Pour tamponner, vous scannez son QR code depuis votre smartphone. Le tampon apparaît instantanément sur l\u2019écran du client. Quand il atteint le seuil, la récompense est débloquée automatiquement.",
   },
   {
     q: "Puis-je annuler à tout moment ?",
-    a: "Oui, sans engagement. Vous pouvez résilier en un clic depuis votre espace. Votre abonnement reste actif jusqu'à la fin de la période payée.",
+    a: "Oui, sans engagement. Vous pouvez résilier en un clic depuis votre espace. Votre abonnement reste actif jusqu\u2019à la fin de la période payée.",
   },
   {
     q: "TocTocToc.boutique fonctionne-t-il pour les chaînes de commerces ?",
-    a: "Oui. Les franchiseurs et multi-sites utilisent le plan Pro ou Enterprise pour gérer l'ensemble de leurs points de vente depuis une seule interface, avec un branding cohérent.",
+    a: "Oui. Les franchiseurs et multi-sites utilisent le plan Pro ou Enterprise pour gérer l\u2019ensemble de leurs points de vente depuis une seule interface, avec un branding cohérent.",
   },
 ];
 
@@ -99,7 +140,7 @@ const plans = [
     originalPrice: null as string | null,
     desc: "Pour démarrer",
     features: ["1 commerce", "Site vitrine", "Avis Google (3 max)", "Fidélité (3 cartes)"],
-    cta: "Commencer",
+    cta: "Commencer gratuitement",
     highlight: false,
     promoBadge: null as string | null,
   },
@@ -112,7 +153,7 @@ const plans = [
       "1 commerce",
       "Site vitrine",
       "Réservations",
-      "Avis + Roulette",
+      "Avis + Roulette illimités",
       "Fidélité illimitée",
     ],
     cta: "Essai gratuit 14 jours",
@@ -128,7 +169,7 @@ const plans = [
       "3 commerces",
       "Site vitrine",
       "Réservations",
-      "Avis + Roulette",
+      "Avis + Roulette illimités",
       "Fidélité illimitée",
     ],
     cta: "Essai gratuit 14 jours",
@@ -136,6 +177,8 @@ const plans = [
     promoBadge: "-50% à vie",
   },
 ];
+
+/* ───────────────────── JSON-LD (SEO) ───────────────────── */
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
@@ -180,6 +223,51 @@ const faqJsonLd = {
   })),
 };
 
+/* ─────────────────── HELPER COMPONENTS ─────────────────── */
+
+function Stars({ rating, size = 16 }: { rating: number; size?: number }) {
+  return (
+    <span className="inline-flex gap-0.5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          className={i < rating ? "fill-amber-400 text-amber-400" : "fill-slate-200 text-slate-200"}
+          style={{ width: size, height: size }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function GoogleMock({
+  name,
+  rating,
+  reviews,
+  variant,
+}: {
+  name: string;
+  rating: number;
+  reviews: number;
+  variant: "before" | "after";
+}) {
+  const isBefore = variant === "before";
+  return (
+    <div className={`rounded-xl border bg-white p-4 shadow-sm ${isBefore ? "border-slate-200" : "border-emerald-200 ring-2 ring-emerald-100"}`}>
+      <div className="mb-1 font-semibold text-slate-900">{name}</div>
+      <div className="mb-1 flex items-center gap-2">
+        <span className="text-lg font-bold text-slate-900">{rating.toFixed(1)}</span>
+        <Stars rating={Math.round(rating)} size={16} />
+        <span className="text-sm text-slate-500">({reviews} avis)</span>
+      </div>
+      <div className="text-xs text-slate-500">
+        Commerce local · <span className="font-medium text-emerald-600">Ouvert</span>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────── PAGE ──────────────────────── */
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
@@ -196,21 +284,20 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      {/* Nav */}
+      {/* ── Nav ── */}
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="TocTocToc.boutique"
-              width={32}
-              height={32}
-              priority
-            />
+            <Image src="/logo.png" alt="TocTocToc.boutique" width={32} height={32} priority />
             <span className="font-brand hidden text-xl font-bold text-indigo-600 sm:inline">
               TocTocToc.boutique
             </span>
           </Link>
+          <div className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
+            <a href="#fonctionnalites" className="hover:text-indigo-600">Fonctionnalités</a>
+            <a href="#demo" className="hover:text-indigo-600">Démo</a>
+            <a href="#tarifs" className="hover:text-indigo-600">Tarifs</a>
+          </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900">
               Connexion
@@ -226,40 +313,111 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero — vidéo en arrière-plan, texte centré par-dessus */}
+      {/* ── Hero ── */}
       <section className="relative flex h-[calc(100vh-65px)] items-center justify-center overflow-hidden">
-        {/* Vidéo background */}
         <HeroVideo />
-        {/* Overlay gradient pour lisibilité du texte */}
         <div className="absolute inset-0 z-[1] bg-gradient-to-b from-white/80 via-white/50 to-white/80" />
-        {/* Contenu texte */}
         <div className="relative z-10 px-6 text-center">
-          <span className="mb-3 inline-block rounded-full bg-indigo-50/90 px-4 py-1.5 text-xs font-medium text-indigo-700 backdrop-blur-sm sm:text-sm">
-            Rejoint par 500+ commerces locaux
+          <span className="mb-3 inline-block rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow-md sm:text-sm">
+            Offre de lancement : -50% à vie
           </span>
           <h1 className="mb-3 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:mb-4 sm:text-4xl md:mb-6 md:text-5xl lg:text-6xl">
-            Plus d&apos;avis Google,
+            Remplissez votre commerce
             <br />
-            <span className="text-indigo-600">plus de clients fidèles</span>
+            <span className="text-indigo-600">grâce à vos clients satisfaits</span>
           </h1>
           <p className="mx-auto mb-4 max-w-2xl text-sm text-slate-600 sm:mb-6 sm:text-base md:mb-8 md:text-lg">
-            Vos clients laissent un avis Google en 30 secondes, cumulent leurs points de fidélité sans application, et réservent en ligne 24h/24.
+            Vos clients laissent un avis Google en 30 secondes, votre note monte, votre visibilité explose.
+            <br className="hidden sm:block" />
+            Carte de fidélité digitale et réservations en ligne incluses.
           </p>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-700 sm:px-8 sm:py-4 sm:text-base"
-          >
-            Essayer gratuitement <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-indigo-700 sm:px-8 sm:py-4 sm:text-base"
+            >
+              Essayer gratuitement <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a
+              href="#demo"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-700 backdrop-blur-sm transition hover:border-indigo-300 hover:text-indigo-600 sm:px-8 sm:py-4 sm:text-base"
+            >
+              Voir la démo <ChevronDown className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-slate-50 py-20">
+      {/* ── Comment ça marche ── */}
+      <section className="bg-white py-20">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">
-            Des résultats concrets pour votre commerce
+          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
+            Comment ça marche ?
           </h2>
+          <p className="mb-12 text-center text-slate-500">
+            3 étapes, 5 minutes, zéro compétence technique.
+          </p>
+          <div className="grid gap-8 md:grid-cols-3">
+            {steps.map((s) => (
+              <div key={s.num} className="relative text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl">
+                  {s.emoji}
+                </div>
+                <div className="mb-1 inline-block rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-bold text-white">
+                  Étape {s.num}
+                </div>
+                <h3 className="mb-2 mt-2 text-lg font-bold text-slate-900">{s.title}</h3>
+                <p className="text-sm leading-relaxed text-slate-500">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Avant / Après Google ── */}
+      <section className="bg-slate-50 py-20">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
+            Votre fiche Google avant / après
+          </h2>
+          <p className="mb-10 text-center text-slate-500">
+            Voici ce que vivent nos commerçants dans les premières semaines.
+          </p>
+          <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
+            <div className="w-full flex-1">
+              <div className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-slate-400">
+                Aujourd&apos;hui
+              </div>
+              <GoogleMock name="Votre commerce" rating={3.2} reviews={12} variant="before" />
+              <p className="mt-2 text-center text-xs text-slate-400">
+                Peu d&apos;avis, peu de visibilité
+              </p>
+            </div>
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-600">
+              →
+            </div>
+            <div className="w-full flex-1">
+              <div className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-emerald-600">
+                Avec TocTocToc
+              </div>
+              <GoogleMock name="Votre commerce" rating={4.8} reviews={142} variant="after" />
+              <p className="mt-2 text-center text-xs font-medium text-emerald-600">
+                Vous dominez la recherche locale
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Fonctionnalités ── */}
+      <section id="fonctionnalites" className="scroll-mt-20 bg-white py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
+            Tout ce qu&apos;il faut pour développer votre commerce
+          </h2>
+          <p className="mb-12 text-center text-slate-500">
+            Adapté à tous les commerces : restaurants, salons de coiffure, boulangeries, spas, pharmacies…
+          </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => {
               const card = (
@@ -288,7 +446,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Chiffres clés */}
+      {/* ── Demo interactive ── */}
+      <div id="demo" className="scroll-mt-20">
+        <LandingDemoSection />
+      </div>
+
+      {/* ── Chiffres clés ── */}
       <section className="bg-indigo-600 py-14">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid grid-cols-3 gap-8 text-center">
@@ -302,51 +465,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pour tous vos commerces */}
-      <section className="bg-slate-50 py-20">
+      {/* ── Témoignages ── */}
+      <section className="bg-white py-20">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
-            Adapté à votre activité
+          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">
+            Ils ont boosté leur commerce
           </h2>
-          <p className="mb-10 text-center text-slate-500">
-            Quel que soit votre commerce, TocTocToc.boutique s&apos;adapte à vos besoins spécifiques.
-          </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {commerceTypes.map((c) => {
-              const content = (
-                <div className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-center transition-shadow hover:shadow-md">
-                  <span className="text-3xl">{c.emoji}</span>
-                  <span className="text-xs font-medium text-slate-700">{c.label}</span>
-                </div>
-              );
-              return c.slug ? (
-                <Link key={c.label} href={`/fonctionnalites/carte-de-fidelite/${c.slug}`}>
-                  {content}
-                </Link>
-              ) : (
-                <div key={c.label}>{content}</div>
-              );
-            })}
+          <div className="grid gap-6 md:grid-cols-3">
+            {testimonials.map((t) => (
+              <blockquote
+                key={t.name}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-6"
+              >
+                <Stars rating={5} size={16} />
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-700">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <footer className="mt-4 border-t border-slate-200 pt-3">
+                  <div className="text-sm font-semibold text-slate-900">{t.name}</div>
+                  <div className="text-xs text-slate-500">{t.role}</div>
+                </footer>
+              </blockquote>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Demo interactive */}
-      <LandingDemoSection />
-
-      {/* Pricing */}
-      <section className="py-20">
+      {/* ── Pricing ── */}
+      <section id="tarifs" className="scroll-mt-20 bg-slate-50 py-20">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="mb-4 text-center text-3xl font-bold text-slate-900">
-            Tarifs simples
+            Tarifs simples, sans surprise
           </h2>
           <p className="mb-3 text-center text-slate-500">
-            Sans engagement, résiliable à tout moment.
-            <br />
-            3 à 8x moins cher que la concurrence.
+            Sans engagement · Résiliable à tout moment · 3 à 8× moins cher que la concurrence
           </p>
-          <div className="mx-auto mb-10 w-fit animate-pulse rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-center text-sm font-bold text-white shadow-lg">
-            Offre de lancement -50% à vie — pour les 1000 premiers inscrits !
+          <div className="mx-auto mb-10 w-fit rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2 text-center text-sm font-bold text-white shadow-md">
+            Offre de lancement : -50% à vie pour les premiers inscrits
           </div>
           <div className="grid gap-6 sm:grid-cols-3">
             {plans.map((plan) => (
@@ -360,7 +515,7 @@ export default function HomePage() {
               >
                 {plan.highlight && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold text-amber-900">
-                    Populaire
+                    Le plus populaire
                   </span>
                 )}
                 {plan.promoBadge && !plan.highlight && (
@@ -414,11 +569,18 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+          {/* Reassurance */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
+            <span>🇫🇷 Hébergé en France</span>
+            <span>🔒 Conforme RGPD</span>
+            <span>💬 Support humain en français</span>
+            <span>✅ 14 jours d&apos;essai gratuit</span>
+          </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="bg-slate-50 py-20">
+      {/* ── FAQ ── */}
+      <section className="bg-white py-20">
         <div className="mx-auto max-w-3xl px-6">
           <h2 className="mb-12 text-center text-3xl font-bold text-slate-900">
             Questions fréquentes
@@ -429,10 +591,9 @@ export default function HomePage() {
                 key={i}
                 className="group rounded-2xl border border-slate-200 bg-white px-6 py-4"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900 group-open:text-indigo-600">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-semibold text-slate-900 group-open:text-indigo-600 [&::-webkit-details-marker]:hidden">
                   {faq.q}
-                  <span className="ml-3 flex-shrink-0 text-lg group-open:hidden">🗿</span>
-                  <span className="ml-3 hidden flex-shrink-0 text-lg group-open:inline">💩</span>
+                  <ChevronDown className="ml-3 h-5 w-5 flex-shrink-0 text-slate-400 transition-transform group-open:rotate-180 group-open:text-indigo-500" />
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-slate-500">{faq.a}</p>
               </details>
@@ -441,10 +602,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ── CTA final ── */}
+      <section className="bg-indigo-600 py-20">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="mb-4 text-3xl font-bold text-white">
+            Prêt à booster votre commerce ?
+          </h2>
+          <p className="mb-8 text-lg text-indigo-200">
+            Rejoignez les commerçants qui ont choisi de reprendre le contrôle de leur visibilité en ligne.
+            <br />
+            Gratuit, sans engagement, en 5 minutes.
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-semibold text-indigo-600 shadow-lg transition-transform hover:scale-105 hover:bg-indigo-50"
+          >
+            Créer mon espace gratuitement <ArrowRight className="h-5 w-5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
       <footer className="border-t border-slate-100 py-12">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-8 grid gap-8 sm:grid-cols-3">
+          <div className="mb-8 grid gap-8 sm:grid-cols-4">
             <div>
               <div className="mb-3 font-semibold text-slate-900">Fonctionnalités</div>
               <ul className="space-y-2 text-sm text-slate-500">
@@ -466,28 +647,27 @@ export default function HomePage() {
               </ul>
             </div>
             <div>
-              <div className="mb-3 font-semibold text-slate-900">Par type de commerce</div>
+              <div className="mb-3 font-semibold text-slate-900">Avis Google par métier</div>
               <ul className="space-y-2 text-sm text-slate-500">
-                <li>
-                  <Link href="/fonctionnalites/carte-de-fidelite/boulangerie" className="hover:text-indigo-600">
-                    Boulangerie
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/fonctionnalites/carte-de-fidelite/restaurant" className="hover:text-indigo-600">
-                    Restaurant
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/fonctionnalites/avis-google/salon-de-coiffure" className="hover:text-indigo-600">
-                    Salon de coiffure
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/fonctionnalites/carte-de-fidelite/cafe" className="hover:text-indigo-600">
-                    Café
-                  </Link>
-                </li>
+                {commerceTypes.filter((c) => c.slug).slice(0, 5).map((c) => (
+                  <li key={c.label}>
+                    <Link href={`/fonctionnalites/avis-google/${c.slug}`} className="hover:text-indigo-600">
+                      {c.emoji} {c.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="mb-3 font-semibold text-slate-900">Fidélité par métier</div>
+              <ul className="space-y-2 text-sm text-slate-500">
+                {commerceTypes.filter((c) => c.slug).slice(0, 5).map((c) => (
+                  <li key={c.label}>
+                    <Link href={`/fonctionnalites/carte-de-fidelite/${c.slug}`} className="hover:text-indigo-600">
+                      {c.emoji} {c.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
@@ -512,7 +692,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-slate-100 pt-6 text-center text-sm text-slate-400">
-            © {new Date().getFullYear()} TocTocToc.boutique. Fait avec ❤️ en France.
+            © {new Date().getFullYear()} TocTocToc.boutique · Fait avec soin en France 🇫🇷
           </div>
         </div>
       </footer>

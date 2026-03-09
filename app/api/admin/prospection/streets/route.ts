@@ -20,6 +20,8 @@ export async function GET() {
           name: true,
           address: true,
           businessType: true,
+          rating: true,
+          reviewCount: true,
           status: true,
           lat: true,
           lng: true,

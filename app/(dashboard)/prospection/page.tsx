@@ -29,6 +29,8 @@ export default async function ProspectionPage() {
           name: true,
           address: true,
           businessType: true,
+          rating: true,
+          reviewCount: true,
           status: true,
           lat: true,
           lng: true,

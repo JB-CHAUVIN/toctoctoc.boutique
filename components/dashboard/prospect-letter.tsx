@@ -318,13 +318,7 @@ export function buildLetterHtml(
     padding-top: 1mm;
   }
 
-  .sender-info {
-    font-size: 8pt;
-    color: #64748b;
-    text-align: right;
-    margin-top: 2mm;
-    line-height: 1.6;
-  }
+
 
   /* ── HOOK BANNER ── */
   .hook-banner {
@@ -421,86 +415,83 @@ export function buildLetterHtml(
     color: #64748b;
   }
 
-  /* ── PRICE BLOCK ── */
-  .price-block {
-    margin: 5mm 0;
-    background: linear-gradient(135deg, ${primary} 0%, ${accent} 100%);
-    border-radius: 12px;
-    padding: 6mm 7mm 5mm;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  .price-block-label {
-    font-size: 8pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    opacity: 0.85;
-    margin-bottom: 4mm;
-    position: relative;
-    z-index: 1;
-  }
-
-  .price-plans {
+  /* ── FEATURE GRID ── */
+  .feature-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 3mm;
-    margin-bottom: 4mm;
-    position: relative;
-    z-index: 1;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5mm;
+    margin: 4mm 0;
   }
 
-  .plan-card {
-    background: rgba(255,255,255,0.10);
+  .feature-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 2.5mm;
+    padding: 2.5mm 3mm;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 3.5mm 3mm;
-    text-align: center;
+    background: #f8fafc;
   }
 
-  .plan-card.featured {
-    background: rgba(255,255,255,0.22);
-    border: 1.5px solid rgba(255,255,255,0.5);
-  }
-
-  .plan-name {
-    font-size: 8.5pt;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.3px;
-  }
-
-  .plan-subtitle {
-    font-size: 7pt;
-    opacity: 0.7;
-    color: #fff;
+  .feature-icon {
+    font-size: 14pt;
+    line-height: 1;
+    flex-shrink: 0;
     margin-top: 0.5mm;
   }
 
-  .plan-price {
-    font-size: 18pt;
-    font-weight: 900;
-    color: #fff;
-    line-height: 1;
-    margin: 2mm 0 0.5mm;
+  .feature-title {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5mm;
   }
 
-  .plan-features {
-    font-size: 7pt;
-    opacity: 0.75;
-    color: #fff;
-    line-height: 1.5;
+  .feature-desc {
+    font-size: 7.5pt;
+    color: #64748b;
+    line-height: 1.35;
   }
 
-  .price-trial {
+  /* ── SOCIAL PROOF ── */
+  .social-proof {
+    margin: 3mm 0 0;
+    padding: 2.5mm 4mm;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 6px 6px 0;
     font-size: 8.5pt;
-    opacity: 0.88;
-    position: relative;
-    z-index: 1;
-    text-align: center;
+    color: #78350f;
+    line-height: 1.45;
+  }
+
+  .social-proof-stat {
+    font-size: 12pt;
+    font-weight: 900;
+    color: #d97706;
+  }
+
+  /* ── REASSURANCE GRID ── */
+  .reassurance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3mm;
+    margin: 5mm 0;
+  }
+
+  .reassurance-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 2mm;
+    font-size: 9pt;
+    color: #334155;
+    line-height: 1.4;
+  }
+
+  .reassurance-icon {
+    font-size: 12pt;
+    line-height: 1;
+    flex-shrink: 0;
   }
 
   /* ── CLAIM SECTION ── */
@@ -675,19 +666,14 @@ export function buildLetterHtml(
   <!-- INNER CONTENT -->
   <div class="inner">
 
-    <!-- META BAR (from / to / date) -->
+    <!-- META BAR (compact) -->
     <div class="meta-bar">
       <div class="recipient-address">
-        <div style="font-size:8.5pt;color:#94a3b8;margin-bottom:2mm;font-style:italic;">À l'attention du/de la responsable</div>
         <div class="recipient-name">${business.name}</div>
         ${addressLines}
       </div>
       <div>
-        <div class="date-place">Le ${today}</div>
-        <div class="sender-info">
-          contact@toctoctoc.boutique<br/>
-          www.toctoctoc.boutique
-        </div>
+        <div class="date-place">${business.city ? `${business.city}, le` : "Le"} ${today}</div>
       </div>
     </div>
 
@@ -708,20 +694,49 @@ export function buildLetterHtml(
       <p>Bonjour,</p>
 
       <p>
+        <strong>9 clients sur 10 consultent les avis Google avant de pousser la porte d'un commerce.</strong>
         ${business.googleRating != null && business.googleReviewCount != null
-          ? `Vous avez actuellement <strong>${business.googleRating.toFixed(1)}★</strong> avec <strong>${business.googleReviewCount} avis</strong> sur Google. C'est ${business.googleRating >= 4.5 ? "excellent" : business.googleRating >= 4 ? "bien" : "un bon début"} — mais imaginez l'impact avec 50 avis de plus.`
-          : `Savez-vous combien d'avis Google vous avez ? Et votre concurrent le plus proche ?`} Aujourd'hui, 9 clients sur 10 consultent les avis avant de choisir un commerce. J'ai préparé un système complet pour <span class="highlight">${business.name}</span> sur <span class="highlight">TocTocToc.boutique</span> — il est déjà configuré et prêt à l'emploi. Vos clients scannent un simple QR code pour laisser un avis Google et tenter de gagner une récompense, ou pour accumuler leurs points de fidélité — le tout en quelques secondes, sans rien télécharger.
+          ? ` Avec ${business.googleReviewCount} avis et une note de ${business.googleRating.toFixed(1)}★, ${business.name} a une belle base — mais vos concurrents avancent vite.`
+          : ` Peu d'avis = peu de visibilité. Vos concurrents les mieux notés captent vos futurs clients.`}
+        J'ai préparé un espace complet pour <span class="highlight">${business.name}</span> — il est prêt, il ne reste qu'à l'activer.
       </p>
 
-      <ul style="margin:0 0 4mm 4mm;padding-left:4mm;font-size:10pt;color:#334155;line-height:1.7;">
-        <li><strong>⭐ 3x plus d'avis Google</strong> — vos clients laissent un avis et jouent à la roulette pour gagner un cadeau</li>
-        <li><strong>🎯 Carte de fidélité digitale</strong> — tamponnage par QR code, fini les cartons perdus</li>
-        <li><strong>🌐 Site vitrine</strong> — une page pro aux couleurs de votre commerce</li>
-        <li><strong>📅 Réservations en ligne</strong> — vos clients réservent 24h/24</li>
-      </ul>
-      <p style="margin:0 0 4mm 0;font-size:8pt;color:#94a3b8;font-style:italic;line-height:1.45;">
-        Bientôt disponible : publication automatique sur les réseaux sociaux, boutique en ligne, standard téléphonique IA, gestion d'équipe, facturation électronique…
-      </p>
+      <!-- FEATURE CARDS -->
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⭐</div>
+          <div>
+            <div class="feature-title">Collecte d'avis Google</div>
+            <div class="feature-desc">Vos clients scannent un QR code, laissent un avis et tentent de gagner un cadeau</div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div>
+            <div class="feature-title">Fidélité digitale</div>
+            <div class="feature-desc">Carte de fidélité sur smartphone, tamponnage par QR code — fini les cartons perdus</div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <div>
+            <div class="feature-title">Site vitrine pro</div>
+            <div class="feature-desc">Une page aux couleurs de votre commerce, visible sur Google en 5 minutes</div>
+          </div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <div>
+            <div class="feature-title">Réservations en ligne</div>
+            <div class="feature-desc">Vos clients réservent 24h/24 depuis votre fiche Google ou votre site</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SOCIAL PROOF -->
+      <div class="social-proof">
+        <span class="social-proof-stat">97%</span> des commerçants qui collectent activement leurs avis voient leur note Google augmenter en moins de 30 jours.
+      </div>
 
     </div>
 
@@ -743,75 +758,53 @@ export function buildLetterHtml(
 
   <div class="inner">
 
+      ${claimSection}
+
       <!-- CARDS -->
       <div class="cards-section">
-        <div class="cards-title">📎 Prêt à utiliser dès aujourd'hui</div>
+        <div class="cards-title">📎 Vous trouverez aussi dans cette enveloppe</div>
         <div class="cards-desc">
-          Vous trouverez avec ce courrier des <strong>supports QR codes</strong> prêts à poser sur votre comptoir dès maintenant — aucune manipulation technique :
+          Des <strong>supports QR codes</strong> prêts à poser sur votre comptoir — aucune manipulation technique :
           <br/>
-          <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis Google, et jouent pour gagner un cadeau<br/>
+          <strong>• Collecte d'avis Google</strong> — vos clients scannent, laissent un avis et jouent pour gagner un cadeau<br/>
           <strong>• Carte de fidélité</strong> — vos clients scannent à chaque passage pour cumuler leurs points
         </div>
       </div>
 
-      <!-- PRICE BLOCK -->
-      <div class="price-block">
-        <!-- Bubbles inside price block -->
-        <div style="position:absolute;width:55mm;height:55mm;border-radius:50%;background:rgba(255,255,255,0.07);top:-15mm;right:-10mm;pointer-events:none;"></div>
-        <div style="position:absolute;width:35mm;height:35mm;border-radius:50%;background:rgba(255,255,255,0.05);bottom:-10mm;left:20mm;pointer-events:none;"></div>
-        <div style="position:absolute;width:22mm;height:22mm;border-radius:50%;background:rgba(255,255,255,0.04);top:5mm;left:-5mm;pointer-events:none;"></div>
-
-        <div style="text-align:center;margin-bottom:3mm;">
-          <span style="display:inline-block;background:linear-gradient(90deg,#f59e0b,#f97316);color:white;font-size:8pt;font-weight:800;padding:1.5mm 4mm;border-radius:20px;">
-            OFFRE DE LANCEMENT -50% À VIE
-          </span>
-        </div>
-
-        <div class="price-plans">
-          <!-- FREE -->
-          <div class="plan-card">
-            <div class="plan-name">GRATUIT</div>
-            <div class="plan-subtitle">Pour découvrir</div>
-            <div class="plan-price">0€</div>
-            <div class="plan-features">Avis + Fidélité<br/>(limité à 3)</div>
-          </div>
-          <!-- STARTER (featured) -->
-          <div class="plan-card featured">
-            <div class="plan-name">STARTER ⭐</div>
-            <div class="plan-subtitle">Le plus populaire</div>
-            <div class="plan-price"><span style="text-decoration:line-through;font-size:11pt;opacity:0.6;">18€</span> 9€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
-            <div class="plan-features">Tout inclus<br/>Sans engagement</div>
-            <div style="margin-top:1mm;font-size:7pt;font-weight:700;color:#f59e0b;">-50% à vie</div>
-          </div>
-          <!-- PRO -->
-          <div class="plan-card">
-            <div class="plan-name">PRO</div>
-            <div class="plan-subtitle">Multi-commerces</div>
-            <div class="plan-price"><span style="text-decoration:line-through;font-size:11pt;opacity:0.5;">38€</span> 19€<span style="font-size:9pt;font-weight:600;">/mois</span></div>
-            <div class="plan-features">Jusqu'à 3 commerces<br/>+ Réseaux sociaux</div>
-            <div style="margin-top:1mm;font-size:7pt;font-weight:700;color:#f59e0b;">-50% à vie</div>
+      <!-- REASSURANCE -->
+      <div class="reassurance-grid">
+        <div class="reassurance-item">
+          <span class="reassurance-icon">✅</span>
+          <div>
+            <strong>100% gratuit pour démarrer</strong><br/>
+            <span style="font-size:8pt;color:#64748b;">Pas de carte bancaire requise</span>
           </div>
         </div>
-
-        <div class="price-trial">
-          ✓ 14 jours d'essai gratuit &nbsp;·&nbsp; ✓ Sans engagement &nbsp;·&nbsp; ✓ 3 à 8× moins cher que la concurrence
+        <div class="reassurance-item">
+          <span class="reassurance-icon">⏱️</span>
+          <div>
+            <strong>Activation en 2 minutes</strong><br/>
+            <span style="font-size:8pt;color:#64748b;">Tout est déjà configuré pour vous</span>
+          </div>
+        </div>
+        <div class="reassurance-item">
+          <span class="reassurance-icon">🔓</span>
+          <div>
+            <strong>Sans engagement</strong><br/>
+            <span style="font-size:8pt;color:#64748b;">Résiliable en un clic, à tout moment</span>
+          </div>
+        </div>
+        <div class="reassurance-item">
+          <span class="reassurance-icon">🇫🇷</span>
+          <div>
+            <strong>Support français</strong><br/>
+            <span style="font-size:8pt;color:#64748b;">Une vraie personne vous répond</span>
+          </div>
         </div>
       </div>
 
-      <p style="margin-top:3mm;">
-        Chez TocTocToc.boutique, on croit que chaque commerce local mérite des outils performants à un prix juste. C'est pourquoi nous proposons le système complet à partir de <strong>9€/mois</strong>.
-      </p>
-
-      ${claimSection}
-
-      <!-- SOFT CLOSE -->
-      <div class="soft-close">
-        Même si le moment n'est pas idéal, votre espace reste disponible. Et si un jour vous souhaitez booster vos avis Google ou fidéliser vos clients, tout sera prêt en un scan.
-      </div>
-
-      <p>
-        N'hésitez pas à me contacter pour toute question ou pour activer votre abonnement en quelques clics.
-        Je reste à votre disposition.
+      <p style="font-size:10pt;color:#334155;margin-top:4mm;">
+        Si vous avez la moindre question, je suis disponible par email ou par téléphone — je serai ravi d'échanger avec vous.
       </p>
 
     <!-- SIGNATURE -->

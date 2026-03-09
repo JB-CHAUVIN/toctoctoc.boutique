@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2 } from "lucide-react";
+import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2, Star } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { ProspectStreet, ProspectLead } from "./prospect-map";
@@ -235,8 +235,26 @@ function LeadCard({
     )}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-slate-800">{lead.name}</p>
-          {lead.businessType && <p className="text-xs text-slate-500">{lead.businessType}</p>}
+          <p
+            className="cursor-copy truncate text-sm font-semibold text-slate-800 hover:text-indigo-600"
+            title="Copier le nom"
+            onClick={() => {
+              navigator.clipboard.writeText(lead.name);
+              toast.success("Nom copié !");
+            }}
+          >{lead.name}</p>
+          <div className="flex items-center gap-1.5">
+            {lead.businessType && <span className="text-xs text-slate-500">{lead.businessType}</span>}
+            {lead.rating != null && (
+              <span className={cn(
+                "flex items-center gap-0.5 text-[11px] font-medium",
+                lead.rating >= 4.5 ? "text-green-600" : lead.rating >= 4 ? "text-yellow-600" : "text-orange-600"
+              )}>
+                <Star className="h-3 w-3 fill-current" />{lead.rating}
+                {lead.reviewCount != null && <span className="font-normal text-slate-400">({lead.reviewCount})</span>}
+              </span>
+            )}
+          </div>
           {lead.address && <p className="mt-0.5 truncate text-xs text-slate-400">{lead.address}</p>}
         </div>
         <span className={cn("flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium", STATUS_COLORS[lead.status])}>
