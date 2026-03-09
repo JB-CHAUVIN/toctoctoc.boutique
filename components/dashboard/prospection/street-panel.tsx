@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2, Star } from "lucide-react";
+import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2, Star, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { ProspectStreet, ProspectLead } from "./prospect-map";
@@ -275,9 +275,18 @@ function LeadCard({
           </a>
         )}
         {lead.googleMapsUrl && (
-          <a href={lead.googleMapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100">
-            <ExternalLink className="h-3 w-3" />Maps
-          </a>
+          <>
+            <a href={lead.googleMapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100">
+              <ExternalLink className="h-3 w-3" />Maps
+            </a>
+            <button
+              onClick={() => { navigator.clipboard.writeText(lead.googleMapsUrl!); toast.success("Lien Maps copié !"); }}
+              className="flex items-center gap-1 rounded-md bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+              title="Copier le lien Maps"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+          </>
         )}
       </div>
 
