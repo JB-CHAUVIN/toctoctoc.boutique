@@ -138,12 +138,20 @@ const MODULE_NAV: Record<string, ModuleNavDef> = {
   },
 };
 
-export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, isAdmin, prospectStepMap }: SidebarProps) {
+export function Sidebar({ businesses: initialBusinesses, maxBusinesses, businessCount: initialCount, planLabel, isAdmin, prospectStepMap }: SidebarProps) {
   const pathname = usePathname();
   const currentBusinessId = pathname.match(/^\/dashboard\/([^/]+)/)?.[1];
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [businessSearch, setBusinessSearch] = useState("");
+  const [businesses, setBusinesses] = useState(initialBusinesses);
+  const [businessCount, setBusinessCount] = useState(initialCount);
+
+  // Sync avec les props serveur (navigation entre pages)
+  useEffect(() => {
+    setBusinesses(initialBusinesses);
+    setBusinessCount(initialCount);
+  }, [initialBusinesses, initialCount]);
 
   // Fermer le drawer à chaque navigation
   useEffect(() => { setMobileOpen(false); }, [pathname]);
@@ -153,6 +161,28 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
     const handler = () => setMobileOpen(true);
     window.addEventListener("sidebar:open", handler);
     return () => window.removeEventListener("sidebar:open", handler);
+  }, []);
+
+  // Écouter sidebar:refresh pour re-fetcher la liste des businesses
+  useEffect(() => {
+    async function refresh() {
+      try {
+        const res = await fetch("/api/admin/businesses");
+        const json = await res.json();
+        if (!json.success) return;
+        const mapped: BusinessNav[] = json.data.map((b: Record<string, unknown>) => ({
+          id: b.id, name: b.name, slug: b.slug,
+          primaryColor: b.primaryColor, logoUrl: b.logoUrl, logoBackground: b.logoBackground,
+          claimedAt: b.claimedAt, claimToken: b.claimToken,
+          modules: b.modules as BusinessModule[],
+          user: b.user as { name: string | null; email: string },
+        }));
+        setBusinesses(mapped);
+        setBusinessCount(mapped.length);
+      } catch { /* silently fail */ }
+    }
+    window.addEventListener("sidebar:refresh", refresh);
+    return () => window.removeEventListener("sidebar:refresh", refresh);
   }, []);
 
   function toggleModule(moduleKey: string) {

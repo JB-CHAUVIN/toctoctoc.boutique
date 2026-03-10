@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
-  X, Loader2, ChevronDown, Sparkles, ImageIcon, Crop, MapPin, Search, CheckCircle2,
+  X, Loader2, ChevronDown, Sparkles, ImageIcon, Crop, MapPin, Search, CheckCircle2, Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -362,11 +362,6 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       if (hasData) {
         setGoogleResult(d);
         toast.success(filled.length > 0 ? `${filled.length} info(s) récupérée(s) !` : "Données récupérées");
-        // Auto-chain website analysis if a website URL was found
-        const websiteUrl = d.website;
-        if (websiteUrl) {
-          handleWebsiteAnalyze(websiteUrl);
-        }
       } else {
         toast("Aucune information trouvée", { icon: "⚠️" });
       }
@@ -561,10 +556,20 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
                           <p className="mb-2 text-xs font-semibold text-green-700">{entries.length} champ(s) récupéré(s)</p>
                           <div className="space-y-0.5">
                             {entries.map(({ label, value, key }) => (
-                              <div key={label} className="flex gap-1.5 text-xs">
+                              <div key={label} className="flex items-center gap-1.5 text-xs">
                                 <span className="w-16 flex-shrink-0 text-slate-400">{label}</span>
                                 {(key === "website" || key === "googleMapsUrl") && value ? (
-                                  <a href={value} target="_blank" rel="noreferrer" className="truncate font-medium text-indigo-600 hover:underline">{value}</a>
+                                  <>
+                                    <a href={value} target="_blank" rel="noreferrer" className="min-w-0 truncate font-medium text-indigo-600 hover:underline">{value}</a>
+                                    <button
+                                      type="button"
+                                      onClick={() => { navigator.clipboard.writeText(value); toast.success(`${label} copié !`); }}
+                                      className="flex-shrink-0 rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                                      title={`Copier ${label}`}
+                                    >
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                  </>
                                 ) : (
                                   <span className="truncate font-medium text-slate-700">{value}</span>
                                 )}

@@ -44,6 +44,8 @@ export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
     } catch {
       toast.error("Erreur lors de la mise à jour du lead");
     }
+    // Notifier la sidebar sans recharger la page (préserve l'état de la map)
+    window.dispatchEvent(new Event("sidebar:refresh"));
     onConverted(businessId);
   }
 
