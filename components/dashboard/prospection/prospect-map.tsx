@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MapPin, Search, Loader2, TrendingUp, Route, Users, Star, RefreshCw, AlertTriangle } from "lucide-react";
+import { MapPin, Search, Loader2, TrendingUp, Route, Users, Star, RefreshCw, AlertTriangle, Globe } from "lucide-react";
 import toast from "react-hot-toast";
 import { StreetPanel } from "./street-panel";
+import { ScanAreaButton } from "./scan-area-button";
+
+const PARIS_CENTER: [number, number] = [48.8566, 2.3522];
+const DEFAULT_ZOOM = 13;
 
 export interface ProspectLead {
   id: string;
@@ -83,9 +87,13 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
   // Objet pour que l'effet se re-déclenche même si on clique deux fois le même marker
   const [highlightLead, setHighlightLead] = useState<{ id: string; tick: number } | null>(null);
   const [searchValue, setSearchValue] = useState("");
+  const [cityValue, setCityValue] = useState("Paris, France");
   const [isSearching, setIsSearching] = useState(false);
+  const [isScanningArea, setIsScanningArea] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [maxRating, setMaxRating] = useState<number | null>(null);
+  const [clickProspectModal, setClickProspectModal] = useState<{ streetName: string; lat: number; lng: number } | null>(null);
+  const [isGeocodingCity, setIsGeocodingCity] = useState(false);
 
   const RATING_OPTIONS = [
     { value: null, label: "Toutes" },
@@ -129,13 +137,31 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
-      const map = L.map(container, { center: [48.8566, 2.3522], zoom: 13 });
+      const map = L.map(container, { center: PARIS_CENTER, zoom: DEFAULT_ZOOM });
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: "abcd",
         maxZoom: 20,
       }).addTo(map);
+
+      // Click on map → reverse geocode to get street name → propose prospection
+      map.on("click", async (e: import("leaflet").LeafletMouseEvent) => {
+        const { lat, lng } = e.latlng;
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=17&addressdetails=1`,
+            { headers: { "Accept-Language": "fr" } }
+          );
+          if (!resp.ok) return;
+          const data = await resp.json();
+          const road = data.address?.road;
+          if (!road) return;
+          setClickProspectModal({ streetName: road, lat, lng });
+        } catch {
+          // Silently ignore reverse geocode errors
+        }
+      });
 
       mapRef.current = map;
       if (!cancelled) setMapReady(true);
@@ -169,7 +195,10 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         const latlngs = chain.map((p) => [p.lat, p.lng] as [number, number]);
         const polyline = L.polyline(latlngs, { color, weight: 5, opacity: 0.85 }).addTo(mapRef.current!);
         polyline.bindTooltip(street.name, { sticky: true });
-        polyline.on("click", () => setSelectedStreet(street));
+        polyline.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+          L.DomEvent.stopPropagation(e);
+          setSelectedStreet(street);
+        });
         polylines.push(polyline);
       }
       polylinesRef.current.set(street.id, polylines);
@@ -187,7 +216,11 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
         fillOpacity: 0.9,
       }).addTo(mapRef.current!);
       marker.bindTooltip(`<strong>${lead.name}</strong><br/>${lead.businessType ?? ""}`, { direction: "top" });
-      marker.on("click", () => { setSelectedStreet(street); setHighlightLead({ id: lead.id, tick: Date.now() }); });
+      marker.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
+        setSelectedStreet(street);
+        setHighlightLead({ id: lead.id, tick: Date.now() });
+      });
       streetMarkers.push(marker);
     }
     markersRef.current.set(street.id, streetMarkers);
@@ -199,16 +232,45 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, streets, maxRating, drawStreet]);
 
+  // Geocode city and recenter map
+  async function goToCity(city: string) {
+    if (!mapRef.current || !city.trim()) return;
+    setIsGeocodingCity(true);
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=0`,
+        { headers: { "Accept-Language": "fr" } }
+      );
+      if (!resp.ok) { toast.error("Impossible de trouver cette ville"); return; }
+      const results = await resp.json();
+      if (!results.length) { toast.error("Ville introuvable"); return; }
+      const { lat, lon, boundingbox } = results[0];
+      if (boundingbox) {
+        mapRef.current.fitBounds([
+          [parseFloat(boundingbox[0]), parseFloat(boundingbox[2])],
+          [parseFloat(boundingbox[1]), parseFloat(boundingbox[3])],
+        ]);
+      } else {
+        mapRef.current.setView([parseFloat(lat), parseFloat(lon)], 13);
+      }
+      toast.success(`Carte recentrée sur ${city.split(",")[0].trim()}`);
+    } catch {
+      toast.error("Erreur réseau");
+    } finally {
+      setIsGeocodingCity(false);
+    }
+  }
+
   // Refresh modal state
   const [refreshModal, setRefreshModal] = useState<{ streetName: string; existing: ProspectStreet } | null>(null);
 
-  async function doSearch(streetName: string, refresh = false) {
+  async function doSearch(streetName: string, refresh = false, overrideCity?: string) {
     setIsSearching(true);
     try {
       const res = await fetch("/api/admin/prospection/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ streetName, refresh }),
+        body: JSON.stringify({ streetName, city: overrideCity || cityValue, refresh }),
       });
       const json = await res.json();
       if (!res.ok) { toast.error(json.error ?? "Erreur"); return; }
@@ -289,8 +351,8 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
             <MapPin className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900">Conquête de Paris</h1>
-            <p className="text-xs text-slate-500">Prospection rue par rue</p>
+            <h1 className="text-lg font-bold text-slate-900">Prospection</h1>
+            <p className="text-xs text-slate-500">Cliquez sur une rue ou recherchez-la</p>
           </div>
         </div>
         <div className="flex items-center gap-6 text-sm">
@@ -329,13 +391,36 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
       {/* Search */}
       <div className="border-b border-slate-200 bg-white px-6 py-3">
         <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="flex w-64 shrink-0 gap-1">
+            <div className="relative flex-1">
+              <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={cityValue}
+                onChange={(e) => setCityValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); goToCity(cityValue); } }}
+                placeholder="Ville (ex: Lyon, France)"
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                disabled={isSearching || isGeocodingCity}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => goToCity(cityValue)}
+              disabled={isSearching || isGeocodingCity || !cityValue.trim()}
+              className="rounded-lg border border-slate-300 px-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              title="Recentrer la carte sur cette ville"
+            >
+              {isGeocodingCity ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+            </button>
+          </div>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Rechercher une rue à Paris (ex: Rue de Rivoli)…"
+              placeholder="Rechercher une rue (ex: Rue de Rivoli)…"
               className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               disabled={isSearching}
             />
@@ -359,6 +444,37 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
               <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
             </div>
           )}
+          {(isSearching || isScanningArea) && mapReady && (
+            <div className="absolute inset-0 z-[999] flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+              <div className="flex flex-col items-center gap-3 rounded-xl bg-white px-6 py-5 shadow-lg border border-slate-200">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                <p className="text-sm font-medium text-slate-700">
+                  {isScanningArea ? "Scan de la zone en cours…" : "Recherche de la rue…"}
+                </p>
+                <p className="text-xs text-slate-400">Interrogation de Google Places</p>
+              </div>
+            </div>
+          )}
+
+          {/* Scan zone */}
+          <ScanAreaButton
+            getBounds={() => {
+              if (!mapRef.current) return null;
+              const b = mapRef.current.getBounds();
+              return {
+                sw: { lat: b.getSouthWest().lat, lng: b.getSouthWest().lng },
+                ne: { lat: b.getNorthEast().lat, lng: b.getNorthEast().lng },
+              };
+            }}
+            city={cityValue}
+            onResults={(street) => {
+              setStreets((prev) => [street, ...prev]);
+              setSelectedStreet(street);
+              drawStreet(street);
+            }}
+            onScanningChange={setIsScanningArea}
+            disabled={isSearching || isScanningArea}
+          />
 
           {/* Légende */}
           <div className="absolute bottom-4 left-4 z-[1000] rounded-lg border border-slate-200 bg-white p-3 shadow-md">
@@ -426,6 +542,53 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
               >
                 <RefreshCw className="h-4 w-4" />
                 Rafraîchir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation click-to-prospect */}
+      {clickProspectModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h3 className="text-base font-semibold text-slate-900">Prospecter cette rue ?</h3>
+            </div>
+            <p className="mb-5 text-sm text-slate-600">
+              Lancer la prospection de <span className="font-semibold">{clickProspectModal.streetName}</span> ?
+              Les commerces de cette rue seront recherchés sur Google.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setClickProspectModal(null)}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  const { streetName } = clickProspectModal;
+                  setClickProspectModal(null);
+
+                  // Check if already prospected
+                  const nameLower = streetName.toLowerCase();
+                  const existing = streets.find(
+                    (s) => s.name.toLowerCase().includes(nameLower) || nameLower.includes(s.name.toLowerCase())
+                  );
+                  if (existing) {
+                    setRefreshModal({ streetName, existing });
+                  } else {
+                    doSearch(streetName);
+                  }
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+              >
+                <Search className="h-4 w-4" />
+                Prospecter
               </button>
             </div>
           </div>

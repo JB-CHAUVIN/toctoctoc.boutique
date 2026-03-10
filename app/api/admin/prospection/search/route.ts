@@ -2,75 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-// Mapping Google Place types → businessType lisible
-const GOOGLE_TYPE_MAP: Record<string, string | null> = {
-  bakery: "Boulangerie",
-  restaurant: "Restaurant",
-  cafe: "Café",
-  bar: "Bar",
-  night_club: "Bar",
-  liquor_store: "Cave à vins",
-  beauty_salon: "Salon de beauté",
-  hair_care: "Salon de coiffure",
-  barber_shop: "Barbier",
-  pharmacy: "Pharmacie",
-  drugstore: "Pharmacie",
-  supermarket: "Épicerie",
-  grocery_or_supermarket: "Épicerie",
-  convenience_store: "Superette",
-  florist: "Fleuriste",
-  book_store: "Librairie",
-  jewelry_store: "Bijouterie",
-  clothing_store: "Boutique de vêtements",
-  shoe_store: "Boutique de chaussures",
-  laundry: "Pressing",
-  dry_cleaning: "Pressing",
-  pet_store: "Animalerie",
-  hardware_store: "Quincaillerie",
-  electronics_store: "Électronique",
-  bicycle_store: "Vélo",
-  car_repair: "Garage",
-  gas_station: "Station service",
-  gym: "Salle de sport",
-  spa: "Spa",
-  dentist: "Dentiste",
-  doctor: "Médecin",
-  hospital: "Hôpital",
-  physiotherapist: "Kiné",
-  optician: "Opticien",
-  travel_agency: "Agence de voyage",
-  bank: "Banque",
-  atm: "Banque",
-  insurance_agency: "Assurances",
-  real_estate_agency: "Immobilier",
-  lawyer: "Avocat",
-  accounting: "Comptable",
-  meal_takeaway: "Restaurant",
-  meal_delivery: "Restaurant",
-  food: "Alimentation",
-  establishment: null,
-  point_of_interest: null,
-  store: "Commerce",
-};
-
-function mapGoogleTypes(types: string[]): string | null {
-  for (const t of types) {
-    const mapped = GOOGLE_TYPE_MAP[t];
-    if (mapped) return mapped;
-  }
-  return null;
-}
+import { mapGoogleTypes } from "@/lib/google-types";
 
 const schema = z.object({
   streetName: z.string().min(2).max(200),
+  city: z.string().min(1).max(200).optional(),
   refresh: z.boolean().optional(),
 });
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
 
 /** Utilise Places Text Search (activée) à la place de Geocoding (désactivée) */
-async function geocodeStreet(query: string): Promise<{
+async function geocodeStreet(query: string, city: string): Promise<{
   canonicalName: string;
   lat: number;
   lng: number;
@@ -84,7 +27,7 @@ async function geocodeStreet(query: string): Promise<{
     .trim();
 
   const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?${new URLSearchParams({
-    query: `${cleaned}, Paris, France`,
+    query: `${cleaned}, ${city}`,
     key: GOOGLE_API_KEY,
     language: "fr",
     region: "fr",
@@ -130,16 +73,14 @@ interface GooglePlace {
 }
 
 /** Text Search sur le nom de la rue — retourne les établissements que Google associe à cette adresse */
-async function searchStreetEstablishments(canonicalName: string): Promise<GooglePlace[]> {
+async function searchStreetEstablishments(canonicalName: string, city: string): Promise<GooglePlace[]> {
   const places: GooglePlace[] = [];
   let pageToken: string | undefined;
 
   // Jusqu'à 3 pages (60 résultats max)
   for (let page = 0; page < 3; page++) {
     const params: Record<string, string> = {
-      // "commerces [rue] Paris" → Google retourne les établissements associés à la rue
-      // plutôt que la rue elle-même (qui apparaît avec "Rue X, Paris, France")
-      query: `commerces ${canonicalName} Paris`,
+      query: `commerces ${canonicalName} ${city}`,
       key: GOOGLE_API_KEY,
       language: "fr",
       region: "fr",
@@ -213,10 +154,11 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
 
   const rawInput = parsed.data.streetName.trim();
+  const city = parsed.data.city?.trim() || "Paris, France";
   const isRefresh = parsed.data.refresh === true;
 
   // ── 1. Google Geocoding → nom canonique + centre + viewport ──
-  const geo = await geocodeStreet(rawInput);
+  const geo = await geocodeStreet(rawInput, city);
   if (!geo) {
     return NextResponse.json({ error: "Rue introuvable via Google Maps. Vérifiez le nom." }, { status: 404 });
   }
@@ -226,7 +168,7 @@ export async function POST(req: Request) {
   // ── 2. Google Places Text Search → commerces associés à la rue ──
   // Text Search utilise le nom de la rue comme requête, ce qui retourne tous les
   // établissements que Google associe à cette adresse (pas de tri par popularité).
-  const allPlaces = await searchStreetEstablishments(canonicalName);
+  const allPlaces = await searchStreetEstablishments(canonicalName, city);
 
   // Garder uniquement les établissements (pas les routes, zones admin, etc.)
   const SKIP_TYPES = new Set([
@@ -322,10 +264,12 @@ export async function POST(req: Request) {
   const geometry = chainedSegments.length > 0 ? chainedSegments : null;
 
   // ── 4. Upsert ProspectStreet ──
+  // Extraire le nom de ville court (avant la première virgule)
+  const cityLabel = city.split(",")[0].trim();
   const street = await prisma.prospectStreet.upsert({
-    where: { name_city: { name: canonicalName, city: "Paris" } },
+    where: { name_city: { name: canonicalName, city: cityLabel } },
     update: { geometry: geometry ?? undefined, searchedAt: new Date() },
-    create: { name: canonicalName, city: "Paris", geometry: geometry ?? undefined },
+    create: { name: canonicalName, city: cityLabel, geometry: geometry ?? undefined },
   });
 
   // ── 4b. Refresh : sauvegarder associations existantes + supprimer les leads non associés ──

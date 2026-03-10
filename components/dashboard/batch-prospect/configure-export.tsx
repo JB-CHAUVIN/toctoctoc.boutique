@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ArrowLeft, FileText, ImageDown, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, ImageDown, Loader2, Mail } from "lucide-react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import toast from "react-hot-toast";
@@ -25,6 +25,7 @@ import {
   buildCombinedTractHtml,
   markBusinessAsProspected,
 } from "./helpers";
+import { buildEnvelopesPrintHtml } from "./envelope-print";
 import type { BusinessData, BusinessConfig, CardVariant } from "./types";
 
 interface ConfigureExportProps {
@@ -260,7 +261,8 @@ export function ConfigureAndExport({
 
       const dateSuffix = new Date().toISOString().slice(0, 10);
       buildPdf(rectoImages, `supports-recto-${dateSuffix}.pdf`);
-      buildPdf(versoImages, `supports-verso-${dateSuffix}.pdf`);
+      // Verso en ordre inverse pour impression recto-verso (la pile est retournée)
+      buildPdf([...versoImages].reverse(), `supports-verso-${dateSuffix}.pdf`);
 
       toast.success("PDFs des supports telecharges");
     } catch (err) {
@@ -269,6 +271,22 @@ export function ConfigureAndExport({
     } finally {
       setGeneratingZip(false);
     }
+  }
+
+  function handlePrintEnvelopes() {
+    const withAddress = businesses.filter((b) => b.address || b.city);
+    if (withAddress.length === 0) {
+      toast.error("Aucun commerce n'a d'adresse renseignée");
+      return;
+    }
+    const html = buildEnvelopesPrintHtml(withAddress, logoB64);
+    const win = window.open("", "_blank", "width=900,height=500");
+    if (!win) { toast.error("Popup bloquée — autorisez les popups"); return; }
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    win.document.fonts.ready.then(() => setTimeout(() => win.print(), 300));
+    toast.success(`${withAddress.length} enveloppe${withAddress.length > 1 ? "s" : ""} DL générée${withAddress.length > 1 ? "s" : ""}`);
   }
 
   return (
@@ -437,6 +455,13 @@ export function ConfigureAndExport({
         >
           {generatingZip ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageDown className="h-4 w-4" />}
           {generatingZip ? "Generation..." : "Telecharger supports (.pdf)"}
+        </button>
+        <button
+          onClick={handlePrintEnvelopes}
+          className="flex items-center gap-2 rounded-lg bg-slate-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-700"
+        >
+          <Mail className="h-4 w-4" />
+          Enveloppes DL
         </button>
         <span className="text-xs text-slate-400">
           Les tracts s&apos;impriment via la boite de dialogue du navigateur. Les supports sont telecharges en 2 PDFs (recto + verso).

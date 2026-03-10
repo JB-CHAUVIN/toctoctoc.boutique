@@ -545,7 +545,7 @@ export function Sidebar({ businesses, maxBusinesses, businessCount, planLabel, i
             )}
           >
             <Map className="h-4 w-4" />
-            Prospection Paris
+            Prospection
           </Link>
           <Link
             href="/admin/batch-prospect"

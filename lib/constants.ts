@@ -158,6 +158,7 @@ export const BUSINESS_TYPES = [
   "Bar",
   "Bar à jeux",
   "Glacier",
+  "Cave à vins",
   // Boulangerie & artisanat alimentaire
   "Boulangerie",
   "Pâtisserie",
@@ -169,6 +170,7 @@ export const BUSINESS_TYPES = [
   "Charcuterie",
   "Poissonnerie",
   "Épicerie fine",
+  "Alimentation",
   // Beauté & bien-être
   "Salon de coiffure",
   "Barbier",
@@ -182,16 +184,42 @@ export const BUSINESS_TYPES = [
   // Commerce de détail
   "Épicerie",
   "Superette",
+  "Supermarché",
+  "Grande surface",
   "Fleuriste",
   "Librairie",
   "Boutique de vêtements",
+  "Boutique de chaussures",
   "Boutique cadeaux",
   "Bijouterie",
+  "Animalerie",
   "Pressing",
+  "Vélo",
+  "Électronique",
+  "Quincaillerie",
+  "Mobilier",
+  "Décoration",
+  "Commerce",
   // Santé
+  "Dentiste",
+  "Médecin",
+  "Kiné",
+  "Pharmacie",
+  "Opticien",
+  "Vétérinaire",
   "Centre auditif",
+  // Auto
+  "Garage",
+  "Concessionnaire",
+  "Station service",
   // Services
-  "Garage / Auto",
+  "Agence de voyage",
+  "Immobilier",
+  "Assurances",
+  "Banque",
+  "Avocat",
+  "Comptable",
+  // Autre
   "Autre",
 ] as const;
 
@@ -322,3 +350,37 @@ export const PRINT_ORDER_STATUS_LABELS: Record<string, { label: string; color: s
   DELIVERED: { label: "Livré", color: "green" },
   CANCELLED: { label: "Annulé", color: "red" },
 };
+
+// ─────────────────────────────────────────
+// PROSPECTION — TYPES DE COMMERCES CIBLES
+// ─────────────────────────────────────────
+
+export interface ProspectTargetType {
+  googleType: string;
+  label: string;
+  priority: "high" | "medium";
+}
+
+/** Types Google Places à cibler pour la prospection zone. Configurable : ajouter/retirer des entrées ici. */
+export const PROSPECT_TARGET_TYPES: ProspectTargetType[] = [
+  // Haute valeur — booking + fidélité + avis = combo parfait
+  { googleType: "restaurant", label: "Restaurant", priority: "high" },
+  { googleType: "cafe", label: "Café", priority: "high" },
+  { googleType: "bar", label: "Bar", priority: "high" },
+  { googleType: "bakery", label: "Boulangerie", priority: "high" },
+  { googleType: "beauty_salon", label: "Salon de beauté", priority: "high" },
+  { googleType: "hair_care", label: "Salon de coiffure", priority: "high" },
+  { googleType: "spa", label: "Spa / Bien-être", priority: "high" },
+  { googleType: "gym", label: "Salle de sport", priority: "high" },
+  { googleType: "florist", label: "Fleuriste", priority: "high" },
+  { googleType: "dentist", label: "Dentiste", priority: "high" },
+  { googleType: "physiotherapist", label: "Kiné", priority: "high" },
+  { googleType: "doctor", label: "Médecin", priority: "high" },
+  // Valeur moyenne — vitrine + avis surtout
+  { googleType: "clothing_store", label: "Boutique vêtements", priority: "medium" },
+  { googleType: "shoe_store", label: "Boutique chaussures", priority: "medium" },
+  { googleType: "jewelry_store", label: "Bijouterie", priority: "medium" },
+  { googleType: "book_store", label: "Librairie", priority: "medium" },
+  { googleType: "pet_store", label: "Animalerie", priority: "medium" },
+  { googleType: "laundry", label: "Pressing", priority: "medium" },
+];

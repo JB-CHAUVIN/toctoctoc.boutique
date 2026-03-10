@@ -8,7 +8,7 @@ const ProspectMap = dynamic(
   { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-slate-400">Chargement de la carte…</div> }
 );
 
-export const metadata = { title: "Prospection Paris — TocTocToc.boutique" };
+export const metadata = { title: "Prospection — TocTocToc.boutique" };
 
 export default async function ProspectionPage() {
   const session = await auth();

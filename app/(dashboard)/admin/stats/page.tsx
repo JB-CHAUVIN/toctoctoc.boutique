@@ -9,6 +9,7 @@ import { batchGetProspectData, computeProspectStep, PROSPECT_STEPS } from "@/lib
 import { VISITOR_TYPE_LABELS, type VisitorType } from "@/lib/visitor-type";
 import { IpClickable } from "@/components/dashboard/ip-clickable";
 import { ExcludedIpsPanel } from "@/components/dashboard/excluded-ips-panel";
+import { RecentEvents } from "@/components/dashboard/recent-events";
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
@@ -504,59 +505,16 @@ export default async function AdminStatsPage({
 
       {/* Activity feed */}
       <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Derniers événements</h2>
-        {recentLogs.length === 0 ? (
-          <p className="text-sm text-slate-500">Aucun événement enregistré.</p>
-        ) : (
-          <div className="space-y-2">
-            {recentLogs.map((log) => {
-              const meta = log.meta as Record<string, unknown> | null;
-              const icon = ACTION_ICONS[log.action] ?? "📋";
-              return (
-                <div
-                  key={log.id}
-                  className="flex items-start gap-3 rounded-lg px-3 py-2 hover:bg-slate-50"
-                >
-                  <span className="mt-0.5 text-base">{icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-medium text-slate-700">
-                        {log.action}
-                      </span>
-                      <span className="text-xs text-slate-400">
-                        {formatDate(log.createdAt)}
-                      </span>
-                    </div>
-                    {meta && (
-                      <div className="mt-0.5 truncate text-xs text-slate-500">
-                        {Object.entries(meta)
-                          .filter(([k]) => k !== "businessId")
-                          .map(([k, v]) => {
-                            const strVal = String(v);
-                            const isIp = k === "ip" || /^(\d{1,3}\.){3}\d{1,3}$/.test(strVal);
-                            if (isIp) {
-                              return (
-                                <span key={k}>
-                                  {k}:{" "}
-                                  <IpClickable ip={strVal} excludedIps={excludedIps} />
-                                </span>
-                              );
-                            }
-                            return <span key={k}>{k}: {strVal}</span>;
-                          })
-                          .reduce<React.ReactNode[]>((acc, el, i) => {
-                            if (i > 0) acc.push(<span key={`sep-${i}`}> · </span>);
-                            acc.push(el);
-                            return acc;
-                          }, [])}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <RecentEvents
+          logs={recentLogs.map((log) => ({
+            id: log.id,
+            action: log.action,
+            meta: log.meta as Record<string, unknown> | null,
+            createdAt: log.createdAt.toISOString(),
+          }))}
+          actionIcons={ACTION_ICONS}
+          excludedIps={excludedIps}
+        />
       </div>
 
       {/* Funnel */}
