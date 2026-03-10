@@ -2,7 +2,7 @@
  * Fix ReviewConfig.googleUrl for businesses where the URL is a Google Maps URL
  * instead of the correct Google review URL.
  *
- * Run via: npx tsx scripts/fix-review-urls.ts
+ * Run via: node --env-file=.env --import=tsx scripts/fix-review-urls.ts
  */
 
 import { prisma } from "../lib/prisma";
