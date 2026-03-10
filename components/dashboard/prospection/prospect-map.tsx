@@ -515,11 +515,6 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
           highlightLead={highlightLead}
           onClose={() => { setSelectedStreet(null); setHighlightLead(null); }}
           onLeadUpdate={handleLeadUpdate}
-          onStreetUpdate={(updated) => {
-            setStreets((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-            setSelectedStreet(updated);
-            drawStreet(updated);
-          }}
         />
       </div>
 

@@ -134,7 +134,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
   const [websiteAnalyzed, setWebsiteAnalyzed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [secondaryTouched, setSecondaryTouched] = useState(false);
-  const [logoAiAnalysis, setLogoAiAnalysis] = useState(true);
+  const [aiConfirm, setAiConfirm] = useState<{ file: File; mode: "ambiance" | "logo" } | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -152,7 +152,7 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
       setWebsiteAnalyzed(false);
       setSecondaryTouched(false);
       setShowAdvanced(!!isAdmin);
-      setLogoAiAnalysis(true);
+      setAiConfirm(null);
       googleAutoFetched.current = false;
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -221,8 +221,13 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
     finally { setAnalyzingWebsite(false); }
   }
 
-  async function handleAmbianceImage(file: File) {
+  function handleAmbianceImage(file: File) {
     setAmbiancePreview(URL.createObjectURL(file));
+    // Demander confirmation avant d'envoyer à l'IA
+    setAiConfirm({ file, mode: "ambiance" });
+  }
+
+  async function analyzeAmbianceImage(file: File) {
     setAnalyzingAmbiance(true);
     try {
       const { base64, mimeType } = await fileToBase64(file);
@@ -237,7 +242,6 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
         ...f,
         ...(d.name && !f.name && { name: d.name }),
         ...(d.businessType && { businessType: d.businessType }),
-        // Colors from image only if website hasn't been analyzed
         ...(!websiteAnalyzed && d.primaryColor && { primaryColor: d.primaryColor }),
         ...(!websiteAnalyzed && d.secondaryColor && { secondaryColor: d.secondaryColor }),
         ...(!websiteAnalyzed && d.accentColor && { accentColor: d.accentColor }),
@@ -247,43 +251,64 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
     finally { setAnalyzingAmbiance(false); }
   }
 
-  async function handleLogoImage(file: File) {
+  function handleLogoImage(file: File) {
     setLogoPreview(URL.createObjectURL(file));
+    // Demander confirmation avant d'envoyer à l'IA
+    setAiConfirm({ file, mode: "logo" });
+  }
+
+  async function analyzeLogoImage(file: File) {
     setAnalyzingLogo(true);
     try {
-      if (logoAiAnalysis) {
-        // AI analysis: gpt-image-1 HD generation
-        const { base64, mimeType } = await fileToBase64(file);
-        const res = await fetch("/api/admin/analyze-business-image", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: base64, mimeType, mode: "logo" }),
-        });
-        const data = await res.json();
-        if (!res.ok) { toast.error(data.error || "Erreur génération logo"); return; }
-        setLogoPreview(data.data.logoUrl);
-        setForm((f) => ({ ...f, logoUrl: data.data.logoUrl, ...(data.data.logoBackground && { logoBackground: data.data.logoBackground }) }));
-        toast.success("Logo HD généré !");
-      } else {
-        // Simple upload, no AI
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", "logos");
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
-        const data = await res.json();
-        if (!res.ok) { toast.error(data.error || "Erreur upload logo"); return; }
-        setLogoPreview(data.url);
-        setForm((f) => ({ ...f, logoUrl: data.url }));
-        toast.success("Logo uploadé !");
-      }
+      const { base64, mimeType } = await fileToBase64(file);
+      const res = await fetch("/api/admin/analyze-business-image", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType, mode: "logo" }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur génération logo"); return; }
+      setLogoPreview(data.data.logoUrl);
+      setForm((f) => ({ ...f, logoUrl: data.data.logoUrl, ...(data.data.logoBackground && { logoBackground: data.data.logoBackground }) }));
+      toast.success("Logo HD généré !");
     } catch { toast.error("Erreur lors du traitement du logo"); }
     finally { setAnalyzingLogo(false); }
+  }
+
+  async function uploadLogoDirect(file: File) {
+    setAnalyzingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "logos");
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Erreur upload logo"); return; }
+      setLogoPreview(data.url);
+      setForm((f) => ({ ...f, logoUrl: data.url }));
+      toast.success("Logo uploadé !");
+    } catch { toast.error("Erreur lors de l'upload"); }
+    finally { setAnalyzingLogo(false); }
+  }
+
+  /** Gère la réponse au dialog de confirmation IA */
+  function handleAiConfirmResponse(useAi: boolean) {
+    if (!aiConfirm) return;
+    const { file, mode } = aiConfirm;
+    setAiConfirm(null);
+    if (mode === "ambiance") {
+      if (useAi) analyzeAmbianceImage(file);
+      // Pas d'upload direct pour l'ambiance (sert uniquement à l'analyse)
+    } else {
+      if (useAi) analyzeLogoImage(file);
+      else uploadLogoDirect(file);
+    }
   }
 
   /** Download a logo from an external URL and upload it locally (no AI) */
   async function uploadLogoFromUrl(externalUrl: string) {
     setAnalyzingLogo(true);
     setLogoPreview(externalUrl);
-    setLogoAiAnalysis(false); // Logo from website → disable AI by default
+    // Logo from website → upload direct, pas de confirmation IA
     try {
       const res = await fetch(externalUrl);
       if (!res.ok) return;
@@ -497,23 +522,12 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
 
                   <ImageDropZone
                     label="✂️  Logo déjà croppé"
-                    hint={logoAiAnalysis ? "Retourné en HD fond transparent via gpt-image-1" : "Upload direct sans traitement IA"}
+                    hint="Choix IA ou upload direct à chaque image"
                     loading={analyzingLogo}
-                    loadingLabel={logoAiAnalysis ? "Génération HD via gpt-image-1…" : "Upload en cours…"}
+                    loadingLabel="Traitement en cours…"
                     preview={logoPreview && !form.logoUrl ? logoPreview : form.logoUrl || null}
                     icon={Crop} onFile={handleLogoImage}
                   />
-                  <label className="-mt-3 flex items-center gap-2 text-xs text-slate-500">
-                    <button
-                      type="button"
-                      onClick={() => setLogoAiAnalysis((v) => !v)}
-                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${logoAiAnalysis ? "bg-violet-600" : "bg-slate-200"}`}
-                    >
-                      <span className={`inline-block h-2.5 w-2.5 rounded-full bg-white shadow-sm transition-transform ${logoAiAnalysis ? "translate-x-[14px]" : "translate-x-[3px]"}`} />
-                    </button>
-                    Analyse via IA
-                    {!logoAiAnalysis && <span className="text-slate-400">(upload direct)</span>}
-                  </label>
 
                   <div>
                     <p className="mb-1.5 text-xs font-medium text-slate-600">
@@ -572,6 +586,43 @@ export function CreateBusinessDialog({ open, onClose, onSuccess, initialValues, 
           </div>
         </form>
         </div>
+
+        {/* Dialog confirmation IA */}
+        {aiConfirm && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 backdrop-blur-[2px] rounded-2xl">
+            <div className="mx-4 w-full max-w-xs rounded-xl bg-white p-5 shadow-xl">
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-500" />
+                <h3 className="text-sm font-semibold text-slate-900">Analyser via IA ?</h3>
+              </div>
+              <p className="mb-4 text-xs text-slate-500">
+                {aiConfirm.mode === "ambiance"
+                  ? "GPT-4o va extraire le nom, type et couleurs de cette photo."
+                  : "GPT Image va reproduire ce logo en HD sur fond transparent."}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleAiConfirmResponse(false)}
+                >
+                  {aiConfirm.mode === "logo" ? "Upload direct" : "Annuler"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleAiConfirmResponse(true)}
+                >
+                  <Sparkles className="mr-1 h-3.5 w-3.5" />
+                  Analyser
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

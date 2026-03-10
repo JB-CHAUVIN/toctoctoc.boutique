@@ -40,15 +40,14 @@ interface Props {
   highlightLead?: { id: string; tick: number } | null;
   onClose: () => void;
   onLeadUpdate: (leadId: string, updates: Partial<ProspectLead>) => void;
-  onStreetUpdate: (street: ProspectStreet) => void;
 }
 
-export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onStreetUpdate }: Props) {
+export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [createLead, setCreateLead] = useState<ProspectLead | null>(null);
   const [linkLead, setLinkLead] = useState<ProspectLead | null>(null);
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
-  const [filters, setFilters] = useState<LeadFilters>({ search: "", sort: "default", websiteFirst: false, typeFilter: null });
+  const [filters, setFilters] = useState<LeadFilters>({ search: "", sort: "rating-asc", websiteFirst: false, typeFilter: null });
   const leadRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Scroll vers le lead cliqué sur la carte et le surligner
@@ -104,14 +103,8 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onSt
 
   function handleConverted(lead: ProspectLead, businessId: string) {
     if (!street) return;
+    // onLeadUpdate met à jour streets + selectedStreet + redraw via functional updates
     onLeadUpdate(lead.id, { status: "CONVERTED", businessId });
-    const updatedStreet: ProspectStreet = {
-      ...street,
-      leads: street.leads.map((l) =>
-        l.id === lead.id ? { ...l, status: "CONVERTED" as const, businessId } : l
-      ),
-    };
-    onStreetUpdate(updatedStreet);
     setCreateLead(null);
     setLinkLead(null);
     toast.success("Lead converti !");
