@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { CreateBusinessDialog } from "@/components/dashboard/create-business-dialog";
 import type { ProspectLead } from "./prospect-map";
 import toast from "react-hot-toast";
@@ -34,8 +33,6 @@ function parseAddress(raw: string | null): { street: string; zipCode: string; ci
 }
 
 export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
-  const router = useRouter();
-
   async function handleSuccess(businessId: string) {
     // Marquer le lead comme converti
     try {
@@ -48,8 +45,6 @@ export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
       toast.error("Erreur lors de la mise à jour du lead");
     }
     onConverted(businessId);
-    // Rafraîchir le layout serveur pour que le nouveau business apparaisse dans la sidebar
-    router.refresh();
   }
 
   const parsed = parseAddress(lead.address);
