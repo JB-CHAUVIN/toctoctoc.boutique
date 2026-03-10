@@ -43,7 +43,7 @@ export function LoyaltyIcon({ size = 40, color = "#fff" }: { size?: number; colo
 
 /** Smooth curve to separate top/bottom sections */
 export function CurveSeparator({ width, color }: { width: number; color: string }) {
-  const h = Math.round(width * 0.08);
+  const h = Math.round(width * 0.12);
   return (
     <svg
       width={width}
@@ -53,7 +53,7 @@ export function CurveSeparator({ width, color }: { width: number; color: string 
       style={{ display: "block", flexShrink: 0 }}
     >
       <path
-        d={`M0,0 C${width * 0.3},${width * 0.07} ${width * 0.7},${width * 0.02} ${width},${width * 0.06} L${width},${h} L0,${h} Z`}
+        d={`M0,${h * 0.15} C${width * 0.25},${h * 1.1} ${width * 0.75},${h * -0.3} ${width},${h * 0.7} L${width},${h} L0,${h} Z`}
         fill={color}
       />
     </svg>

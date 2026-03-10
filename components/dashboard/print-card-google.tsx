@@ -51,7 +51,7 @@ export function PrintCardGoogle({
   // Split ratio: top colored section vs bottom white section
   const topRatio = isSquare ? 0.52 : 0.55;
   const topH = Math.round(cardH * topRatio);
-  const curveH = Math.round(cardW * 0.08);
+  const curveH = Math.round(cardW * 0.12);
 
   // Google logo circle size
   const logoCircleSize = pf(isSquare ? 36 : 44);
@@ -200,7 +200,7 @@ export function PrintCardGoogle({
         </div>
 
         {/* Reward badge */}
-        {card.hasReward && !isSquare && (
+        {card.hasReward && (
           <div
             style={{
               display: "inline-flex",
@@ -249,42 +249,55 @@ export function PrintCardGoogle({
         <div
           style={{
             display: "flex",
-            gap: px(8),
+            gap: px(card.hasNFC ? 4 : 8),
             width: "100%",
             alignItems: "stretch",
           }}
         >
           {card.hasNFC && (
-            <div
-              style={{
-                flex: 1,
-                borderRadius: px(8),
-                background: ts.nfcBoxBg,
-                border: ts.nfcBoxBorder,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: `${px(6)}px ${px(4)}px`,
-                gap: px(2),
-              }}
-            >
-              <NfcIllustrationCompact size={px(isSquare ? 38 : 48)} />
+            <>
+              <div
+                style={{
+                  flex: 1,
+                  borderRadius: px(8),
+                  background: ts.nfcBoxBg,
+                  border: ts.nfcBoxBorder,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: `${px(6)}px ${px(4)}px`,
+                  gap: px(2),
+                }}
+              >
+                <NfcIllustrationCompact size={px(isSquare ? 38 : 48)} />
+                <span
+                  style={{
+                    fontSize: px(7),
+                    fontWeight: 700,
+                    color: ts.nfcTextColor,
+                    textAlign: "center",
+                    lineHeight: 1.3,
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  APPROCHEZ
+                  <br />
+                  votre téléphone
+                </span>
+              </div>
               <span
                 style={{
                   fontSize: px(7),
-                  fontWeight: 700,
-                  color: ts.nfcTextColor,
-                  textAlign: "center",
-                  lineHeight: 1.3,
-                  letterSpacing: 0.3,
+                  fontWeight: 600,
+                  color: "#b0b0b0",
+                  flexShrink: 0,
+                  alignSelf: "center",
                 }}
               >
-                APPROCHEZ
-                <br />
-                votre téléphone
+                ou
               </span>
-            </div>
+            </>
           )}
 
           <div
@@ -332,7 +345,7 @@ export function PrintCardGoogle({
                 letterSpacing: 0.3,
               }}
             >
-              {card.hasNFC ? "OU SCANNEZ-MOI" : "SCANNEZ-MOI"}
+              SCANNEZ-MOI
             </span>
           </div>
         </div>
@@ -367,7 +380,7 @@ export function PrintCardGoogle({
               letterSpacing: 0.3,
             }}
           >
-            propulsé par TocTocToc.boutique
+            par TocTocToc.boutique
           </span>
         </div>
       </div>
