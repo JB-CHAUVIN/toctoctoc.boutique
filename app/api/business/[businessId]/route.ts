@@ -67,9 +67,16 @@ export async function PATCH(req: Request, { params }: { params: { businessId: st
 
   const data = parsed.data;
 
-  // Mettre à jour le slug si le nom change
-  if (data.name && data.name !== business.name) {
-    let newSlug = slugify(data.name);
+  // Mettre à jour le slug si le nom, le type ou la ville change
+  const nameChanged = data.name && data.name !== business.name;
+  const typeChanged = data.businessType !== undefined && data.businessType !== business.businessType;
+  const cityChanged = data.city !== undefined && data.city !== business.city;
+  if (nameChanged || typeChanged || cityChanged) {
+    const slugName = data.name ?? business.name;
+    const slugType = data.businessType ?? business.businessType;
+    const slugCity = data.city ?? business.city;
+    const slugParts = [slugName, slugType, slugCity].filter(Boolean).join("-");
+    let newSlug = slugify(slugParts);
     const existing = await prisma.business.findFirst({
       where: { slug: newSlug, id: { not: params.businessId } },
     });

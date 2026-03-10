@@ -144,8 +144,9 @@ export async function POST(req: Request) {
 
     const { name, reviewUrl, googleRating, googleReviewCount, ...rest } = parsed.data;
 
-    // Générer un slug unique
-    let slug = slugify(name);
+    // Générer un slug unique : nom-type-ville
+    const slugParts = [name, parsed.data.businessType, parsed.data.city].filter(Boolean).join("-");
+    let slug = slugify(slugParts);
     const existing = await prisma.business.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${Date.now()}`;
 
