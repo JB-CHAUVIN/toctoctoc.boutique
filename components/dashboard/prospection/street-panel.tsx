@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { ProspectStreet, ProspectLead } from "./prospect-map";
 import { CreateFromLeadDialog } from "./create-from-lead-dialog";
+import { LeadFilterBar, applyLeadFilters, type LeadFilters } from "./lead-filters";
 
 const STATUS_LABELS: Record<ProspectLead["status"], string> = {
   DISCOVERED: "À prospecter",
@@ -47,6 +48,7 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onSt
   const [createLead, setCreateLead] = useState<ProspectLead | null>(null);
   const [linkLead, setLinkLead] = useState<ProspectLead | null>(null);
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
+  const [filters, setFilters] = useState<LeadFilters>({ search: "", sort: "default", websiteFirst: false, typeFilter: null });
   const leadRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Scroll vers le lead cliqué sur la carte et le surligner
@@ -115,11 +117,12 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onSt
     toast.success("Lead converti !");
   }
 
-  // Grouper par statut
+  // Appliquer filtres puis grouper par statut
+  const filteredLeads = applyLeadFilters(street.leads, filters);
   const groups: Record<ProspectLead["status"], ProspectLead[]> = {
     DISCOVERED: [], CONTACTED: [], CONVERTED: [], DECLINED: [],
   };
-  for (const lead of street.leads) {
+  for (const lead of filteredLeads) {
     groups[lead.status].push(lead);
   }
 
@@ -130,7 +133,9 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onSt
         <div className="flex items-start justify-between border-b border-slate-100 px-4 py-4">
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-base font-bold text-slate-900">{street.name}</h2>
-            <p className="text-xs text-slate-500">{street.city} — {totalLeads} lead{totalLeads > 1 ? "s" : ""}</p>
+            <p className="text-xs text-slate-500">
+              {street.city} — {filteredLeads.length !== totalLeads ? `${filteredLeads.length}/` : ""}{totalLeads} lead{totalLeads > 1 ? "s" : ""}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -154,10 +159,18 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onSt
           </div>
         </div>
 
+        {/* Filtres */}
+        {totalLeads > 0 && (
+          <LeadFilterBar leads={street.leads} filters={filters} onChange={setFilters} />
+        )}
+
         {/* Liste des leads */}
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
           {totalLeads === 0 && (
             <p className="py-8 text-center text-sm text-slate-400">Aucun lead trouvé sur cette rue.</p>
+          )}
+          {totalLeads > 0 && filteredLeads.length === 0 && (
+            <p className="py-8 text-center text-sm text-slate-400">Aucun lead ne correspond aux filtres.</p>
           )}
 
           {STATUS_ORDER.map((status) => {
