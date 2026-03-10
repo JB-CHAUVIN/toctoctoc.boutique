@@ -10,6 +10,14 @@ interface Props {
   onConverted: (businessId: string) => void;
 }
 
+/** Extract place_id from a Google Maps URL and build the review URL */
+function buildReviewUrl(googleMapsUrl: string | null): string {
+  if (!googleMapsUrl) return "";
+  const match = googleMapsUrl.match(/place_id:([A-Za-z0-9_-]+)/);
+  if (match) return `https://search.google.com/local/writereview?placeid=${match[1]}`;
+  return "";
+}
+
 /** Parse "118 Rue de Belleville, 75020 Paris" → { street, zipCode, city } */
 function parseAddress(raw: string | null): { street: string; zipCode: string; city: string } {
   if (!raw) return { street: "", zipCode: "", city: "" };
@@ -67,7 +75,7 @@ export function CreateFromLeadDialog({ lead, onClose, onConverted }: Props) {
         phone: lead.phone ?? "",
         website: lead.website ?? "",
         googleMapsUrl: lead.googleMapsUrl ?? "",
-        reviewUrl: lead.googleMapsUrl ?? "",
+        reviewUrl: buildReviewUrl(lead.googleMapsUrl),
       }}
     />
   );
