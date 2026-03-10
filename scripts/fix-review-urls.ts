@@ -5,11 +5,7 @@
  * Run via: npx tsx scripts/fix-review-urls.ts
  */
 
-import { PrismaClient } from "@prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-
-const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "../lib/prisma";
 
 async function main() {
   // Find all ReviewConfigs with a Maps URL instead of a review URL
