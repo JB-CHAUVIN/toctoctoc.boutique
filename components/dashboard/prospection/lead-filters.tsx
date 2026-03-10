@@ -20,9 +20,9 @@ interface Props {
 }
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "rating-asc", label: "Note ↑" },
   { value: "default", label: "Par défaut" },
   { value: "rating-desc", label: "Note ↓" },
-  { value: "rating-asc", label: "Note ↑" },
   { value: "reviews-desc", label: "Avis ↓" },
   { value: "reviews-asc", label: "Avis ↑" },
 ];
