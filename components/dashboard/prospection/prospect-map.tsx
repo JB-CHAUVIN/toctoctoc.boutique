@@ -191,15 +191,31 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     const chains = parseGeometry(street.geometry);
     if (chains && chains.length > 0) {
       const polylines: import("leaflet").Polyline[] = [];
+      const isScanZone = street.name.startsWith("Scan ");
+
       for (const chain of chains) {
         const latlngs = chain.map((p) => [p.lat, p.lng] as [number, number]);
-        const polyline = L.polyline(latlngs, { color, weight: 5, opacity: 0.85 }).addTo(mapRef.current!);
-        polyline.bindTooltip(street.name, { sticky: true });
-        polyline.on("click", (e: import("leaflet").LeafletMouseEvent) => {
+        let shape: import("leaflet").Polyline | import("leaflet").Polygon;
+
+        if (isScanZone) {
+          // Rectangle cliquable semi-transparent pour les scans de zone
+          shape = L.polygon(latlngs, {
+            color,
+            weight: 2,
+            opacity: 0.7,
+            fillColor: color,
+            fillOpacity: 0.1,
+          }).addTo(mapRef.current!);
+        } else {
+          shape = L.polyline(latlngs, { color, weight: 5, opacity: 0.85 }).addTo(mapRef.current!);
+        }
+
+        shape.bindTooltip(`${street.name} (${street.leads.length} leads)`, { sticky: true });
+        shape.on("click", (e: import("leaflet").LeafletMouseEvent) => {
           L.DomEvent.stopPropagation(e);
           setSelectedStreet(street);
         });
-        polylines.push(polyline);
+        polylines.push(shape as import("leaflet").Polyline);
       }
       polylinesRef.current.set(street.id, polylines);
     }
