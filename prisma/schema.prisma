@@ -140,7 +140,7 @@ model Business {
   country String  @default("FR")
   phone   String?
   email   String?
-  website String?
+  website String? @db.Text
 
   // Branding
   logoUrl        String?
