@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { mapGoogleTypes } from "@/lib/google-types";
+import { enrichLeadsWithDetails } from "@/lib/enrich-leads";
 
 const schema = z.object({
   streetName: z.string().min(2).max(200),
@@ -337,6 +338,9 @@ export async function POST(req: Request) {
     await prisma.prospectLead.createMany({ data: leadsToCreate });
   }
 
+  // Enrichir website + phone via Google Place Details
+  const enrichedCount = await enrichLeadsWithDetails(street.id);
+
   const fullStreet = await prisma.prospectStreet.findUnique({
     where: { id: street.id },
     include: { leads: { orderBy: { createdAt: "asc" } } },
@@ -349,6 +353,7 @@ export async function POST(req: Request) {
     data: fullStreet,
     meta: {
       newLeadsCount: leadsToCreate.length,
+      enrichedCount,
       ...(isRefresh ? { refreshed: true, reassociatedCount } : {}),
     },
   });

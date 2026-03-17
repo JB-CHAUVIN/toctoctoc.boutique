@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PROSPECT_TARGET_TYPES } from "@/lib/constants";
 import { mapGoogleTypes } from "@/lib/google-types";
+import { enrichLeadsWithDetails } from "@/lib/enrich-leads";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!;
 
@@ -180,6 +181,9 @@ export async function POST(req: Request) {
     await prisma.prospectLead.createMany({ data: leadsToCreate });
   }
 
+  // Enrichir website + phone via Google Place Details
+  const enrichedCount = await enrichLeadsWithDetails(street.id);
+
   const fullStreet = await prisma.prospectStreet.findUnique({
     where: { id: street.id },
     include: { leads: { orderBy: { createdAt: "asc" } } },
@@ -193,6 +197,7 @@ export async function POST(req: Request) {
       newLeadsCount: leadsToCreate.length,
       skippedCount,
       typesSearched: requestedTypes.length,
+      enrichedCount,
     },
   });
 }
