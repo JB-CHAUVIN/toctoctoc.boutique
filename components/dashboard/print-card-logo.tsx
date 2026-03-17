@@ -43,6 +43,7 @@ interface PrintCardLogoProps {
   themeStyles: ThemeStyles;
   showAvatar?: boolean;
   invertLogo?: boolean;
+  logoScale?: number;
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ export function PrintCardLogo({
   businessLogoB64,
   businessLogoUrl,
   invertLogo = false,
+  logoScale = 1,
   style,
   cardW = 215,
   cardH = 215,
@@ -83,7 +85,8 @@ export function PrintCardLogo({
 
   // Logo
   const logoSrc = businessLogoB64 || businessLogoUrl;
-  const logoSize = pf(isSquare ? (hasReward ? 40 : 48) : 58);
+  const logoBaseSize = pf(isSquare ? (hasReward ? 40 : 48) : 58);
+  const logoSize = logoBaseSize * logoScale;
 
   // Text color on primary
   const textOnPrimary = contrastColor(primaryColor);

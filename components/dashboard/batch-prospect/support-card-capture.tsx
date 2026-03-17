@@ -22,6 +22,7 @@ interface SupportCardCaptureProps {
   refSetter: (el: HTMLDivElement | null) => void;
   cardType: "reviews" | "loyalty";
   cardVariant: CardVariant;
+  logoScale?: number;
   theme?: PrintThemeId;
 }
 
@@ -35,6 +36,7 @@ export function SupportCardCapture({
   refSetter,
   cardType,
   cardVariant,
+  logoScale = 1,
   theme,
 }: SupportCardCaptureProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -85,6 +87,7 @@ export function SupportCardCapture({
         cardH={SUPPORT_CARD_H}
         themeStyles={themeStyles}
         showAvatar={showAvatar}
+        logoScale={logoScale}
         theme={theme}
       />
     </div>

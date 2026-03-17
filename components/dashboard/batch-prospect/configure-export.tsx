@@ -382,8 +382,8 @@ export function ConfigureAndExport({
                 )}
               </div>
 
-              {/* Avatar toggle (separate line) */}
-              <div className="mt-2">
+              {/* Avatar toggle + logo scale */}
+              <div className="mt-2 flex flex-wrap items-center gap-4">
                 <label className="flex items-center gap-2 text-xs text-slate-500">
                   <button
                     type="button"
@@ -394,6 +394,21 @@ export function ConfigureAndExport({
                   </button>
                   Avatar du commerce
                 </label>
+                {bHasLogo && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-slate-400">Logo</span>
+                    <input
+                      type="range"
+                      min="0.3"
+                      max="2"
+                      step="0.1"
+                      value={config.logoScale ?? 1}
+                      onChange={(e) => updateConfig(b.id, { logoScale: parseFloat(e.target.value) })}
+                      className="h-1 w-20 cursor-pointer accent-indigo-600"
+                    />
+                    <span className="w-8 text-[10px] font-medium text-slate-500">{((config.logoScale ?? 1) * 100).toFixed(0)}%</span>
+                  </div>
+                )}
               </div>
 
               {/* Previews: tract + support cards */}
@@ -411,10 +426,10 @@ export function ConfigureAndExport({
                     card={getCard("reviews", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
-
                     showAvatar={config.showAvatar}
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
+                    logoScale={config.logoScale ?? 1}
                     theme={config.supportTheme}
                   />
                 )}
@@ -424,10 +439,10 @@ export function ConfigureAndExport({
                     card={getCard("loyalty", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
-
                     showAvatar={config.showAvatar}
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
+                    logoScale={config.logoScale ?? 1}
                     theme={config.supportTheme}
                   />
                 )}
@@ -448,13 +463,13 @@ export function ConfigureAndExport({
           <div key={`capture-${b.id}`}>
             {hasModule(b, "REVIEWS") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="reviews" refSetter={getVersoRefSetter(b.id, "reviews")} />
               </>
             )}
             {hasModule(b, "LOYALTY") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="loyalty" refSetter={getVersoRefSetter(b.id, "loyalty")} />
               </>
             )}
@@ -543,6 +558,7 @@ function SupportPreviewMini({
   showAvatar,
   logoB64,
   businessLogoB64,
+  logoScale = 1,
   theme,
 }: {
   label: string;
@@ -552,6 +568,7 @@ function SupportPreviewMini({
   showAvatar: boolean;
   logoB64?: string;
   businessLogoB64?: string;
+  logoScale?: number;
   theme?: import("@/lib/constants").PrintThemeId;
 }) {
   return (
@@ -574,6 +591,7 @@ function SupportPreviewMini({
             cardH={SUPPORT_CARD_H}
             themeStyles={themeStyles}
             showAvatar={showAvatar}
+            logoScale={logoScale}
             theme={theme}
           />
         </div>

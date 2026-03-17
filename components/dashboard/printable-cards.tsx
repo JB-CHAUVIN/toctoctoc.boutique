@@ -364,6 +364,7 @@ export function PrintCard({
   themeStyles,
   showAvatar = true,
   invertLogo = false,
+  logoScale = 1,
   theme,
 }: {
   card: CardDef;
@@ -382,6 +383,7 @@ export function PrintCard({
   themeStyles?: ThemeStyles;
   showAvatar?: boolean;
   invertLogo?: boolean;
+  logoScale?: number;
   theme?: PrintThemeId;
 }) {
   // Delegate to google-specific layout
@@ -424,6 +426,7 @@ export function PrintCard({
         themeStyles={themeStyles}
         showAvatar={showAvatar}
         invertLogo={invertLogo}
+        logoScale={logoScale}
       />
     );
   }
@@ -752,6 +755,7 @@ function CardStack({
   themeStyles,
   showAvatar = true,
   invertLogo = false,
+  logoScale = 1,
   theme,
 }: {
   cards: CardDef[];
@@ -768,6 +772,7 @@ function CardStack({
   themeStyles?: ThemeStyles;
   showAvatar?: boolean;
   invertLogo?: boolean;
+  logoScale?: number;
   theme?: PrintThemeId;
 }) {
   const [index, setIndex] = useState(0);
@@ -832,6 +837,7 @@ function CardStack({
     themeStyles,
     showAvatar,
     invertLogo,
+    logoScale,
     theme,
   };
 
@@ -1198,6 +1204,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
     themeStyles,
     showAvatar,
     invertLogo,
+    logoScale: 1,
     theme,
   };
 
