@@ -20,6 +20,7 @@ interface PrintCardGoogleProps {
   cardH?: number;
   themeStyles: ThemeStyles;
   showAvatar?: boolean;
+  invertLogo?: boolean;
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ export function PrintCardGoogle({
   cardH = 330,
   themeStyles: ts,
   showAvatar = true,
+  invertLogo = false,
 }: PrintCardGoogleProps) {
   const isReviews = card.type === "reviews";
   const isSquare = cardH <= cardW;
@@ -111,6 +113,7 @@ export function PrintCardGoogle({
                 background: logoBackground || "rgba(255,255,255,0.2)",
                 padding: pf(1.5),
                 flexShrink: 0,
+                ...(invertLogo ? { filter: "invert(1)" } : {}),
               }}
             />
           ) : (

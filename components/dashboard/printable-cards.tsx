@@ -379,6 +379,7 @@ export function PrintCard({
   cardH = 330,
   themeStyles,
   showAvatar = true,
+  invertLogo = false,
   theme,
 }: {
   card: CardDef;
@@ -396,6 +397,7 @@ export function PrintCard({
   cardH?: number;
   themeStyles?: ThemeStyles;
   showAvatar?: boolean;
+  invertLogo?: boolean;
   theme?: PrintThemeId;
 }) {
   // Delegate to google-specific layout
@@ -415,6 +417,7 @@ export function PrintCard({
         cardH={cardH}
         themeStyles={themeStyles}
         showAvatar={showAvatar}
+        invertLogo={invertLogo}
       />
     );
   }
@@ -436,6 +439,7 @@ export function PrintCard({
         cardH={cardH}
         themeStyles={themeStyles}
         showAvatar={showAvatar}
+        invertLogo={invertLogo}
       />
     );
   }
@@ -534,6 +538,7 @@ export function PrintCard({
               background: logoBackground || accentColor,
               padding: pf(2),
               flexShrink: 0,
+              ...(invertLogo ? { filter: "invert(1)" } : {}),
             }}
           />
         ) : (
@@ -786,6 +791,7 @@ function CardStack({
   logoBackground,
   themeStyles,
   showAvatar = true,
+  invertLogo = false,
   theme,
 }: {
   cards: CardDef[];
@@ -801,6 +807,7 @@ function CardStack({
   logoBackground?: string;
   themeStyles?: ThemeStyles;
   showAvatar?: boolean;
+  invertLogo?: boolean;
   theme?: PrintThemeId;
 }) {
   const [index, setIndex] = useState(0);
@@ -864,6 +871,7 @@ function CardStack({
     cardH,
     themeStyles,
     showAvatar,
+    invertLogo,
     theme,
   };
 
@@ -1104,6 +1112,7 @@ export function PrintableCards({
   const [businessLogoB64, setBusinessLogoB64] = useState<string | undefined>();
   const [theme, setTheme] = useState<PrintThemeId>(logoUrl ? "logo" : "gradient");
   const [showAvatar, setShowAvatar] = useState(true);
+  const [invertLogo, setInvertLogo] = useState(false);
 
   // ── Print at real size ──────────────────────────────────────────────────────
   const [printW, setPrintW] = useState("9.3");
@@ -1228,6 +1237,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
     appUrl,
     themeStyles,
     showAvatar,
+    invertLogo,
     theme,
   };
 
@@ -1245,6 +1255,18 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
           </button>
           Avatar du commerce
         </label>
+        {hasLogo && (
+          <label className="flex items-center gap-2 text-xs text-slate-500">
+            <button
+              type="button"
+              onClick={() => setInvertLogo((v) => !v)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${invertLogo ? "bg-indigo-600" : "bg-slate-200"}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${invertLogo ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+            </button>
+            Inverser le logo
+          </label>
+        )}
       </div>
       <div className="flex flex-wrap gap-12">
         {hasReviews && (
@@ -1300,6 +1322,7 @@ ${captures.map(c => `<div class="card"><img src="${c.src}"><span class="card-lab
           cardW: renderW, cardH: renderH,
           themeStyles,
           showAvatar,
+          invertLogo,
           theme,
         };
         return (

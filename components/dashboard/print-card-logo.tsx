@@ -42,6 +42,7 @@ interface PrintCardLogoProps {
   cardH?: number;
   themeStyles: ThemeStyles;
   showAvatar?: boolean;
+  invertLogo?: boolean;
 }
 
 // ── Main Component ──────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ export function PrintCardLogo({
   logoB64,
   businessLogoB64,
   businessLogoUrl,
+  invertLogo = false,
   style,
   cardW = 215,
   cardH = 215,
@@ -128,6 +130,7 @@ export function PrintCardLogo({
               height: logoSize,
               objectFit: "contain",
               flexShrink: 0,
+              ...(invertLogo ? { filter: "invert(1)" } : {}),
             }}
           />
         ) : (
