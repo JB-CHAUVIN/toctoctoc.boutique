@@ -395,19 +395,31 @@ export function ConfigureAndExport({
                   Avatar du commerce
                 </label>
                 {bHasLogo && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-slate-400">Logo</span>
-                    <input
-                      type="range"
-                      min="0.3"
-                      max="2"
-                      step="0.1"
-                      value={config.logoScale ?? 1}
-                      onChange={(e) => updateConfig(b.id, { logoScale: parseFloat(e.target.value) })}
-                      className="h-1 w-20 cursor-pointer accent-indigo-600"
-                    />
-                    <span className="w-8 text-[10px] font-medium text-slate-500">{((config.logoScale ?? 1) * 100).toFixed(0)}%</span>
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-slate-400">Logo</span>
+                      <input
+                        type="range"
+                        min="0.3"
+                        max="2"
+                        step="0.1"
+                        value={config.logoScale ?? 1}
+                        onChange={(e) => updateConfig(b.id, { logoScale: parseFloat(e.target.value) })}
+                        className="h-1 w-20 cursor-pointer accent-indigo-600"
+                      />
+                      <span className="w-8 text-[10px] font-medium text-slate-500">{((config.logoScale ?? 1) * 100).toFixed(0)}%</span>
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-slate-500">
+                      <button
+                        type="button"
+                        onClick={() => updateConfig(b.id, { invertLogo: !config.invertLogo })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.invertLogo ? "bg-indigo-600" : "bg-slate-200"}`}
+                      >
+                        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${config.invertLogo ? "translate-x-[18px]" : "translate-x-[3px]"}`} />
+                      </button>
+                      Inverser le logo
+                    </label>
+                  </>
                 )}
               </div>
 
@@ -430,6 +442,7 @@ export function ConfigureAndExport({
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
                     logoScale={config.logoScale ?? 1}
+                    invertLogo={config.invertLogo ?? false}
                     theme={config.supportTheme}
                   />
                 )}
@@ -443,6 +456,7 @@ export function ConfigureAndExport({
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
                     logoScale={config.logoScale ?? 1}
+                    invertLogo={config.invertLogo ?? false}
                     theme={config.supportTheme}
                   />
                 )}
@@ -463,13 +477,13 @@ export function ConfigureAndExport({
           <div key={`capture-${b.id}`}>
             {hasModule(b, "REVIEWS") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} invertLogo={config.invertLogo ?? false} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="reviews" refSetter={getVersoRefSetter(b.id, "reviews")} />
               </>
             )}
             {hasModule(b, "LOYALTY") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} logoScale={config.logoScale ?? 1} invertLogo={config.invertLogo ?? false} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="loyalty" refSetter={getVersoRefSetter(b.id, "loyalty")} />
               </>
             )}
@@ -559,6 +573,7 @@ function SupportPreviewMini({
   logoB64,
   businessLogoB64,
   logoScale = 1,
+  invertLogo = false,
   theme,
 }: {
   label: string;
@@ -569,6 +584,7 @@ function SupportPreviewMini({
   logoB64?: string;
   businessLogoB64?: string;
   logoScale?: number;
+  invertLogo?: boolean;
   theme?: import("@/lib/constants").PrintThemeId;
 }) {
   return (
@@ -592,6 +608,7 @@ function SupportPreviewMini({
             themeStyles={themeStyles}
             showAvatar={showAvatar}
             logoScale={logoScale}
+            invertLogo={invertLogo}
             theme={theme}
           />
         </div>

@@ -124,7 +124,7 @@ export function PrintCardLogo({
           gap: px(hasReward ? 4 : 5),
         }}
       >
-        {/* Business logo */}
+        {/* Business logo — scales without pushing other content */}
         {logoSrc ? (
           <img
             src={logoSrc}
@@ -133,7 +133,8 @@ export function PrintCardLogo({
               width: logoSize,
               height: logoSize,
               objectFit: "contain",
-              flexShrink: 0,
+              flexShrink: 1,
+              minHeight: 0,
               ...(invertLogo ? { filter: "invert(1)" } : {}),
             }}
           />
@@ -150,7 +151,8 @@ export function PrintCardLogo({
               fontSize: pf(28),
               fontWeight: 800,
               color: textOnPrimary,
-              flexShrink: 0,
+              flexShrink: 1,
+              minHeight: 0,
             }}
           >
             {businessName[0]?.toUpperCase() ?? "?"}

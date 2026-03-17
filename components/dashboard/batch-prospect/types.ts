@@ -35,5 +35,6 @@ export interface BusinessConfig {
   supportTheme: PrintThemeId;
   showAvatar: boolean;
   cardVariant: CardVariant;
-  logoScale?: number; // 0.5 – 2, default 1
+  logoScale?: number; // 0.3 – 2, default 1
+  invertLogo?: boolean;
 }

@@ -23,6 +23,7 @@ interface SupportCardCaptureProps {
   cardType: "reviews" | "loyalty";
   cardVariant: CardVariant;
   logoScale?: number;
+  invertLogo?: boolean;
   theme?: PrintThemeId;
 }
 
@@ -37,6 +38,7 @@ export function SupportCardCapture({
   cardType,
   cardVariant,
   logoScale = 1,
+  invertLogo = false,
   theme,
 }: SupportCardCaptureProps) {
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -88,6 +90,7 @@ export function SupportCardCapture({
         themeStyles={themeStyles}
         showAvatar={showAvatar}
         logoScale={logoScale}
+        invertLogo={invertLogo}
         theme={theme}
       />
     </div>
