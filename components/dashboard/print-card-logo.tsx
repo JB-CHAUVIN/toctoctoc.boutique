@@ -186,16 +186,14 @@ export function PrintCardLogo({
           )}
         </div>
 
-        {/* 5 gold stars — reviews only */}
-        {isReviews && (
-          <div style={{ display: "flex", gap: pf(2), flexShrink: 0 }}>
-            {[0, 1, 2, 3, 4].map((i) => (
-              <svg key={i} width={pf(12)} height={pf(12)} viewBox="0 0 24 24" fill="#FBBF24">
-                <path d="M12 2l2.83 5.73 6.32.92-4.57 4.45 1.08 6.28L12 16.52l-5.66 2.98 1.08-6.28L2.85 8.65l6.32-.92L12 2z" />
-              </svg>
-            ))}
-          </div>
-        )}
+        {/* 5 gold stars (reviews) or spacer (loyalty) — same height */}
+        <div style={{ display: "flex", gap: pf(2), flexShrink: 0, height: pf(12) }}>
+          {isReviews && [0, 1, 2, 3, 4].map((i) => (
+            <svg key={i} width={pf(12)} height={pf(12)} viewBox="0 0 24 24" fill="#FBBF24">
+              <path d="M12 2l2.83 5.73 6.32.92-4.57 4.45 1.08 6.28L12 16.52l-5.66 2.98 1.08-6.28L2.85 8.65l6.32-.92L12 2z" />
+            </svg>
+          ))}
+        </div>
 
         {/* Reward banner — visible, accrocheur */}
         {hasReward && (
