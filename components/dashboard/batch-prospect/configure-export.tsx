@@ -587,11 +587,13 @@ function SupportPreviewMini({
   invertLogo?: boolean;
   theme?: import("@/lib/constants").PrintThemeId;
 }) {
+  const previewSize = 160;
+  const scale = previewSize / SUPPORT_CARD_W;
   return (
     <div className="flex-shrink-0">
       <p className="mb-1 text-[10px] text-slate-400">{label}</p>
-      <div className="overflow-hidden rounded-lg" style={{ width: 100, height: 100 }}>
-        <div style={{ transform: "scale(0.333)", transformOrigin: "top left" }}>
+      <div className="overflow-hidden rounded-lg" style={{ width: previewSize, height: previewSize }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: "top left" }}>
           <PrintCard
             card={card}
             businessName={b.name}
