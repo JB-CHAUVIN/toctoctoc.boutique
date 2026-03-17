@@ -353,39 +353,6 @@ export function PrintCardGoogle({
           </div>
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: px(3),
-            marginTop: px(2),
-          }}
-        >
-          {logoB64 && (
-            <img
-              src={logoB64}
-              alt=""
-              style={{
-                width: px(9),
-                height: px(9),
-                borderRadius: 1.5,
-                objectFit: "contain",
-                opacity: 0.5,
-              }}
-            />
-          )}
-          <span
-            style={{
-              fontSize: px(6),
-              fontWeight: 700,
-              color: ts.footerColor,
-              letterSpacing: 0.3,
-            }}
-          >
-            par TocTocToc.boutique
-          </span>
-        </div>
       </div>
     </div>
   );

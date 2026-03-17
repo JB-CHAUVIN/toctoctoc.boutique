@@ -748,30 +748,6 @@ export function PrintCard({
         </div>
       </div>
 
-      {/* Footer */}
-      <div
-        style={{
-          marginTop: px(5),
-          zIndex: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: px(4),
-          opacity: 0.45,
-        }}
-      >
-        <IconLogo size={px(10)} logoB64={logoB64} />
-        <span
-          style={{
-            fontSize: px(6.5),
-            fontWeight: 800,
-            color: ts.footerColor === "rgba(255,255,255,0.45)" ? "#fff" : ts.footerColor,
-            letterSpacing: 0.2,
-            marginBottom: px(-2),
-          }}
-        >
-          TocTocToc.boutique
-        </span>
-      </div>
     </div>
   );
 }

@@ -374,39 +374,6 @@ export function PrintCardLogo({
           </div>
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: px(3),
-          }}
-        >
-          {logoB64 && (
-            <img
-              src={logoB64}
-              alt=""
-              style={{
-                width: px(8),
-                height: px(8),
-                borderRadius: 1.5,
-                objectFit: "contain",
-                opacity: 0.5,
-              }}
-            />
-          )}
-          <span
-            style={{
-              fontSize: px(5.5),
-              fontWeight: 600,
-              color: "#94a3b8",
-              letterSpacing: 0.4,
-            }}
-          >
-            Propulsé par{" "}
-            <span style={{ fontWeight: 800 }}>TocTocToc.boutique</span>
-          </span>
-        </div>
       </div>
     </div>
   );
