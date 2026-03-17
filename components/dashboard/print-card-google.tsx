@@ -75,6 +75,8 @@ export function PrintCardGoogle({
         overflow: "hidden",
         fontFamily: ts.fontFamily,
         position: "relative",
+        border: "1px solid #e2e8f0",
+        borderRadius: cardW * 0.055,
         ...style,
       }}
     >

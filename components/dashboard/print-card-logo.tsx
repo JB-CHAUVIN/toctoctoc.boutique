@@ -105,6 +105,7 @@ export function PrintCardLogo({
         fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
         position: "relative",
         borderRadius: pf(12),
+        border: "1px solid #e2e8f0",
         ...style,
       }}
     >

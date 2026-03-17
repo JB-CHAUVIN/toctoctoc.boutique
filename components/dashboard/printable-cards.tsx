@@ -474,6 +474,7 @@ export function PrintCard({
         position: "relative",
         fontFamily: ts.fontFamily,
         borderRadius: 0,
+        border: "1px solid #e2e8f0",
         ...style,
       }}
     >
