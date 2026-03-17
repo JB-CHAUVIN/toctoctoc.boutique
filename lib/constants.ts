@@ -326,13 +326,13 @@ export const PRINT_PRODUCTS_MAP: Record<string, PrintProduct> = Object.fromEntri
 // THÈMES SUPPORTS IMPRIMABLES
 // ─────────────────────────────────────────
 
-export type PrintThemeId = "gradient" | "minimal" | "bold" | "google" | "custom";
+export type PrintThemeId = "gradient" | "minimal" | "bold" | "google" | "logo";
 
 export interface PrintTheme {
   id: PrintThemeId;
   name: string;
   description: string;
-  requiresBrandStyle?: boolean;
+  requiresLogo?: boolean;
 }
 
 export const PRINT_THEMES: PrintTheme[] = [
@@ -340,7 +340,7 @@ export const PRINT_THEMES: PrintTheme[] = [
   { id: "minimal", name: "Minimal", description: "Fond blanc, bordure colorée, texte sombre" },
   { id: "bold", name: "Bold", description: "Couleur primaire pleine, texte large" },
   { id: "google", name: "Classique", description: "Style split haut/bas inspiré des plaques Google Avis" },
-  { id: "custom", name: "Custom", description: "Charte graphique du commerce (couleurs + font du site web)", requiresBrandStyle: true },
+  { id: "logo", name: "Logo en avant !", description: "Logo du commerce mis en avant (split couleur + blanc)", requiresLogo: true },
 ];
 
 export const PRINT_ORDER_STATUS_LABELS: Record<string, { label: string; color: string }> = {

@@ -101,11 +101,10 @@ export function buildLetterHtml(
   });
 
   // Apply theme-based color overrides
-  const useCustom = theme === "custom" && brandStyle?.primaryColor;
-  const primary    = useCustom ? brandStyle!.primaryColor! : business.primaryColor;
-  const accent     = useCustom ? (brandStyle!.accentColor || business.accentColor) : business.accentColor;
+  const primary    = business.primaryColor;
+  const accent     = business.accentColor;
   const primaryRgb = hexToRgb(primary);
-  const fontFamily = useCustom && brandStyle?.fontFamily ? brandStyle.fontFamily : "Plus Jakarta Sans";
+  const fontFamily = "Plus Jakarta Sans";
 
   // Theme-specific CSS overrides
   const isMinimal = theme === "minimal";
@@ -836,8 +835,8 @@ export function ProspectLetterButton({
   brandStyle,
 }: Props) {
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState<PrintThemeId>("gradient");
-  const hasBrandStyle = !!brandStyle?.primaryColor;
+  const hasLogo = !!business.logoUrl;
+  const [theme, setTheme] = useState<PrintThemeId>(hasLogo ? "logo" : "gradient");
 
   async function handlePrint() {
     setLoading(true);
@@ -889,13 +888,13 @@ export function ProspectLetterButton({
       </button>
       <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5">
         {PRINT_THEMES.map((t) => {
-          const disabled = t.requiresBrandStyle && !hasBrandStyle;
+          const disabled = t.requiresLogo && !hasLogo;
           return (
             <button
               key={t.id}
               onClick={() => !disabled && setTheme(t.id)}
               disabled={disabled}
-              title={disabled ? "Nécessite l'extraction des couleurs du site web" : t.description}
+              title={disabled ? "Nécessite un logo pour le commerce" : t.description}
               className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${
                 theme === t.id
                   ? "bg-white text-violet-700 shadow-sm"

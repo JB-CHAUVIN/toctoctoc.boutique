@@ -5,18 +5,18 @@ import { PRINT_THEMES, type PrintThemeId } from "@/lib/constants";
 interface ThemeButtonsProps {
   value: PrintThemeId;
   onChange: (t: PrintThemeId) => void;
-  hasBrandStyle?: boolean;
+  hasLogo?: boolean;
 }
 
 export function ThemeButtons({
   value,
   onChange,
-  hasBrandStyle = true,
+  hasLogo = false,
 }: ThemeButtonsProps) {
   return (
     <div className="flex items-center gap-0.5 rounded-lg bg-slate-100 p-0.5">
       {PRINT_THEMES.map((t) => {
-        const disabled = t.requiresBrandStyle && !hasBrandStyle;
+        const disabled = t.requiresLogo && !hasLogo;
         return (
           <button
             key={t.id}
@@ -24,7 +24,7 @@ export function ThemeButtons({
             disabled={disabled}
             title={
               disabled
-                ? "Necessite l'extraction des couleurs du site web"
+                ? "Nécessite un logo pour le commerce"
                 : t.description
             }
             className={`rounded-md px-2 py-1 text-xs font-medium transition-all ${

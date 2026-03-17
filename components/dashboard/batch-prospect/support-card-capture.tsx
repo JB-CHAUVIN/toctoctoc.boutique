@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react";
 import QRCode from "qrcode";
-import {
-  PrintCard,
-  type BrandStyleData,
-} from "../printable-cards";
+import { PrintCard } from "../printable-cards";
 import type { PrintThemeId } from "@/lib/constants";
 import { getCard } from "./helpers";
 import type { BusinessData, CardVariant } from "./types";
@@ -19,7 +16,6 @@ interface SupportCardCaptureProps {
   business: BusinessData;
   appUrl: string;
   themeStyles: ReturnType<typeof import("../printable-cards").getThemeStyles>;
-  brandStyle: BrandStyleData | null;
   showAvatar: boolean;
   logoB64?: string;
   businessLogoB64?: string;
@@ -33,7 +29,6 @@ export function SupportCardCapture({
   business,
   appUrl,
   themeStyles,
-  brandStyle,
   showAvatar,
   logoB64,
   businessLogoB64,
@@ -89,7 +84,6 @@ export function SupportCardCapture({
         cardW={SUPPORT_CARD_W}
         cardH={SUPPORT_CARD_H}
         themeStyles={themeStyles}
-        brandStyle={brandStyle}
         showAvatar={showAvatar}
         theme={theme}
       />

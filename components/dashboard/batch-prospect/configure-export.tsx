@@ -95,24 +95,6 @@ export function ConfigureAndExport({
     });
   }, [businesses, businessLogos]);
 
-  // Load Google Fonts for custom themes
-  useEffect(() => {
-    const fontNames = new Set<string>();
-    businesses.forEach((b) => {
-      const bs = flattenBrandStyle(b.brandStyle);
-      if (bs?.fontFamily) fontNames.add(bs.fontFamily);
-    });
-    fontNames.forEach((fontName) => {
-      const id = `gfont-${fontName.replace(/\s+/g, "-")}`;
-      if (document.getElementById(id)) return;
-      const link = document.createElement("link");
-      link.id = id;
-      link.rel = "stylesheet";
-      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;600;700;800;900&display=swap`;
-      document.head.appendChild(link);
-    });
-  }, [businesses]);
-
   function updateConfig(id: string, patch: Partial<BusinessConfig>) {
     setConfigs((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
@@ -329,7 +311,7 @@ export function ConfigureAndExport({
           const bHasReviews = hasModule(b, "REVIEWS");
           const bHasLoyalty = hasModule(b, "LOYALTY");
           const normalizedBs = flattenBrandStyle(b.brandStyle);
-          const hasBs = !!normalizedBs?.primaryColor;
+          const bHasLogo = !!b.logoUrl;
           const supportThemeStyles = getThemeStyles(
             config.supportTheme, b.primaryColor, b.secondaryColor, b.accentColor, normalizedBs,
           );
@@ -342,12 +324,12 @@ export function ConfigureAndExport({
               <div className="flex flex-wrap items-center gap-4">
                 <div>
                   <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">Theme tract</p>
-                  <ThemeButtons value={config.tractTheme} onChange={(t) => updateConfig(b.id, { tractTheme: t })} hasBrandStyle={hasBs} />
+                  <ThemeButtons value={config.tractTheme} onChange={(t) => updateConfig(b.id, { tractTheme: t })} hasLogo={bHasLogo} />
                 </div>
                 {(bHasReviews || bHasLoyalty) && (
                   <div>
                     <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">Theme support</p>
-                    <ThemeButtons value={config.supportTheme} onChange={(t) => updateConfig(b.id, { supportTheme: t })} hasBrandStyle={hasBs} />
+                    <ThemeButtons value={config.supportTheme} onChange={(t) => updateConfig(b.id, { supportTheme: t })} hasLogo={bHasLogo} />
                   </div>
                 )}
                 {(bHasReviews || bHasLoyalty) && (
@@ -387,7 +369,7 @@ export function ConfigureAndExport({
                     card={getCard("reviews", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
-                    brandStyle={normalizedBs}
+
                     showAvatar={config.showAvatar}
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
@@ -400,7 +382,7 @@ export function ConfigureAndExport({
                     card={getCard("loyalty", config.cardVariant)}
                     business={b}
                     themeStyles={supportThemeStyles}
-                    brandStyle={normalizedBs}
+
                     showAvatar={config.showAvatar}
                     logoB64={logoB64}
                     businessLogoB64={businessLogos[b.id]}
@@ -424,13 +406,13 @@ export function ConfigureAndExport({
           <div key={`capture-${b.id}`}>
             {hasModule(b, "REVIEWS") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "reviews")} cardType="reviews" cardVariant={config.cardVariant} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="reviews" refSetter={getVersoRefSetter(b.id, "reviews")} />
               </>
             )}
             {hasModule(b, "LOYALTY") && (
               <>
-                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} brandStyle={normalizedBs} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} theme={config.supportTheme} />
+                <SupportCardCapture business={b} appUrl={appUrl} themeStyles={supportThemeStyles} showAvatar={config.showAvatar} logoB64={logoB64} businessLogoB64={businessLogos[b.id]} refSetter={getRefSetter(b.id, "loyalty")} cardType="loyalty" cardVariant={config.cardVariant} theme={config.supportTheme} />
                 <SupportCardVerso businessName={b.name} cardType="loyalty" refSetter={getVersoRefSetter(b.id, "loyalty")} />
               </>
             )}
@@ -508,7 +490,6 @@ function SupportPreviewMini({
   card,
   business: b,
   themeStyles,
-  brandStyle,
   showAvatar,
   logoB64,
   businessLogoB64,
@@ -518,7 +499,6 @@ function SupportPreviewMini({
   card: import("../printable-cards").CardDef;
   business: BusinessData;
   themeStyles: ReturnType<typeof getThemeStyles>;
-  brandStyle: ReturnType<typeof flattenBrandStyle>;
   showAvatar: boolean;
   logoB64?: string;
   businessLogoB64?: string;
@@ -543,7 +523,6 @@ function SupportPreviewMini({
             cardW={SUPPORT_CARD_W}
             cardH={SUPPORT_CARD_H}
             themeStyles={themeStyles}
-            brandStyle={brandStyle}
             showAvatar={showAvatar}
             theme={theme}
           />
