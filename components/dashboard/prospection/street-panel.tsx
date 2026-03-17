@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2, Star, Copy } from "lucide-react";
+import { X, ExternalLink, Phone, Globe, Plus, CheckCircle, XCircle, Mail, Link2, Loader2, Search, Building2, Star, Copy, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { ProspectStreet, ProspectLead } from "./prospect-map";
@@ -40,10 +40,12 @@ interface Props {
   highlightLead?: { id: string; tick: number } | null;
   onClose: () => void;
   onLeadUpdate: (leadId: string, updates: Partial<ProspectLead>) => void;
+  onStreetLeadsReplace?: (streetId: string, leads: ProspectLead[]) => void;
 }
 
-export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate }: Props) {
+export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate, onStreetLeadsReplace }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
   const [createLead, setCreateLead] = useState<ProspectLead | null>(null);
   const [linkLead, setLinkLead] = useState<ProspectLead | null>(null);
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
@@ -138,7 +140,7 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate }: Pr
           </button>
         </div>
 
-        {/* Barre de progression */}
+        {/* Barre de progression + enrichir */}
         <div className="border-b border-slate-100 px-4 py-3">
           <div className="mb-1 flex justify-between text-xs text-slate-500">
             <span>Conversion</span>
@@ -150,6 +152,40 @@ export function StreetPanel({ street, highlightLead, onClose, onLeadUpdate }: Pr
               style={{ width: `${progress}%` }}
             />
           </div>
+          {/* Enrichir les leads (website + phone via Google Place Details) */}
+          {totalLeads > 0 && (
+            <button
+              onClick={async () => {
+                if (!street || enriching) return;
+                setEnriching(true);
+                try {
+                  const res = await fetch("/api/admin/prospection/enrich", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ streetId: street.id }),
+                  });
+                  const json = await res.json();
+                  if (!res.ok) { toast.error(json.error ?? "Erreur"); return; }
+                  const count = json.meta?.enrichedCount ?? 0;
+                  if (count > 0) {
+                    toast.success(`${count} lead${count > 1 ? "s" : ""} enrichi${count > 1 ? "s" : ""} (site web + tél.)`);
+                    if (onStreetLeadsReplace) onStreetLeadsReplace(street.id, json.data.leads);
+                  } else {
+                    toast.success("Tous les leads sont déjà enrichis");
+                  }
+                } catch {
+                  toast.error("Erreur réseau");
+                } finally {
+                  setEnriching(false);
+                }
+              }}
+              disabled={enriching}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] font-medium text-amber-700 transition hover:bg-amber-100 disabled:opacity-50"
+            >
+              {enriching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              {enriching ? "Enrichissement…" : "Enrichir (site web + tél.)"}
+            </button>
+          )}
         </div>
 
         {/* Filtres */}
