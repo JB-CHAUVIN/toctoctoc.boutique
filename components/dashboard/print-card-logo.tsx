@@ -162,26 +162,25 @@ export function PrintCardLogo({
         {/* CTA text — uppercase, tracked, bold "GOOGLE" */}
         <div
           style={{
-            fontSize: pf(isSquare ? 10 : 12),
+            fontSize: pf(isSquare ? 10.5 : 12.5),
             fontWeight: 800,
             color: textOnPrimary,
-            lineHeight: 1.3,
+            lineHeight: 1.25,
             textAlign: "center",
-            letterSpacing: pf(1),
-            textTransform: "uppercase",
+            letterSpacing: pf(0.3),
           }}
         >
           {isReviews ? (
             <>
-              Laissez-nous votre
+              Laissez-nous votre avis
               <br />
-              avis sur <span style={{ fontWeight: 800, textDecoration: "underline", textUnderlineOffset: pf(2) }}>Google</span>
+              sur <span style={{ fontWeight: 800 }}>Google</span>
             </>
           ) : (
             <>
               Votre carte
               <br />
-              de <span style={{ fontWeight: 800, textDecoration: "underline", textUnderlineOffset: pf(2) }}>fidélité</span>
+              de <span style={{ fontWeight: 800 }}>fidélité</span>
             </>
           )}
         </div>
