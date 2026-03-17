@@ -7,6 +7,7 @@ import { jsPDF } from "jspdf";
 import toast from "react-hot-toast";
 import type { PrintThemeId } from "@/lib/constants";
 import { buildLetterHtml } from "../prospect-letter";
+import { buildLetterV2Html } from "../prospect-letter-v2";
 import {
   PrintCard,
   getThemeStyles,
@@ -185,6 +186,47 @@ export function ConfigureAndExport({
     } catch (err) {
       console.error("[BATCH-TRACTS]", err);
       toast.error("Erreur lors de la generation des tracts");
+    } finally {
+      setGeneratingTracts(false);
+    }
+  }
+
+  async function handleGenerateTractsV2() {
+    setGeneratingTracts(true);
+    try {
+      const pages: string[] = [];
+      for (const b of businesses) {
+        let token = b.claimToken;
+        if (!token) token = await ensureClaimToken(b.id);
+        let claimUrl: string | null = null;
+        let claimQrDataUrl: string | null = null;
+        if (token) {
+          const qr = await generateClaimQr(appUrl, token);
+          claimUrl = qr.url;
+          claimQrDataUrl = qr.qrDataUrl;
+        }
+        pages.push(buildLetterV2Html(
+          { name: b.name, slug: b.slug, businessType: b.businessType, address: b.address, city: b.city, zipCode: b.zipCode, phone: b.phone, email: b.email, primaryColor: b.primaryColor, accentColor: b.accentColor, logoUrl: b.logoUrl, logoBackground: b.logoBackground, googleRating: b.googleRating, googleReviewCount: b.googleReviewCount },
+          appUrl, claimUrl, claimQrDataUrl,
+        ));
+      }
+
+      const combined = buildCombinedTractHtml(pages);
+      const win = window.open("", "_blank", "width=600,height=850");
+      if (!win) { toast.error("Popup bloquee - autorisez les popups"); return; }
+      win.document.write(combined);
+      win.document.close();
+      win.focus();
+      win.document.fonts.ready.then(() => setTimeout(() => win.print(), 400));
+
+      const notYet = businesses.filter((b) => !b.prospectedAt);
+      await Promise.all(notYet.map((b) => markBusinessAsProspected(b.id)));
+      notYet.forEach((b) => { b.prospectedAt = new Date().toISOString(); });
+
+      toast.success(`${businesses.length} tracts V2 (A5) generes`);
+    } catch (err) {
+      console.error("[BATCH-TRACTS-V2]", err);
+      toast.error("Erreur lors de la generation des tracts V2");
     } finally {
       setGeneratingTracts(false);
     }
@@ -423,12 +465,20 @@ export function ConfigureAndExport({
       {/* Export actions (sticky bottom) */}
       <div className="sticky bottom-0 mt-8 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
         <button
+          onClick={handleGenerateTractsV2}
+          disabled={generatingTracts}
+          className="flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {generatingTracts ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+          {generatingTracts ? "Generation..." : `V2 A5 (${businesses.length})`}
+        </button>
+        <button
           onClick={handleGenerateTracts}
           disabled={generatingTracts}
           className="flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
         >
           {generatingTracts ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-          {generatingTracts ? "Generation..." : `Imprimer ${businesses.length} tract${businesses.length > 1 ? "s" : ""}`}
+          {generatingTracts ? "Generation..." : `V1 A4 (${businesses.length})`}
         </button>
         <button
           onClick={handleGeneratePdfs}

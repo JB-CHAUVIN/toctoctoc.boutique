@@ -37,6 +37,8 @@ export default async function AvisPage({ params }: { params: { slug: string } })
         googleUrl={reviewConfig.googleUrl}
         instructions={reviewConfig.instructions}
         rewards={reviewConfig.rewards}
+        logoUrl={business.logoUrl}
+        logoBackground={business.logoBackground}
       />
     </div>
   );

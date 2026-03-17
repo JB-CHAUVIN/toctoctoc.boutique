@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Check, Settings2, ChevronDown, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProspectLetterButton } from "./prospect-letter";
+import { ProspectLetterV2Button } from "./prospect-letter-v2";
 import { ProspectStepper } from "./prospect-stepper";
 import { RefreshGoogleButton } from "./refresh-google-button";
 
@@ -165,6 +166,12 @@ export function SetupPanel({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <ProspectLetterV2Button
+          business={business}
+          businessId={businessId}
+          claimToken={claimToken}
+          appUrl={appUrl}
+        />
         <ProspectLetterButton
           business={business}
           businessId={businessId}

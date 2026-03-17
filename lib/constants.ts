@@ -25,8 +25,8 @@ export const PLAN_LIMITS: Record<
     originalPriceMonthly: null,
     maxBusinesses: 1,
     modules: ["SHOWCASE", "REVIEWS", "LOYALTY"],
-    maxReviews: 3,
-    maxLoyaltyCards: 3,
+    maxReviews: 30,
+    maxLoyaltyCards: 20,
   },
   STARTER: {
     label: "Starter",

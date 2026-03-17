@@ -92,6 +92,7 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
   const [isScanningArea, setIsScanningArea] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [maxRating, setMaxRating] = useState<number | null>(null);
+  const [websiteFilter, setWebsiteFilter] = useState<"all" | "yes" | "no">("all");
   const [clickProspectModal, setClickProspectModal] = useState<{ streetName: string; lat: number; lng: number } | null>(null);
   const [isGeocodingCity, setIsGeocodingCity] = useState(false);
 
@@ -104,11 +105,16 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     { value: 0.1, label: "Sans note" },
   ];
 
-  // Filtrer les leads par note
+  // Filtrer les leads par note + site web
   function filterLeads(leads: ProspectLead[]): ProspectLead[] {
-    if (maxRating === null) return leads;
-    if (maxRating === 0.1) return leads.filter((l) => l.rating == null);
-    return leads.filter((l) => l.rating != null && l.rating < maxRating);
+    let result = leads;
+    if (maxRating !== null) {
+      if (maxRating === 0.1) result = result.filter((l) => l.rating == null);
+      else result = result.filter((l) => l.rating != null && l.rating < maxRating);
+    }
+    if (websiteFilter === "yes") result = result.filter((l) => !!l.website);
+    if (websiteFilter === "no") result = result.filter((l) => !l.website);
+    return result;
   }
 
   const filteredStreets = streets.map((s) => ({ ...s, leads: filterLeads(s.leads) }));
@@ -246,7 +252,7 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
     if (!mapReady) return;
     filteredStreets.forEach(drawStreet);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapReady, streets, maxRating, drawStreet]);
+  }, [mapReady, streets, maxRating, websiteFilter, drawStreet]);
 
   // Geocode city and recenter map
   async function goToCity(city: string) {
@@ -399,6 +405,18 @@ export function ProspectMap({ initialStreets }: { initialStreets: ProspectStreet
                   {opt.label}
                 </option>
               ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 text-slate-600">
+            <Globe className="h-4 w-4 text-slate-400" />
+            <select
+              value={websiteFilter}
+              onChange={(e) => setWebsiteFilter(e.target.value as "all" | "yes" | "no")}
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="all">Site web : tous</option>
+              <option value="yes">A un site web</option>
+              <option value="no">Sans site web</option>
             </select>
           </div>
         </div>

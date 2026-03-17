@@ -18,6 +18,8 @@ interface Props {
   googleUrl: string | null;
   instructions: string | null;
   rewards: Reward[];
+  logoUrl?: string | null;
+  logoBackground?: string | null;
 }
 
 type Step = "info" | "google" | "roulette" | "result" | "thanks";
@@ -31,7 +33,7 @@ interface ReviewData {
   rewardClaimedAt: string | null;
 }
 
-export function ReviewFlow({ businessId, businessName, primaryColor, accentColor, googleUrl, instructions, rewards }: Props) {
+export function ReviewFlow({ businessId, businessName, primaryColor, accentColor, googleUrl, instructions, rewards, logoUrl, logoBackground }: Props) {
   const [step, setStep] = useState<Step>("info");
   const [token, setToken] = useState<string | null>(null);
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
@@ -155,12 +157,21 @@ export function ReviewFlow({ businessId, businessName, primaryColor, accentColor
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <div
-          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
-          style={{ backgroundColor: primaryColor + "20" }}
-        >
-          ⭐
-        </div>
+        {logoUrl ? (
+          <div
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl"
+            style={{ backgroundColor: logoBackground ?? primaryColor + "20" }}
+          >
+            <img src={logoUrl} alt={businessName} className="h-14 w-14 object-contain" />
+          </div>
+        ) : (
+          <div
+            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
+            style={{ backgroundColor: primaryColor + "20" }}
+          >
+            ⭐
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-slate-900">{businessName}</h1>
         <p className="mt-2 text-slate-500">
           {instructions || "Donnez-nous votre avis et gagnez une récompense !"}

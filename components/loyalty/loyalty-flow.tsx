@@ -196,12 +196,21 @@ export function LoyaltyFlow({ businessId, businessName, primaryColor, config, st
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <div
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
-            style={{ backgroundColor: primaryColor + "20" }}
-          >
-            🎯
-          </div>
+          {logoUrl ? (
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl"
+              style={{ backgroundColor: logoBackground ?? primaryColor + "20" }}
+            >
+              <img src={logoUrl} alt={businessName} className="h-14 w-14 object-contain" />
+            </div>
+          ) : (
+            <div
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-3xl"
+              style={{ backgroundColor: primaryColor + "20" }}
+            >
+              🎯
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-slate-900">Carte de fidélité</h1>
           <p className="mt-2 text-slate-500">{businessName}</p>
         </div>
