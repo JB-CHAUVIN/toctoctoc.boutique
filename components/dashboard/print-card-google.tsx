@@ -29,7 +29,8 @@ export function PrintCardGoogle({
   card,
   businessName,
   qrDataUrl,
-  logoB64,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  logoB64: _logoB64,
   businessLogoB64,
   businessLogoUrl,
   logoBackground,

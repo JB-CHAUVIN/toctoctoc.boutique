@@ -344,23 +344,7 @@ function NfcPhoneIllustration({ size = 52 }: { size?: number }) {
   );
 }
 
-function IconLogo({ size = 12, logoB64 }: { size?: number; logoB64?: string }) {
-  if (!logoB64) return null;
-  return (
-    <img
-      src={logoB64}
-      alt=""
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 2,
-        objectFit: "contain",
-        display: "inline-block",
-        verticalAlign: "middle",
-      }}
-    />
-  );
-}
+
 
 // ── PrintCard ────────────────────────────────────────────────────────────────
 export function PrintCard({
